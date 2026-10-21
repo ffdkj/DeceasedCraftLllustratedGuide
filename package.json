@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
   "description": "亡者世界 · 生存图鉴（Hono + TypeScript）",
   "scripts": {
     "dev": "vite",

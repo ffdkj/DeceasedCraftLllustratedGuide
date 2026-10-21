@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.gitignore
+.deploy
+.wrangler
+_cleanup-20261021/files
+wzsj
+wzsj-20261020
+wzsj-20261021
+.chrome-test-profile
+.edge-test-profile
+/*.png
+/*.log
+.env
+.env.*
