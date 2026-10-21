@@ -1,0 +1,52 @@
+﻿载具ID,名称,处理,并入基础车型
+belroftmotors:adventure,棕色探险者厢式车,已补入主列表,belroftmotors:adventure
+belroftmotors:adventure_ambulance,探险者救护车（橙色）,并入变体/同级模型,belroftmotors:adventure
+belroftmotors:adventure_police,探险者警车（白色）,并入变体/同级模型,belroftmotors:adventure
+belroftmotors:boat_trailer,M89船艇拖车,已补入主列表,belroftmotors:boat_trailer
+belroftmotors:bullfrog,橙色牛蛙肌肉车,已补入主列表,belroftmotors:bullfrog
+belroftmotors:citadel,棕色堡垒牵引车,已补入主列表,belroftmotors:citadel
+belroftmotors:conquest_police,征服者警用皮卡（白色）,并入变体/同级模型,belroftmotors:conquest_black
+belroftmotors:corallum_police,珊瑚号警用船艇（橙色）,并入变体/同级模型,belroftmotors:corallum_black
+belroftmotors:emperor_fire_chief,帝皇消防指挥车,并入变体/同级模型,belroftmotors:emperor_black
+belroftmotors:emperor_police,帝皇警用轿车（白色）,并入变体/同级模型,belroftmotors:emperor_black
+belroftmotors:fisker_type_b,棕色菲斯克小艇（B型）,已补入主列表,belroftmotors:fisker_type_b
+belroftmotors:keeper_fire_chief,卫士消防指挥车,并入变体/同级模型,belroftmotors:keeper_black
+belroftmotors:keeper_police,卫士警用越野车（绿色）,并入变体/同级模型,belroftmotors:keeper_black
+belroftmotors:nugget,棕色金粒三轮车,已补入主列表,belroftmotors:nugget
+belroftmotors:nugget_police,金粒警用三轮车（绿色）,并入变体/同级模型,belroftmotors:nugget
+belroftmotors:trailer_cars,M271汽车运输半挂车,已补入主列表,belroftmotors:trailer_cars
+belroftmotors:trailer_dry_van,棕色厢式货运半挂车,已补入主列表,belroftmotors:trailer_dry_van
+belroftmotors:trailer_tanker,棕色罐式半挂车,已补入主列表,belroftmotors:trailer_tanker
+belroftmotors:trailer_trucks,M271-1卡车运输半挂车,已补入主列表,belroftmotors:trailer_trucks
+mtsofficialpack:comanche,红色科曼奇,已补入主列表,mtsofficialpack:comanche
+mtsofficialpack:e500,红色日食500,已补入主列表,mtsofficialpack:e500
+mtsofficialpack:mc172,橡木塞斯纳172,已补入主列表,mtsofficialpack:mc172
+mtsofficialpack:merc230,棕色梅赛德斯,已补入主列表,mtsofficialpack:merc230
+mtsofficialpack:quad,橙色四轮全地形车,已补入主列表,mtsofficialpack:quad
+qmp_n:2s17_2,2S17 2,已补入主列表,qmp_n:2s17_2
+qmp_n:bmd1p,Bmd1P,已补入主列表,qmp_n:bmd1p
+qmp_n:brdm2_1,Brdm2 1,并入变体/同级模型,qmp_s:brdm2
+qmp_n:brdm2_2,Brdm2 2,并入变体/同级模型,qmp_s:brdm2
+qmp_n:bredly1,M2A3布雷德利2000年型，配备布雷德利反应装甲 [绿色],已补入主列表,qmp_n:bredly1
+qmp_n:gaz_tiger_m,Gaz Tiger M,已补入主列表,qmp_n:gaz_tiger_m
+qmp_n:gaz_tiger_m1,Gaz Tiger M1,并入变体/同级模型,qmp_n:gaz_tiger_m
+qmp_n:humvee4_1,HMMWV M1114 1994年型，配备M2勃朗宁重机枪 [绿色],并入变体/同级模型,qmp_n:humvee4
+qmp_n:humvee4_2,HMMWV M1114 1994年型，配备DSHK重机枪 [绿色],并入变体/同级模型,qmp_n:humvee4
+qmp_n:humvee4_3,HMMWV M1114 1994年型，配备MK-19榴弹发射器 [绿色],并入变体/同级模型,qmp_n:humvee4
+qmp_n:humvee_1,HMMWV M1167A1 1985年型，配备M2勃朗宁重机枪 [绿色],并入变体/同级模型,qmp_n:humvee
+qmp_n:humvee_2,HMMWV M1167A1 1985年型，配备DSHK重机枪 [绿色],并入变体/同级模型,qmp_n:humvee
+qmp_n:humvee_3,HMMWV M1167A1 1985年型，配备MK-19榴弹发射器 [绿色],并入变体/同级模型,qmp_n:humvee
+qmp_n:leopard2a5,豹2A5 1995年型 [绿色],已补入主列表,qmp_n:leopard2a5
+qmp_n:leopard2a6,豹2A6 2000年型 [绿色],已补入主列表,qmp_n:leopard2a6
+qmp_n:leopard2a7,豹2A7V 2019年型 [绿色],已补入主列表,qmp_n:leopard2a7
+qmp_n:leopard2a7hu,豹2A7HU 2018年型 [绿色],已补入主列表,qmp_n:leopard2a7hu
+qmp_n:m60tts,M60A3 1978年型，配备坦克热成像瞄准镜 [绿色],已补入主列表,qmp_n:m60tts
+qmp_n:maxxpro,万国MaxxPro 2007年型 [绿色],已补入主列表,qmp_n:maxxpro
+qmp_n:maxxpro_dshk,万国MaxxPro 2007年型，配备DSHK重机枪 [绿色],并入变体/同级模型,qmp_n:maxxpro
+qmp_n:maxxpro_m2,万国MaxxPro 2007年型，配备M2勃朗宁重机枪 [绿色],并入变体/同级模型,qmp_n:maxxpro
+qmp_n:maxxpro_mk19,万国MaxxPro 2007年型，配备MK-19榴弹发射器 [绿色],并入变体/同级模型,qmp_n:maxxpro
+qmp_n:sprutb_base,Sprutb Base,已补入主列表,qmp_n:sprutb_base
+qmp_n:ural4320,Ural4320,已补入主列表,qmp_n:ural4320
+qmp_n:varta2,Varta2,已补入主列表,qmp_n:varta2
+qmp_n:varta2_dshk,Varta2 Dshk,并入变体/同级模型,qmp_n:varta2
+qmp_n:varta2_m2,Varta2 M2,并入变体/同级模型,qmp_n:varta2

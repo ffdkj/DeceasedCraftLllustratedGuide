@@ -1,0 +1,36 @@
+# dependencies / build output
+node_modules/
+dist/
+*.log
+
+# local secrets
+.env
+.env.*
+!.env.example
+
+# deploy scratch
+.deploy/
+.wrangler/
+
+# cleanup backups (keep README/CSV records, not the moved files)
+_cleanup-20261021/files/
+
+# dead build-output duplicates, removed in Phase 1
+wzsj-20261021/assets/
+
+# legacy snapshots (kept on disk for reference, not tracked)
+wzsj/
+wzsj-20261020/
+
+# local test profiles / screenshots / verification artifacts
+.chrome-test-profile/
+.edge-test-profile/
+.baseline-*.png
+.desktop-*.png
+.verify-*.png
+.verify-*.json
+.verify-*.py
+
+# OS
+Thumbs.db
+.DS_Store
