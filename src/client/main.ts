@@ -1,4 +1,4 @@
 import './seed';
-import './legacy/music.js';
+import './music';
 import './legacy/gunsmith.js';
 import './legacy/app.js';

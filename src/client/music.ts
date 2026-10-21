@@ -1,51 +1,75 @@
-/* ============ 亡者世界 · 原声播放器 ============ */
-(function () {
-  "use strict";
+/* ============ 亡者世界 · 原声播放器（TypeScript） ============ */
 
-  const KEY = "wz_music_v1";
-  const TRACKS = [
-    { id: "search", title: "搜寻", src: "/media/audio/search.m4a" },
-    { id: "hope", title: "一线生机", src: "/media/audio/hope.m4a" },
-    { id: "forgotten", title: "遗忘", src: "/media/audio/forgotten.m4a" },
-    { id: "silhouettes", title: "曾经的身影", src: "/media/audio/silhouettes.m4a" },
-    { id: "transformation", title: "我们的蜕变", src: "/media/audio/transformation.m4a" },
-    { id: "we", title: "曾经的我们", src: "/media/audio/we.m4a" },
-    { id: "broken", title: "残破", src: "/media/audio/broken.m4a" }
-  ];
-  const ARTIST = "TqLxQuanZ";
-  const SOURCE_URL = "https://space.bilibili.com/373594976";
+interface Track {
+  id: string;
+  title: string;
+  src: string;
+}
 
-  const ICONS = {
-    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-    play: '<path d="M8 5v14l11-7-11-7z" fill="currentColor" stroke="none"/>',
-    pause: '<path d="M7 5h4v14H7zM14 5h4v14h-4z" fill="currentColor" stroke="none"/>',
-    prev: '<path d="M18 5v14L8 12l10-7z" fill="currentColor" stroke="none"/><path d="M5 5v14"/>',
-    next: '<path d="M6 5v14l10-7L6 5z" fill="currentColor" stroke="none"/><path d="M19 5v14"/>',
-    stop: '<rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor" stroke="none"/>',
-    close: '<path d="M18 6L6 18M6 6l12 12"/>',
-    volume: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/>',
-    mute: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/>',
-    note: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'
-  };
-  function svg(name, size) {
-    const s = size || 20;
-    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + "</svg>";
-  }
-  function esc(v) {
-    return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-  function fmtTime(sec) {
-    if (!isFinite(sec) || sec < 0) return "0:00";
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return m + ":" + (s < 10 ? "0" : "") + s;
-  }
+interface SavedState {
+  index?: number;
+  volume?: number;
+  muted?: boolean;
+}
 
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
-  let index = Number.isInteger(saved.index) && saved.index >= 0 && saved.index < TRACKS.length ? saved.index : 0;
+const KEY = "wz_music_v1";
+const TRACKS: Track[] = [
+  { id: "search", title: "搜寻", src: "/media/audio/search.m4a" },
+  { id: "hope", title: "一线生机", src: "/media/audio/hope.m4a" },
+  { id: "forgotten", title: "遗忘", src: "/media/audio/forgotten.m4a" },
+  { id: "silhouettes", title: "曾经的身影", src: "/media/audio/silhouettes.m4a" },
+  { id: "transformation", title: "我们的蜕变", src: "/media/audio/transformation.m4a" },
+  { id: "we", title: "曾经的我们", src: "/media/audio/we.m4a" },
+  { id: "broken", title: "残破", src: "/media/audio/broken.m4a" }
+];
+const ARTIST = "TqLxQuanZ";
+const SOURCE_URL = "https://space.bilibili.com/373594976";
+
+const ICONS: Record<string, string> = {
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  play: '<path d="M8 5v14l11-7-11-7z" fill="currentColor" stroke="none"/>',
+  pause: '<path d="M7 5h4v14H7zM14 5h4v14h-4z" fill="currentColor" stroke="none"/>',
+  prev: '<path d="M18 5v14L8 12l10-7z" fill="currentColor" stroke="none"/><path d="M5 5v14"/>',
+  next: '<path d="M6 5v14l10-7L6 5z" fill="currentColor" stroke="none"/><path d="M19 5v14"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor" stroke="none"/>',
+  close: '<path d="M18 6L6 18M6 6l12 12"/>',
+  volume: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/>',
+  mute: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/>',
+  note: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'
+};
+
+function svg(name: string, size?: number): string {
+  const s = size || 20;
+  return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + "</svg>";
+}
+
+function esc(v: unknown): string {
+  return String(v == null ? "" : v).replace(/[&<>"']/g, (c) => {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string;
+  });
+}
+
+function fmtTime(sec: number): string {
+  if (!isFinite(sec) || sec < 0) return "0:00";
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return m + ":" + (s < 10 ? "0" : "") + s;
+}
+
+function must<T extends HTMLElement>(id: string): T {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`missing #${id}`);
+  return el as T;
+}
+
+function initMusic(): void {
+  let saved: SavedState = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(KEY) || "{}") as SavedState;
+  } catch {
+    saved = {};
+  }
+  let index = Number.isInteger(saved.index) && saved.index! >= 0 && saved.index! < TRACKS.length ? saved.index! : 0;
   let volume = typeof saved.volume === "number" && saved.volume >= 0 && saved.volume <= 1 ? saved.volume : 0.55;
   let muted = !!saved.muted;
   let open = false;
@@ -87,43 +111,51 @@
     '</section>';
   document.body.appendChild(host);
 
-  const fab = document.getElementById("musicFab");
-  const panel = document.getElementById("musicPanel");
-  const backdrop = document.getElementById("musicBackdrop");
-  const nowTitle = document.getElementById("musicNowTitle");
-  const nowSub = document.getElementById("musicNowSub");
-  const playBtn = document.getElementById("musicPlay");
-  const seek = document.getElementById("musicSeek");
-  const volumeInput = document.getElementById("musicVolume");
-  const muteBtn = document.getElementById("musicMute");
-  const timeNow = document.getElementById("musicTimeNow");
-  const timeAll = document.getElementById("musicTimeAll");
-  const status = document.getElementById("musicStatus");
-  const list = document.getElementById("musicList");
+  const fab = must<HTMLButtonElement>("musicFab");
+  const panel = must<HTMLElement>("musicPanel");
+  const backdrop = must<HTMLDivElement>("musicBackdrop");
+  const nowTitle = must<HTMLElement>("musicNowTitle");
+  const nowSub = must<HTMLElement>("musicNowSub");
+  const playBtn = must<HTMLButtonElement>("musicPlay");
+  const seek = must<HTMLInputElement>("musicSeek");
+  const volumeInput = must<HTMLInputElement>("musicVolume");
+  const muteBtn = must<HTMLButtonElement>("musicMute");
+  const timeNow = must<HTMLElement>("musicTimeNow");
+  const timeAll = must<HTMLElement>("musicTimeAll");
+  const status = must<HTMLElement>("musicStatus");
+  const list = must<HTMLElement>("musicList");
 
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ index: index, volume: volume, muted: muted })); } catch (e) {}
+  function save(): void {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ index, volume, muted }));
+    } catch {
+      /* ignore quota errors */
+    }
   }
 
-  function updatePlayingUI() {
+  function updatePlayingUI(): void {
     const playing = !audio.paused && !audio.ended;
     playBtn.innerHTML = svg(playing ? "pause" : "play", 26);
     playBtn.setAttribute("aria-label", playing ? "暂停" : "播放");
     fab.classList.toggle("playing", playing);
     status.textContent = playing ? "正在播放" : (audio.currentTime > 0 ? "已暂停" : "点击播放");
     if ("mediaSession" in navigator) {
-      try { navigator.mediaSession.playbackState = playing ? "playing" : "paused"; } catch (e) {}
+      try {
+        navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+      } catch {
+        /* ignore unsupported */
+      }
     }
   }
 
-  function updateMuteUI() {
+  function updateMuteUI(): void {
     muteBtn.innerHTML = svg(muted || volume === 0 ? "mute" : "volume", 18);
     muteBtn.setAttribute("aria-label", muted ? "取消静音" : "静音");
     muteBtn.classList.toggle("is-muted", muted || volume === 0);
   }
 
-  function renderList() {
-    list.innerHTML = TRACKS.map(function (t, i) {
+  function renderList(): void {
+    list.innerHTML = TRACKS.map((t, i) => {
       return '<button class="music-track' + (i === index ? " active" : "") + '" type="button" role="listitem" data-track="' + i + '" aria-current="' + (i === index ? "true" : "false") + '">' +
         '<span class="music-track-no">' + (i === index ? '<span class="mini-bars" aria-hidden="true"><i></i><i></i><i></i></span>' : String(i + 1).padStart(2, "0")) + '</span>' +
         '<span class="music-track-title">' + esc(t.title) + '</span>' +
@@ -132,8 +164,8 @@
     }).join("");
   }
 
-  function updateMediaSession() {
-    if (!("mediaSession" in navigator) || !window.MediaMetadata) return;
+  function updateMediaSession(): void {
+    if (!("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: TRACKS[index].title,
@@ -141,10 +173,12 @@
         album: "亡者世界 DeceasedCraft",
         artwork: [{ src: "./icons/icon-192.png", sizes: "192x192", type: "image/png" }]
       });
-    } catch (e) {}
+    } catch {
+      /* ignore unsupported */
+    }
   }
 
-  function loadTrack(i, startPlayback) {
+  function loadTrack(i: number, startPlayback: boolean): void {
     index = (i + TRACKS.length) % TRACKS.length;
     const t = TRACKS[index];
     audio.src = t.src;
@@ -158,28 +192,32 @@
     updatePlayingUI();
     updateMediaSession();
     save();
-    // Playback only starts from an explicit player control interaction.
     if (startPlayback) play();
   }
-  function play() {
+
+  function play(): void {
     const p = audio.play();
     if (p && p.catch) {
-      p.catch(function () {
+      p.catch(() => {
         status.textContent = "点击播放";
         updatePlayingUI();
       });
     }
   }
 
-  function stop() {
+  function stop(): void {
     audio.pause();
-    try { audio.currentTime = 0; } catch (e) {}
+    try {
+      audio.currentTime = 0;
+    } catch {
+      /* ignore */
+    }
     seek.value = "0";
     timeNow.textContent = "0:00";
     updatePlayingUI();
   }
 
-  function togglePanel(force) {
+  function togglePanel(force?: boolean): void {
     open = typeof force === "boolean" ? force : !open;
     fab.setAttribute("aria-expanded", open ? "true" : "false");
     fab.setAttribute("aria-label", open ? "收起原声播放器" : "打开原声播放器");
@@ -193,7 +231,7 @@
     }
   }
 
-  function toggle() {
+  function toggle(): void {
     if (audio.paused || audio.ended) {
       if (audio.ended) audio.currentTime = 0;
       if (!audio.src) loadTrack(index, true);
@@ -203,7 +241,7 @@
     }
   }
 
-  function changeVolume(v) {
+  function changeVolume(v: number): void {
     volume = Math.max(0, Math.min(1, v));
     audio.volume = volume;
     if (volume > 0 && muted) {
@@ -215,7 +253,7 @@
     save();
   }
 
-  function toggleMute() {
+  function toggleMute(): void {
     if (muted || volume === 0) {
       if (volume === 0) volume = lastVolume;
       muted = false;
@@ -231,10 +269,11 @@
     save();
   }
 
-  fab.addEventListener("click", function () { togglePanel(); });
-  backdrop.addEventListener("click", function () { togglePanel(false); });
-  panel.addEventListener("click", function (e) {
-    const action = e.target.closest("[data-music]");
+  fab.addEventListener("click", () => togglePanel());
+  backdrop.addEventListener("click", () => togglePanel(false));
+  panel.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    const action = target.closest<HTMLElement>("[data-music]");
     if (action) {
       const a = action.getAttribute("data-music");
       if (a === "toggle") toggle();
@@ -245,7 +284,7 @@
       else if (a === "close") togglePanel(false);
       return;
     }
-    const track = e.target.closest("[data-track]");
+    const track = target.closest<HTMLElement>("[data-track]");
     if (track) {
       const i = Number(track.getAttribute("data-track"));
       if (i === index) toggle();
@@ -253,35 +292,35 @@
     }
   });
 
-  list.addEventListener("keydown", function (e) {
+  list.addEventListener("keydown", (e) => {
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-    const rows = Array.from(list.querySelectorAll("[data-track]"));
-    const i = rows.indexOf(document.activeElement);
+    const rows = Array.from(list.querySelectorAll<HTMLElement>("[data-track]"));
+    const i = rows.indexOf(document.activeElement as HTMLElement);
     if (i < 0) return;
     e.preventDefault();
     const next = (i + (e.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length;
     rows[next].focus();
   });
 
-  seek.addEventListener("input", function () {
+  seek.addEventListener("input", () => {
     seeking = true;
     if (audio.duration && isFinite(audio.duration)) {
       timeNow.textContent = fmtTime((Number(seek.value) / 1000) * audio.duration);
     }
   });
-  seek.addEventListener("change", function () {
+  seek.addEventListener("change", () => {
     if (audio.duration && isFinite(audio.duration)) {
       audio.currentTime = (Number(seek.value) / 1000) * audio.duration;
     }
     seeking = false;
   });
-  volumeInput.addEventListener("input", function () { changeVolume(Number(volumeInput.value) / 100); });
+  volumeInput.addEventListener("input", () => changeVolume(Number(volumeInput.value) / 100));
 
-  audio.addEventListener("loadedmetadata", function () {
+  audio.addEventListener("loadedmetadata", () => {
     timeAll.textContent = fmtTime(audio.duration);
     updatePlayingUI();
   });
-  audio.addEventListener("timeupdate", function () {
+  audio.addEventListener("timeupdate", () => {
     if (!seeking && audio.duration && isFinite(audio.duration)) {
       seek.value = String(Math.round((audio.currentTime / audio.duration) * 1000));
       timeNow.textContent = fmtTime(audio.currentTime);
@@ -289,11 +328,11 @@
   });
   audio.addEventListener("play", updatePlayingUI);
   audio.addEventListener("pause", updatePlayingUI);
-  audio.addEventListener("ended", function () {
+  audio.addEventListener("ended", () => {
     updatePlayingUI();
     status.textContent = "播放结束 · 点击重播";
   });
-  audio.addEventListener("error", function () {
+  audio.addEventListener("error", () => {
     status.textContent = "音频加载失败";
     updatePlayingUI();
   });
@@ -302,13 +341,15 @@
     try {
       navigator.mediaSession.setActionHandler("play", toggle);
       navigator.mediaSession.setActionHandler("pause", toggle);
-      navigator.mediaSession.setActionHandler("previoustrack", function () { loadTrack(index - 1, true); });
-      navigator.mediaSession.setActionHandler("nexttrack", function () { loadTrack(index + 1, true); });
+      navigator.mediaSession.setActionHandler("previoustrack", () => loadTrack(index - 1, true));
+      navigator.mediaSession.setActionHandler("nexttrack", () => loadTrack(index + 1, true));
       navigator.mediaSession.setActionHandler("stop", stop);
-    } catch (e) {}
+    } catch {
+      /* ignore unsupported */
+    }
   }
 
-  document.addEventListener("keydown", function (e) {
+  document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && open) togglePanel(false);
   });
 
@@ -317,13 +358,21 @@
   volumeInput.value = String(Math.round(volume * 100));
   loadTrack(index, false);
   window.WZMusic = {
-    play: play,
-    stop: stop,
-    next: function () { loadTrack(index + 1, true); },
-    prev: function () { loadTrack(index - 1, true); },
-    tracks: TRACKS.map(function (t) { return t.title; }),
-    state: function () {
-      return { index: index, title: TRACKS[index].title, paused: audio.paused, currentTime: audio.currentTime, duration: audio.duration, volume: volume, muted: muted };
-    }
+    play,
+    stop,
+    next: () => loadTrack(index + 1, true),
+    prev: () => loadTrack(index - 1, true),
+    tracks: TRACKS.map((t) => t.title),
+    state: () => ({
+      index,
+      title: TRACKS[index].title,
+      paused: audio.paused,
+      currentTime: audio.currentTime,
+      duration: audio.duration,
+      volume,
+      muted
+    })
   };
-})();
+}
+
+initMusic();
