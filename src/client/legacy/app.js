@@ -689,7 +689,8 @@
       return itemIcon(item.iconItem, item.name, null, size);
     }
     if (item.image) {
-      return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(item.image) + "')\"></div>";
+      const src = size <= 64 && item.thumb ? item.thumb : item.image;
+      return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(src) + "')\"></div>";
     }
     if (item.iconItem) return itemIcon(item.iconItem, item.name, null, size);
     const cfg = GUIDE_TYPES[type] || { icon: "info" };
@@ -1001,7 +1002,9 @@
   function buildingThumb(b, size) {
     const g = buildingGuide(b.id);
     if (g && g.image) {
-      return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(g.image) + "')\"></div>";
+      const small = (window.WZ_BUILDING_THUMBS_SMALL || {})[b.id];
+      const src = size <= 64 && small ? small : g.image;
+      return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(src) + "')\"></div>";
     }
     return '<div class="avatar">' + esc(initial(b.name)) + "</div>";
   }
