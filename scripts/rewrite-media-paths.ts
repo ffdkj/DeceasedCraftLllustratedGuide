@@ -1,6 +1,5 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
 
 const PUBLIC = path.resolve('public');
 
@@ -75,29 +74,19 @@ async function rewriteLoot() {
 }
 
 async function rewriteSeed() {
-  const file = path.resolve('src/client/legacy/seed.js');
-  const text = await fs.readFile(file, 'utf8');
-  const sandbox: { window: Record<string, unknown> } = { window: {} };
-  vm.runInNewContext(text, sandbox, { timeout: 5000 });
-
-  const seed = sandbox.window.WZ_SEED;
-  const thumbs = (sandbox.window.WZ_BUILDING_THUMBS ?? {}) as Record<string, string>;
-  const small = (sandbox.window.WZ_BUILDING_THUMBS_SMALL ?? {}) as Record<string, string>;
-
-  const mediaThumbs: Record<string, string> = {};
-  for (const [id, value] of Object.entries(thumbs)) {
-    mediaThumbs[id] = value.startsWith('/media/')
-      ? value
-      : '/media/images/' + value.slice('./images/'.length);
+  const file = path.resolve('src/client/seed.ts');
+  try {
+    await fs.access(file);
+  } catch {
+    return;
   }
-
-  const header = text.slice(0, text.indexOf('window.WZ_SEED'));
-  const out =
-    header +
-    'window.WZ_SEED = ' + JSON.stringify(seed) + ';\n\n' +
-    'window.WZ_BUILDING_THUMBS = ' + JSON.stringify(mediaThumbs) + ';\n\n' +
-    'window.WZ_BUILDING_THUMBS_SMALL = ' + JSON.stringify(small) + ';\n';
-  await fs.writeFile(file, out);
+  let text = await fs.readFile(file, 'utf8');
+  text = text.replace(
+    /"\.\/images\/(guides|buildings|vehicles)\/([^"]+\.webp)"/g,
+    (match, folder: string, rest: string) =>
+      rest.endsWith('-thumb.webp') ? match : `"/media/images/${folder}/${rest}"`
+  );
+  await fs.writeFile(file, text);
 }
 
 async function rewriteMusic() {

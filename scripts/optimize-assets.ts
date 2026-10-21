@@ -1,6 +1,5 @@
-import { promises as fs } from 'node:fs';
+import { promises as fs, existsSync } from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
 import sharp from 'sharp';
 
 const ROOT = path.resolve('public');
@@ -166,28 +165,12 @@ async function rewriteLoot() {
 }
 
 async function rewriteSeed() {
-  const file = path.resolve('src/client/legacy/seed.js');
-  const text = await fs.readFile(file, 'utf8');
-  // seed.js uses JS object literal syntax with unquoted keys, so evaluate it
-  // in an isolated context instead of JSON.parse.
-  const sandbox: { window: Record<string, unknown> } = { window: {} };
-  vm.runInNewContext(text, sandbox, { timeout: 5000 });
-  const seed = sandbox.window.WZ_SEED;
-  const thumbs = sandbox.window.WZ_BUILDING_THUMBS;
-  const mappedSeed = mapDeep(seed);
-  const mappedThumbs = mapDeep(thumbs) as Record<string, string>;
-  const small: Record<string, string> = {};
-  for (const [id, value] of Object.entries(mappedThumbs ?? {})) {
-    const t = thumbMap.get(value);
-    if (t) small[id] = t;
-  }
-  const header = text.slice(0, text.indexOf('window.WZ_SEED'));
-  const out =
-    header +
-    'window.WZ_SEED = ' + JSON.stringify(mappedSeed) + ';\n\n' +
-    'window.WZ_BUILDING_THUMBS = ' + JSON.stringify(mappedThumbs) + ';\n\n' +
-    'window.WZ_BUILDING_THUMBS_SMALL = ' + JSON.stringify(small) + ';\n';
-  await fs.writeFile(file, out);
+  const candidates = [path.resolve('src/client/seed.ts'), path.resolve('src/client/legacy/seed.js')];
+  const file = candidates.find((f) => existsSync(f));
+  if (!file) return;
+  let text = await fs.readFile(file, 'utf8');
+  for (const [from, to] of pathMap) text = text.split(from).join(to);
+  await fs.writeFile(file, text);
 }
 
 async function rewriteCss() {
