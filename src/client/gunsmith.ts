@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO(types): legacy TACZ gunsmith UI; migrate to strict types incrementally.
 /* 亡者世界 · TACZ 改枪台 */
 (function () {
   "use strict";

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO(types): legacy SPA renderer; split into router/store/render modules and type incrementally.
 /* ============ 亡者世界 · 生存图鉴 ============ */
 (function () {
   "use strict";
