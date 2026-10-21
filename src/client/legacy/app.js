@@ -2163,6 +2163,9 @@
         '<button class="menu-item" data-action="export"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">导出备份</span><span class="menu-sub">收藏与自制内容导出为 JSON</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-action="import"><span class="menu-ico">' + icon("upload", 17) + '</span><span class="menu-main"><span class="menu-title">导入备份</span><span class="menu-sub">合并攻略包</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-action="install"><span class="menu-ico">' + icon("install", 17) + '</span><span class="menu-main"><span class="menu-title">安装到手机桌面</span><span class="menu-sub">HTTPS 环境下可离线</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-action="offline-images"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">下载离线图片包</span><span class="menu-sub">缩略图 + 详情大图 · 不含音频</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-action="offline-audio"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">下载离线音频</span><span class="menu-sub">7 首原声 · 约 10.8MB</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-action="clear-offline"><span class="menu-ico" style="color:var(--red)">' + icon("trash", 17) + '</span><span class="menu-main"><span class="menu-title" style="color:var(--red)">清除离线图片/音频</span><span class="menu-sub">保留应用壳层缓存</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-action="about"><span class="menu-ico">' + icon("info", 17) + '</span><span class="menu-main"><span class="menu-title">数据来源与说明</span><span class="menu-sub">战利品、剧情、作者与版权</span></span>' + icon("chevron", 17) + "</button>" +
       "</div></div>" +
       '<div class="section tiny dim" style="text-align:center;line-height:1.9">亡者世界图鉴 · 玩家自制<br>所有资料仅供参考，以官方整合包数据为准</div>';
@@ -2507,6 +2510,9 @@
         break;
       }
       case "install": installApp(); break;
+      case "offline-images": requestOffline("prefetch-images"); break;
+      case "offline-audio": requestOffline("prefetch-audio"); break;
+      case "clear-offline": requestOffline("clear-offline"); break;
       case "close-sheet": closeSheet(); break;
       case "clear-loot-search": {
         const input = q("loot-search");
@@ -2639,7 +2645,36 @@
       installSheet();
     }
   }
+  function requestOffline(type) {
+    if (!("serviceWorker" in navigator)) {
+      toast("当前浏览器不支持离线缓存");
+      return;
+    }
+    if (!navigator.serviceWorker.controller) {
+      toast("离线缓存尚未就绪，请刷新后重试");
+      return;
+    }
+    if (type !== "clear-offline" && !navigator.onLine) {
+      toast("当前离线，无法下载");
+      return;
+    }
+    navigator.serviceWorker.controller.postMessage({ type: type });
+    if (type === "prefetch-images") toast("开始缓存图片…");
+    if (type === "prefetch-audio") toast("开始缓存音频…");
+  }
+
   if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.addEventListener("message", function (event) {
+      const d = event.data || {};
+      const label = d.kind === "audio" ? "音频" : "图片";
+      if (d.type === "prefetch-progress") {
+        toast(label + " " + d.done + "/" + d.total + (d.failed ? " · 失败 " + d.failed : ""));
+      } else if (d.type === "prefetch-done") {
+        toast(label + "缓存完成" + (d.failed ? "（失败 " + d.failed + "）" : ""));
+      } else if (d.type === "offline-cleared") {
+        toast("离线图片/音频缓存已清除");
+      }
+    });
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("./sw.js").catch(function () {});
     });
