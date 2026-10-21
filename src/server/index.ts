@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { mediaHandler } from './media.js';
 
 const app = new Hono();
 
@@ -22,6 +23,8 @@ function resolveStaticRoot(): string {
 const staticRoot = resolveStaticRoot();
 
 app.get('/api/health', (c) => c.json({ ok: true, service: 'wzsj-atlas' }));
+
+app.all('/media/:path{.+}', mediaHandler);
 
 app.use(
   '*',

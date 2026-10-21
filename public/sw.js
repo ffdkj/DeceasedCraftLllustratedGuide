@@ -1,5 +1,5 @@
 /* 亡者世界图鉴 · 离线缓存 */
-const CACHE = "wz-guide-v5.11.19-20261021-cleanup";
+const CACHE = "wz-guide-v5.11.19-rustfs";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,13 +8,6 @@ const ASSETS = [
   "./js/music.js",
   "./js/seed.js",
   "./js/gunsmith.js",
-  "./audio/search.m4a",
-  "./audio/hope.m4a",
-  "./audio/forgotten.m4a",
-  "./audio/silhouettes.m4a",
-  "./audio/transformation.m4a",
-  "./audio/we.m4a",
-  "./audio/broken.m4a",
   "./data/loot.js",
   "./data/textures.js",
   "./data/guides.js",
