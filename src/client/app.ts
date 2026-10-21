@@ -526,15 +526,47 @@
     renderTopbar({});
     document.title = "世界图鉴 · 亡者世界";
     q("view").innerHTML =
-      '<div class="detail-hero' + heroClass("world") + '"' + heroStyle("world") + '><h1>世界图鉴</h1><div class="meta"><span class="badge">载具</span><span class="badge">剧情</span><span class="badge">防御</span></div>' +
+      '<div class="detail-hero' + heroClass("world") + '"' + heroStyle("world") + '><h1>世界图鉴</h1><div class="meta"><span class="badge">载具</span><span class="badge">剧情</span><span class="badge">防御</span><span class="badge custom">更新日志</span></div>' +
         '<div class="hero-desc" style="margin-top:10px">载具组装、全剧情书与基地防御。建筑外观与战利品已合并到「战利品」板块，避免重复。</div></div>' +
       '<div class="section"><div class="hub-grid">' +
         hubCard({ href: "#/world/vehicles", icon: "car", title: "载具", sub: "民用 / 军用 / 船只 / 飞机", count: GUIDE_TYPES.vehicles.data.length, unit: "种", accent: "#7ea8c9" }) +
         hubCard({ href: "#/world/story", icon: "book", title: "剧情故事", sub: "新闻 / 各区域笔记与录音", count: GUIDE_TYPES.story.data.length, unit: "篇", accent: "#e0a94a" }) +
         hubCard({ href: "#/world/difficulty", icon: "skull", title: "世界难度", sub: "和平 / 简单 / 普通 / 困难 / 末日", count: 5, unit: "级", accent: "#e07a5f" }) +
         hubCard({ href: "#/world/defense", icon: "shield", title: "防御工事", sub: "爆炸物 / 防御墙 / 电击 / 炮塔", count: GUIDE_TYPES.defense.data.length, unit: "条", accent: "#7fc79a" }) +
+        hubCard({ href: "#/world/changelog", icon: "book", title: "更新日志", sub: "5.11.0 → 5.11.19 版本改动", count: (window.WZ_CHANGELOG || []).length, unit: "版", accent: "#b09acb" }) +
       "</div></div>" +
       '<div class="section"><div class="guide-note">' + icon("info", 18) + "<div>载具配方来自 MTS / Immersive Aircraft 定义；剧情书整理截止 5.11.19；改枪台方案可用 WZG1- 分享码传递。</div></div></div>";
+  }
+
+  function changelogVersions() {
+    const logs = (window.WZ_CHANGELOG || []).slice();
+    logs.sort(function (a, b) {
+      const pa = String(a.version || "").split(".").map(Number);
+      const pb = String(b.version || "").split(".").map(Number);
+      for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        const d = (pb[i] || 0) - (pa[i] || 0);
+        if (d) return d;
+      }
+      return 0;
+    });
+    return logs;
+  }
+
+  function renderChangelog() {
+    const logs = changelogVersions();
+    const newest = logs[0] ? logs[0].version : "";
+    const oldest = logs.length ? logs[logs.length - 1].version : "";
+    const total = logs.reduce(function (a, l) { return a + ((l.items || []).length); }, 0);
+    renderTopbar({ back: "#/world", title: "更新日志", sub: logs.length + " 个版本" });
+    document.title = "更新日志 · 亡者世界";
+    q("view").innerHTML =
+      '<div class="detail-hero' + heroClass("world") + '"' + heroStyle("world") + '><h1>更新日志</h1><div class="meta"><span class="badge">' + (oldest ? "v" + esc(oldest) + " → v" + esc(newest) : "待收录") + '</span><span class="badge">' + total + ' 条改动</span><span class="badge custom">整理自官方日志</span></div><div class="hero-desc" style="margin-top:10px">按版本查看新增内容、平衡调整与修复，最新版本排在最前，点击标题展开或收起。</div></div>' +
+      '<div class="section"><div class="log-list">' + logs.map(function (log, i) {
+        const cleanTitle = String(log.title || "").replace(/^v?[\d.]+\s*(更新日志|更新列表|Patch Notes[^:：]*)?[:：]?/i, "").trim();
+        const items = log.items || [];
+        return '<details class="log-item"' + (i === 0 ? " open" : "") + '><summary><span class="log-version">v' + esc(log.version) + '</span><span class="log-title">' + esc(cleanTitle || "版本改动") + '</span><span class="log-count">' + items.length + ' 条</span></summary><ul>' + items.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ul></details>';
+      }).join("") + '</div></div>' +
+      '<div class="section"><div class="guide-note">' + icon("info", 18) + "<div>更新日志整理自整合包官方更新记录，按原文保留作者署名与说明；条目中的数值以游戏内实际版本为准。</div></div></div>";
   }
 
   /* ---------------- 通用图鉴列表 / 详情 ---------------- */
@@ -1174,6 +1206,7 @@
       }
     } else if (root === "world") {
       if (p[1] === "vehicle-audit") renderVehicleAudit();
+      else if (p[1] === "changelog") renderChangelog();
       else if (p[1] === "difficulty") renderWorldDifficulty();
       else if (p[1] === "buildings") renderBuildingsList();
       else if (p[1] === "vehicles" || p[1] === "vehicle") {

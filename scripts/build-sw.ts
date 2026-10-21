@@ -29,6 +29,7 @@ async function main() {
     './data/textures.js',
     './data/guides.js',
     './data/gunsmith.js',
+    './data/changelog.js',
     './textures/atlas.webp',
     './manifest.webmanifest',
     './icons/icon.svg',

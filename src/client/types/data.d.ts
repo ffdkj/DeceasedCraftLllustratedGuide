@@ -37,6 +37,7 @@ declare global {
     WZ_SEED: SeedData;
     WZ_GUIDES: any;
     WZ_GUNSMITH: any;
+    WZ_CHANGELOG: any;
     WZ_TEXTURES: any;
     WZ_BUILDING_THUMBS: Record<string, string>;
     WZ_BUILDING_THUMBS_SMALL: Record<string, string>;
