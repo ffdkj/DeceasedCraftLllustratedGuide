@@ -115,39 +115,58 @@ window.WZ_TIERS_UI = {
   rows(gunId): Array<{ kind: "gun"|"bullet", tier: "T1".."T4"|null,
                        label: "枪械梯度"|"子弹梯度", name: string, ico: string,
                        href: string|null, inferred: boolean, note: string|null }>,
-  strip(gunId): string   // 两行同构 HTML，两个页面共用
+  badges(gunId): string   // 两个 tag 的无包裹 HTML 串，直接塞进 .gs-badges / .meta
 }
 ```
 
-HTML 结构：
+HTML 结构（与「全自动 / 开膛待击」同排，透明底有色字）：
 
 ```html
-<div class="tier-strip">
-  <button class="tier-row tier-T4" data-go="#/item/deceasedcraft%3Aspecial_assembly_parts">
-    <span class="tier-ico">…16px 图标…</span>
-    <span class="tier-label">枪械梯度</span>
-    <span class="tier-badge">T4</span>
-    <span class="tier-name">特殊武器组装元件</span>
+<div class="gs-badges">
+  <span class="gs-badge fire">全自动</span>
+  <span class="gs-badge bolt">闭膛待击</span>
+  <button class="gs-badge tier-tag tier-T3 clickable" title="枪械梯度：步枪组装元件"
+          data-go="#/item/deceasedcraft%3Arifle_assembly_parts">
+    <span class="tier-ico">…16px 元件图标…</span>
+    <span class="tier-text">枪械梯度</span><b class="tier-hl">T3</b>
   </button>
-  <button class="tier-row tier-T3" data-go="#/item/deceasedcraft%3Amold_bullet_casing_556x45">
-    <span class="tier-ico">…</span>
-    <span class="tier-label">子弹梯度</span>
-    <span class="tier-badge">T3</span>
-    <span class="tier-name">5.56×45mm</span>
+  <button class="gs-badge tier-tag tier-T3 clickable" title="子弹梯度：5.56×45mm"
+          data-go="#/item/deceasedcraft%3Amold_bullet_casing_556x45">
+    <span class="tier-ico">…16px 模具图标…</span>
+    <span class="tier-text">子弹梯度</span><b class="tier-hl">T3</b>
   </button>
 </div>
 ```
 
-- **挂载点 1**：改枪台 `#view > div.gs-head` 内部末尾（通栏，`flex: 1 1 100%`）。
-- **挂载点 2**：枪械详情 `#view > .detail-hero` 的 `.meta` 之后。
+- **挂载点 1**：改枪台 `#view > div.gs-head > div.gs-head-body > div.gs-badges`，追加在射击模式徽章之后。
+- **挂载点 2**：枪械详情 `#view > .detail-hero > .meta`，追加在类型徽章之后。
 - **点击**：`data-go` 走既有的全局路由委托（`app.ts` 里 `closest("[data-go]")`），不新增事件监听。
-  - 枪械行 → 该组装元件物品页；`inferred` 无元件 → 不可点。
-  - 子弹行 → 该口径模具物品页。
-  - 无模具 / 无弹药 → 不可点，灰色虚线框。
-- **配色**：T1 绿 `#4ade80`、T2 蓝 `#60a5fa`、T3 紫 `#c084fc`、T4 金红（金 → 红渐变）；亮色主题单独降饱和，保证对比度。
-- **图标**：枪械行 = 定档元件的物品图标；子弹行 = 该口径模具的物品图标（不用统一的 `tacz:ammo`）。
-- **文案**：枪械行名称 = 元件中文名（推断时写回落依据的档位名，后缀「· 推断」灰色小字）；子弹行名称 = 口径名。
-- 响应式：窄屏两行各占一行、`tier-name` 可省略号截断；两行永远上下排列（不做横排）。
+  - 枪械 tag → 该组装元件物品页；`inferred` 无元件 → 渲染成 `<span>`，不可点。
+  - 子弹 tag → 该口径模具物品页。
+  - 无模具 / 无弹药 → 渲染成 `<span>`，灰色虚线框，文字直接写「无模具」/「无弹药」。
+- **配色**：透明底 + 有色字（边框同色 25–40% 透明度）：T1 绿 `#4ade80`、T2 蓝 `#60a5fa`、T3 紫 `#c084fc`、T4 金红（文字 `#f0803f`，档位数字用金→红渐变裁字）；亮色主题换深一档保证对比度。
+- **图标**：枪械 tag = 定档元件的 16px 物品图标；子弹 tag = 该口径模具的 16px 物品图标（无模具时退用 `tacz:ammo`）。
+- **文案**：`枪械梯度` + 彩色档位；子弹 tag 为 `子弹梯度` + 彩色档位。`title` 属性给元件名 / 口径名。推断档位后缀「· 推断」（灰）。
+- 响应式：窄屏缩字号与内边距，标签随 `.gs-badges` 自然换行。
+
+## 枪械描述块（改枪台）
+
+「枪械库」卡片移除后，177 把枪的文案在改枪台呈现，紧贴 `.gs-head` 下方（`#view > .gs-desc`，位于 `.gs-actions` 之前）：
+
+```html
+<div class="gs-desc">
+  <div class="gs-desc-row"><span class="gs-desc-tag">背景</span><span class="gs-desc-text">“广受好评”的栓动机枪</span></div>
+  <div class="gs-desc-row"><span class="gs-desc-tag">作用</span><span class="gs-desc-text">持续火力压制，弹容大…</span></div>
+</div>
+```
+
+- 数据源是已加载的 `WZ_GUIDES.guns`（无新增数据文件、无生成脚本）：`description`（144 把有）+ `effect`（177 把都有）。
+- 没有背景描述的 33 把枪显示灰色斜体占位「暂无背景描述」；没有 `effect` 的条目（如 `suffuse:knife`）整块不渲染。
+- 描述里的换行用 `white-space: pre-line` 保留（如 `bf1:ef46` 的第二行「可在无线电台复装」）。
+
+## 装备图鉴改动
+
+`renderGearHub` 移除「枪械库」（`#/gear/guns`）这张 hub 卡片，保留「改枪台」：卡片从 6 张减到 5 张。`#/gear/guns` 路由与页面本身保留（枪械详情页的返回仍指向它），只是不再从装备图鉴进入。
 
 ## Commands
 
@@ -163,11 +182,11 @@ npm run verify               # build + tsc + check:assets（全量门禁）
 scripts/gen-tiers.ts        新增：梯度生成（读两份已生成数据，输出 tiers.js）
 scripts/verify-tiers.ts     新增：梯度断言（分布基线 + 抽样 + 一致性）
 src/client/tiers.ts         新增：WZ_TIERS_UI（两页共用组件）
-src/client/app.ts           改：详情页 hero 插入 strip
-src/client/gunsmith.ts      改：gs-head 插入 strip
+src/client/app.ts           改：详情页 .meta 插入 tag、装备图鉴移除枪械库卡片
+src/client/gunsmith.ts      改：.gs-badges 插入 tag、新增 .gs-desc 描述块
 src/client/main.ts          改：import './tiers'
 public/data/tiers.js        新增（生成物，入库）
-public/css/app.css          改：.tier-strip / .tier-row / .tier-badge 等
+public/css/app.css          改：.gs-badge.tier-tag / .tier-hl / .gs-desc 等
 index.html · scripts/build-sw.ts · src/client/types/data.d.ts   改：接入新数据
 ```
 
@@ -219,6 +238,17 @@ index.html · scripts/build-sw.ts · src/client/types/data.d.ts   改：接入�
 - **界面**：改枪台 `.gs-head` 的第 4 个子节点即 `.tier-strip`；枪械详情页插在 `.detail-hero > .meta` 之后，两处同构。DOM 断言 **30** 条、点击跳转 **8** 条通过；`npm run verify`（build + tsc + check:assets 902 处引用）全绿。
 - **两处与初稿的偏差**：① 模具物品页的区块标题是「最佳来源」而不是「可搜刮建筑」（后者只用于枪械/护甲详情）；②「无弹药」行不渲染图标与名称节点，只留 `子弹梯度` + 灰色「无弹药」标，避免出现「?」占位和多余破折号。
 - **未做**：未给梯度行加规则说明或 tooltip（按 q10 决定），未把梯度铺到枪械库列表与换枪选择器（按 q8 决定）。
+
+## 实施记录（第二轮，2026-10-22）
+
+按用户复查意见改了四处：
+
+1. **梯度从「两行条」改成 tag**：挂到 `.gs-badges`（与「全自动 / 开膛待击」同排）与详情页 `.meta`；`.tier-strip` 相关 HTML 与 CSS 全部删除，`WZ_TIERS_UI.strip()` → `badges()`。
+2. **样式改透明底有色字**：`.gs-badge.tier-tag`，边框用同色 25–40% 透明度，T4 档位数字用金→红渐变裁字；亮色主题换深一档。
+3. **装备图鉴移除「枪械库」卡片**：`renderGearHub` 的 hub 卡片 6 → 5，只保留改枪台；`#/gear/guns` 路由与页面保留。
+4. **177 把枪的文案搬进改枪台**：`.gs-desc` 紧贴 `.gs-head` 下方（`.gs-actions` 之前），背景 + 作用两行；144 把有背景描述，33 把显示「暂无背景描述」占位，`effect` 缺失的条目（`suffuse:knife`）整块不渲染。
+
+验收：DOM 断言 **36** 条、点击跳转 **8** 条全通过（含推断 tag 点了不跳、无模具/无弹药 tag 不可点、换行描述保留）。
 
 ## Open Questions
 

@@ -123,26 +123,28 @@
     return [gunRow(gunId), bulletRow(gunId)].filter(Boolean);
   }
 
-  /* ---------------- 渲染 ---------------- */
-  function rowHTML(row) {
+  /* ---------------- 渲染：与枪械种类同排的 tag ---------------- */
+  function badgeHTML(row) {
     const muted = !row.tier;
-    const classes = "tier-row" + (row.tier ? " tier-" + row.tier : " muted");
+    const classes =
+      "gs-badge tier-tag" +
+      (row.tier ? " tier-" + row.tier : " muted") +
+      (row.href ? " clickable" : "");
+    const title = row.name ? row.label + "：" + row.name : row.label;
     const inner =
-      (row.ico ? '<span class="tier-ico">' + iconHTML(row.ico, row.name, 22) + "</span>" : "") +
-      '<span class="tier-label">' + esc(row.label) + "</span>" +
-      (muted ? '<span class="tier-badge none">' + esc(row.note || "—") + "</span>" : '<span class="tier-badge">' + esc(row.tier) + "</span>") +
-      (row.name ? '<span class="tier-name">' + esc(row.name) + "</span>" : "") +
-      (row.inferred ? '<span class="tier-note">· 推断</span>' : "");
+      (row.ico ? '<span class="tier-ico">' + iconHTML(row.ico, row.name, 16) + "</span>" : "") +
+      '<span class="tier-text">' + esc(row.label) + "</span>" +
+      (muted ? '<span class="tier-none">' + esc(row.note || "") + "</span>" : '<b class="tier-hl">' + esc(row.tier) + "</b>") +
+      (row.inferred ? '<span class="tier-infer">· 推断</span>' : "");
     if (row.href) {
-      return '<button type="button" class="' + classes + ' clickable" data-go="' + esc(row.href) + '">' + inner + "</button>";
+      return '<button type="button" class="' + classes + '" title="' + esc(title) + '" data-go="' + esc(row.href) + '">' + inner + "</button>";
     }
-    return '<div class="' + classes + '">' + inner + "</div>";
+    return '<span class="' + classes + '" title="' + esc(title) + '">' + inner + "</span>";
   }
 
-  function strip(gunId) {
-    const list = rows(gunId);
-    if (!list.length) return "";
-    return '<div class="tier-strip">' + list.map(rowHTML).join("") + "</div>";
+  /* 返回可直接塞进 .gs-badges / .meta 的 tag 串（枪械梯度 + 子弹梯度两项）。 */
+  function badges(gunId) {
+    return rows(gunId).map(badgeHTML).join("");
   }
 
   window.WZ_TIERS_UI = {
@@ -150,6 +152,6 @@
       return !!data();
     },
     rows: rows,
-    strip: strip,
+    badges: badges,
   };
 })();

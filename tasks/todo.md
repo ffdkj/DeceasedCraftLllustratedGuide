@@ -39,3 +39,21 @@
   - Acceptance: spec / plan / todo / CONTEXT 术语齐全，一次提交入库
   - Verify: `git status` 仅预期文件；`npm run verify` + `npm run verify:tiers` 全绿
   - Files: `specs/SPEC-gun-tiers.md`、`tasks/plan.md`、`tasks/todo.md`、`CONTEXT.md`
+
+## 第二轮（梯度改 tag + 移除枪械库 + 补描述）
+
+- [x] T9 梯度改成 tag 挂进 `.gs-badges` 与详情页 `.meta`
+  - Acceptance: 页面无 `.tier-strip`；两个 tag 与射击模式同排；透明底有色字
+  - Verify: DOM 断言 36 条（含 5 个样本枪 + 详情页 + 装备图鉴）
+  - Files: `src/client/tiers.ts`、`src/client/gunsmith.ts`、`src/client/app.ts`、`public/css/app.css`
+- [x] T10 装备图鉴移除「枪械库」卡片
+  - Acceptance: hub 卡片 6 → 5，改枪台仍在，`#/gear/guns` 页面保留
+  - Verify: DOM 断言「不再有枪械库卡片」+ 卡片数 5
+  - Files: `src/client/app.ts`
+- [x] T11 177 把枪的文案搬进改枪台
+  - Acceptance: `.gs-desc` 在 `.gs-head` 下方，背景 + 作用两行；33 把无背景描述显示占位；多行描述保留换行
+  - Verify: m4a1（有描述）/ gz:aug_9mm（无描述）/ bf1:ef46（多行）三个样本
+  - Files: `src/client/gunsmith.ts`、`public/css/app.css`
+- [x] T12 文档与门禁
+  - Acceptance: spec / todo / CONTEXT 同步，`npm run verify` + `verify:tiers` 全绿
+  - Files: `specs/SPEC-gun-tiers.md`、`tasks/todo.md`、`CONTEXT.md`

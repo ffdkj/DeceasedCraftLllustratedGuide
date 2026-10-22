@@ -526,6 +526,18 @@
       '</button>';
   }
 
+  /* 枪械描述：guides.js 的 flavor 描述（144 把有）+ 定位/作用（177 把都有），紧贴头部下方。 */
+  function gunDescBlock(item) {
+    const desc = String((item && item.description) || "").trim();
+    const effect = String((item && item.effect) || "").trim();
+    if (!desc && !effect) return "";
+    return '<div class="gs-desc">' +
+      '<div class="gs-desc-row"><span class="gs-desc-tag">背景</span><span class="gs-desc-text' + (desc ? "" : " empty") + '">' +
+        esc(desc || "暂无背景描述") + '</span></div>' +
+      (effect ? '<div class="gs-desc-row"><span class="gs-desc-tag">作用</span><span class="gs-desc-text">' + esc(effect) + '</span></div>' : "") +
+      '</div>';
+  }
+
   function renderWorkspace(gunId) {
     const UIx = UI();
     closeModal();
@@ -558,11 +570,11 @@
       '<div class="gs-head">' +
         '<div class="gs-head-icon">' + gunImg(item, gs, 92) + '</div>' +
         '<div class="gs-head-body"><div class="gs-kicker">' + esc((gs && gs.type) || item.type || "枪械") + '</div><h1>' + esc(item.name || gunId) + (isUnreleased(gunId) ? ' <span class="badge unreleased">未实装</span>' : "") + '</h1>' +
-        '<div class="gs-badges">' + modes + '</div>' +
+        '<div class="gs-badges">' + modes + ((tiersUI() && tiersUI().available()) ? tiersUI().badges(gunId) : "") + '</div>' +
         '<div class="gs-head-ammo">' + esc(item.ammo || (gs && gs.ammoName) || "—") + (gs && gs.bulletAmount > 1 ? " · " + gs.bulletAmount + " 弹丸" : "") + '</div></div>' +
         '<button class="gs-switch" data-gs-action="gun-picker">换枪</button>' +
-        ((tiersUI() && tiersUI().available()) ? tiersUI().strip(gunId) : "") +
       '</div>' +
+      gunDescBlock(item) +
       '<div class="gs-actions"><button class="gs-btn" data-gs-action="reset">' + icon("trash", 16) + ' 清空配件</button>' +
         '<button class="gs-btn primary" data-gs-action="save">' + icon("check", 16) + (dirty ? " 保存当前方案" : " 当前已保存") + '</button>' +
         '<button class="gs-btn" data-gs-action="preset" data-preset="recommended">推荐方案</button>' +

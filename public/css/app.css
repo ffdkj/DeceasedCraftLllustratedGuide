@@ -2390,99 +2390,72 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
 }
 
 /* ============================================================
-   梯度条（枪械梯度 / 子弹梯度）：改枪台头部 + 枪械详情页头部共用
+   梯度 tag（枪械梯度 / 子弹梯度）：改枪台 .gs-badges 与枪械详情 .meta 共用
+   透明底 + 有色字，T1 绿 / T2 蓝 / T3 紫 / T4 金红
    ============================================================ */
-.gs-head { flex-wrap: wrap; }
-.gs-head > .tier-strip { flex: 1 1 100%; }
-
-.tier-strip {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--line);
-}
-.detail-hero .tier-strip { margin-top: 12px; border-top: 0; padding-top: 0; }
-
-.tier-row {
+.gs-badge.tier-tag {
   --tier: var(--muted);
-  --tier-soft: transparent;
   --tier-line: var(--line);
-  display: flex; align-items: center; gap: 8px;
-  width: 100%; min-height: 30px; min-width: 0;
-  padding: 4px 9px;
-  border: 1px solid var(--tier-line);
-  border-radius: 9px;
-  background: var(--tier-soft);
-  color: var(--text);
-  font: inherit;
+  --tier-soft: transparent;
+  gap: 5px;
+  padding: 2px 7px 2px 5px;
+  background: transparent;
+  border-color: var(--tier-line);
+  color: var(--tier);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
   text-align: left;
-  transition: border-color .16s ease, transform .16s ease;
+  cursor: default;
 }
-.tier-row.tier-T1 { --tier: #4ade80; --tier-soft: rgba(74,222,128,.12); --tier-line: rgba(74,222,128,.32); }
-.tier-row.tier-T2 { --tier: #60a5fa; --tier-soft: rgba(96,165,250,.12); --tier-line: rgba(96,165,250,.32); }
-.tier-row.tier-T3 { --tier: #c084fc; --tier-soft: rgba(192,132,252,.12); --tier-line: rgba(192,132,252,.32); }
-.tier-row.tier-T4 { --tier: #f0b429; --tier-soft: rgba(240,180,41,.12); --tier-line: rgba(224,49,49,.34); }
+.gs-badge.tier-tag.tier-T1 { --tier: #4ade80; --tier-line: rgba(74,222,128,.38); --tier-soft: rgba(74,222,128,.12); }
+.gs-badge.tier-tag.tier-T2 { --tier: #60a5fa; --tier-line: rgba(96,165,250,.38); --tier-soft: rgba(96,165,250,.12); }
+.gs-badge.tier-tag.tier-T3 { --tier: #c084fc; --tier-line: rgba(192,132,252,.38); --tier-soft: rgba(192,132,252,.12); }
+.gs-badge.tier-tag.tier-T4 { --tier: #f0803f; --tier-line: rgba(224,49,49,.42); --tier-soft: rgba(224,49,49,.12); }
 
-.tier-ico { flex: none; display: grid; place-items: center; width: 22px; height: 22px; }
-.tier-ico .item-ico { border-radius: 4px; }
-
-.tier-label {
-  flex: none;
-  font-size: 10px; font-weight: 700; letter-spacing: .04em;
-  color: var(--muted);
+.tier-ico { display: grid; place-items: center; flex: none; width: 16px; height: 16px; }
+.tier-ico .item-ico { width: 16px; height: 16px; border-radius: 3px; font-size: 8px; }
+.tier-hl { font-weight: 800; letter-spacing: .02em; color: inherit; font-variant-numeric: tabular-nums; }
+.gs-badge.tier-tag.tier-T4 .tier-hl {
+  background: linear-gradient(135deg, #f0b429, #e03131);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
 }
+.tier-infer, .tier-none { font-weight: 600; color: var(--dim); }
+.gs-badge.tier-tag.muted { --tier: var(--dim); border-style: dashed; border-color: var(--line); color: var(--dim); }
+.gs-badge.tier-tag.clickable { cursor: pointer; }
+.gs-badge.tier-tag.clickable:hover { border-color: var(--tier); background: var(--tier-soft); }
+.gs-badge.tier-tag.clickable:focus-visible { outline: 2px solid var(--tier); outline-offset: 1px; }
 
-.tier-badge {
-  flex: none;
-  display: inline-grid; place-items: center;
-  min-width: 26px; height: 17px; padding: 0 5px;
-  border-radius: 5px;
-  background: var(--tier);
-  color: #0b141d;
-  font-size: 10.5px; font-weight: 800; letter-spacing: .02em;
-  font-variant-numeric: tabular-nums;
+[data-theme="light"] .gs-badge.tier-tag.tier-T1 { --tier: #15803d; --tier-line: rgba(21,128,61,.34); --tier-soft: rgba(21,128,61,.08); }
+[data-theme="light"] .gs-badge.tier-tag.tier-T2 { --tier: #1d4ed8; --tier-line: rgba(29,78,216,.34); --tier-soft: rgba(29,78,216,.08); }
+[data-theme="light"] .gs-badge.tier-tag.tier-T3 { --tier: #7e22ce; --tier-line: rgba(126,34,206,.34); --tier-soft: rgba(126,34,206,.08); }
+[data-theme="light"] .gs-badge.tier-tag.tier-T4 { --tier: #c2410c; --tier-line: rgba(194,65,12,.34); --tier-soft: rgba(194,65,12,.08); }
+[data-theme="light"] .gs-badge.tier-tag.tier-T4 .tier-hl { background: linear-gradient(135deg,#b45309,#dc2626); -webkit-background-clip: text; background-clip: text; color: transparent; }
+[data-theme="light"] .tier-infer, [data-theme="light"] .tier-none { color: #6b7684; }
+
+/* ---------- 枪械描述（guides.js：背景 + 定位/作用），紧贴 .gs-head 下方 ---------- */
+.gs-desc {
+  display: grid; gap: 5px;
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  font-size: 12px; line-height: 1.55;
 }
-.tier-row.tier-T4 .tier-badge { background: linear-gradient(135deg, #f0b429, #e03131); color: #1a0f05; }
-.tier-badge.none {
-  background: transparent;
-  border: 1px dashed var(--line-strong);
-  color: var(--dim);
-  font-weight: 600;
-  letter-spacing: 0;
-}
+.gs-desc-row { display: flex; align-items: baseline; gap: 8px; }
+.gs-desc-tag { flex: none; min-width: 22px; font-size: 10px; font-weight: 700; color: var(--amber-2); letter-spacing: .04em; }
+.gs-desc-text { color: var(--muted); white-space: pre-line; word-break: break-word; }
+.gs-desc-text.empty { color: var(--dim); font-style: italic; }
 
-.tier-name {
-  flex: 1 1 auto; min-width: 0;
-  font-size: 11.5px; font-weight: 700;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.tier-note { flex: none; font-size: 10px; color: var(--dim); }
-
-.tier-row.clickable { cursor: pointer; }
-.tier-row.clickable:hover { border-color: var(--tier); transform: translateY(-1px); }
-.tier-row.clickable:focus-visible { outline: 2px solid var(--tier); outline-offset: 1px; }
-
-.tier-row.muted {
-  background: transparent;
-  border-style: dashed;
-  border-color: var(--line);
-}
-.tier-row.muted .tier-name { color: var(--muted); font-weight: 600; }
-
-[data-theme="light"] .tier-row.tier-T1 { --tier: #16a34a; --tier-soft: rgba(22,163,74,.09); --tier-line: rgba(22,163,74,.28); }
-[data-theme="light"] .tier-row.tier-T2 { --tier: #2563eb; --tier-soft: rgba(37,99,235,.09); --tier-line: rgba(37,99,235,.28); }
-[data-theme="light"] .tier-row.tier-T3 { --tier: #9333ea; --tier-soft: rgba(147,51,234,.09); --tier-line: rgba(147,51,234,.28); }
-[data-theme="light"] .tier-row.tier-T4 { --tier: #dc2626; --tier-soft: rgba(220,38,38,.08); --tier-line: rgba(220,38,38,.28); }
-[data-theme="light"] .tier-row.tier-T4 .tier-badge { background: linear-gradient(135deg, #d97706, #dc2626); color: #fff; }
-[data-theme="light"] .tier-badge { color: #fff; }
-[data-theme="light"] .tier-row.muted { background: transparent; }
+[data-theme="light"] .gs-desc-text { color: #33414f; }
+[data-theme="light"] .gs-desc-text.empty { color: #8a949f; }
 
 @media (max-width: 520px) {
-  .tier-strip { margin-top: 9px; padding-top: 9px; }
-  .tier-row { gap: 6px; padding: 4px 7px; }
-  .tier-label { font-size: 9.5px; }
-  .tier-name { font-size: 11px; }
-  .tier-badge { min-width: 24px; font-size: 10px; }
+  .gs-badge.tier-tag { padding: 1px 6px 1px 4px; font-size: 9.5px; }
+  .tier-ico, .tier-ico .item-ico { width: 14px; height: 14px; }
+  .gs-desc { padding: 8px 10px; font-size: 11.5px; }
+  .gs-desc-row { gap: 6px; }
 }
