@@ -188,10 +188,11 @@ function main() {
   const diff = readGlobal(ROOT, DIFF_REL, "WZ_MONSTER_DIFF");
   if (!diff) throw new Error(`读不到 ${DIFF_REL}：先跑 npm run gen:monsters`);
   const stats = diff.entities as Record<string, any>;
-  const eventHpMult = (() => {
-    const rule = (diff.rules?.hardEvent ?? [])[0];
-    return rule ? Number(rule.hp) : 2;
-  })();
+  const eventRule = (diff.rules?.hardEvent ?? [])[0] ?? {};
+  const eventHpMult = Number(eventRule.hp ?? 2);
+  const eventDmgMult = Number(eventRule.dmg ?? 1.5);
+  const eventArmorMult = Number(eventRule.armor ?? 1.5);
+  const vanillaFactor = (difficulty: "normal" | "hard", d: number) => (difficulty === "hard" ? 1.5 * d : d);
 
   const jar = findPackJar();
   const defs = readLostsoulsDefs(jar);
@@ -236,6 +237,13 @@ function main() {
       const baseHp = e?.base?.hp ?? null;
       const cityNormal = tier ? e?.city?.[tier]?.normal?.hp ?? null : e?.wild?.normal?.hp ?? null;
       const cityHard = tier ? e?.city?.[tier]?.hard?.hp ?? null : e?.wild?.hard?.hp ?? null;
+      const cellNormal = tier ? e?.city?.[tier]?.normal : e?.wild?.normal;
+      const cellHard = tier ? e?.city?.[tier]?.hard : e?.wild?.hard;
+      // 建筑加成只作用血量；护甲/攻击只吃「区域 + 难度 + 事件」三档
+      const armorNormal = cellNormal?.armor ?? null;
+      const armorHard = cellHard?.armor === null || cellHard?.armor === undefined ? null : r2(cellHard.armor * eventArmorMult);
+      const dmgNormal = cellNormal?.dmg ?? null;
+      const dmgHard = cellHard?.dmg === null || cellHard?.dmg === undefined ? null : r2(cellHard.dmg * eventDmgMult);
       return {
         id: m.id,
         name: mobNames.get(m.id) ?? e?.name ?? null,
@@ -244,7 +252,12 @@ function main() {
         expect: r1((avg * m.weight) / totalWeight),
         hpNormal: cityNormal === null ? null : r2(cityNormal * hb),
         hpHard: cityHard === null ? null : r2(cityHard * hb * eventHpMult),
-        onlyHere: null as boolean | null,
+        armorNormal,
+        armorHard,
+        dmgNormal,
+        dmgHard,
+        toPlayerNormal: dmgNormal === null ? null : r2(vanillaFactor("normal", dmgNormal)),
+        toPlayerHard: dmgHard === null ? null : r2(vanillaFactor("hard", dmgHard)),
       };
     });
 
@@ -338,6 +351,7 @@ function main() {
       difficultyStack: `血量 = 基础 × 建筑加成 × 区域/难度倍率 × (困难 ? 事件 ${eventHpMult} : 1)`,
     },
     tiers: DISTRICT_TIER,
+    eventMult: { hp: eventHpMult, dmg: eventDmgMult, armor: eventArmorMult },
     counts,
     missingHordeIds,
     buildings,
@@ -374,6 +388,8 @@ function writeDoc(data: any) {
   L.push(`- 机读数据：\`${OUT_REL}\`（\`window.WZ_HORDE_BUILDINGS\`）`);
   L.push(`- 出怪定义：${data.source.defs}`);
   L.push(`- 规模/血量：建筑自带的 \`mobamounts\` 与 \`healthbonus\`；血量按「基础 × 建筑加成 × 区域/难度倍率」叠`);
+  L.push(`- 护甲/攻击：\`healthbonus\` **只加血**，不加甲/攻；甲/攻只吃「区域倍率 + 困难区域批 + 事件批（困难 ×${data.eventMult.dmg} 攻 / ×${data.eventMult.armor} 甲）」`);
+  L.push(`- 「打向玩家」= 攻击属性 × 原版难度系数（困难 1.5D），不含玩家护甲`);
   L.push(`- 刷怪类型：${data.source.spawnType}，所以困难难度下事件那条 ×2 对它同样生效`);
   L.push("");
   L.push("## 1. 一览");
@@ -405,11 +421,14 @@ function writeDoc(data: any) {
     const armored = ["helmets", "chestplates", "leggings", "boots"].filter((k) => (b.armor[k] ?? []).length);
     if (armored.length) L.push(`装备：${armored.map((k) => b.armor[k].join("/")).join("；")}`);
     L.push("");
-    L.push("| 怪物 | 权重 | 占比 | 期望只数 | 普通血量 | 困难血量 |");
-    L.push("|---|---:|---:|---:|---:|---:|");
+    L.push("| 怪物 | 权重 | 占比 | 期望只数 | 普通 血/甲/攻 | 困难 血/甲/攻 | 困难打向玩家 |");
+    L.push("|---|---:|---:|---:|---|---|---:|");
     for (const m of b.mobs) {
+      const fmt = (hp: any, ar: any, dg: any) =>
+        `${hp ?? "—"} / ${ar ?? "—"} / ${dg ?? "—"}`;
       L.push(
-        `| ${m.name ?? m.id}（${m.id}） | ${m.weight} | ${m.share}% | ${m.expect} | ${m.hpNormal ?? "—"} | ${m.hpHard ?? "—"} |`,
+        `| ${m.name ?? m.id}（${m.id}） | ${m.weight} | ${m.share}% | ${m.expect} | ` +
+          `${fmt(m.hpNormal, m.armorNormal, m.dmgNormal)} | ${fmt(m.hpHard, m.armorHard, m.dmgHard)} | ${m.toPlayerHard ?? "—"} |`,
       );
     }
     L.push("");

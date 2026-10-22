@@ -742,7 +742,7 @@ T4 = 15 种的大杂烩，生化服/防化服/大吸盘/Boss 级全在这**（`g
 |---|---|
 | `mobs[{name,weight}]` | 该建筑尸潮的出怪池与权重 |
 | `mobamounts{min,max}` | 整波规模（T1 派出所 10–15，核电站 80–90） |
-| `healthbonus{min,max}` | 这波怪的血量倍率（T1 派出所 ×0.75，荒地系列 ×1.25） |
+| `healthbonus{min,max}` | 这波怪的血量倍率（T1 派出所 ×0.75，荒地系列 ×1.25）——**只加血，不加护甲/攻击** |
 | `spawnmaxinbuilding` | 同屏上限（多数 20） |
 | `hauntedchance` | 建筑「闹鬼」概率（全是 1.0） |
 | `helmets/chestplates/leggings/boots` | 给这波怪穿什么（本包全空） |
@@ -750,6 +750,10 @@ T4 = 15 种的大杂烩，生化服/防化服/大吸盘/Boss 级全在这**（`g
 LostSouls 刷怪用的是 `MobSpawnType.MOB_SUMMONED`（反编译 `mcjty/lostsouls/ForgeEventHandlers` 确认），
 所以困难难度下 InControl 那条 `spawntype: [event, mob_summoned]` 的 ×2 也会命中：
 建筑僵尸困难血量 = 基础 × 建筑加成 × 区域 ×2 × 事件 ×2。
+
+护甲/攻击不吃建筑加成，只叠「区域 + 困难区域 + 事件」：荒地军事中心僵尸
+普通 50 血 / 3 甲 / 3 攻，困难 200 血 / 9 甲 / 6.75 攻（打向玩家 10.13）；
+非僵尸类（不命中 `finalize` 那条）普通甲/攻就是基础值，困难才 ×2 甲 ×2.25 攻。
 
 ### 8.9.2 结论：没有「只在尸潮出现」的怪
 

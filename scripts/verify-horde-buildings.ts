@@ -68,6 +68,16 @@ check(!!airZombie, "军事中心名单里有僵尸");
 check(near(airZombie.hpNormal, 50, 0.02), `军事中心僵尸普通血量 50（实际 ${airZombie.hpNormal}）`);
 check(near(airZombie.hpHard, 200, 0.02), `军事中心僵尸困难血量 200（40×1.25×2×2）（实际 ${airZombie.hpHard}）`);
 check(near(airZombie.expect, 14.8, 0.15), `军事中心僵尸期望 14.8 只（实际 ${airZombie.expect}）`);
+check(near(airZombie.armorNormal, 3, 0.02), `军事中心僵尸普通护甲 3（实际 ${airZombie.armorNormal}）`);
+check(near(airZombie.dmgNormal, 3, 0.02), `军事中心僵尸普通攻击 3（实际 ${airZombie.dmgNormal}）`);
+check(near(airZombie.armorHard, 9, 0.02), `军事中心僵尸困难护甲 9（2×1.5×2×1.5）（实际 ${airZombie.armorHard}）`);
+check(near(airZombie.dmgHard, 6.75, 0.02), `军事中心僵尸困难攻击 6.75（实际 ${airZombie.dmgHard}）`);
+check(near(airZombie.toPlayerHard, 10.13, 0.02), `军事中心僵尸困难打向玩家 10.13（实际 ${airZombie.toPlayerHard}）`);
+const airHazmat = air.mobs.find((m: any) => m.id === "zombie_extreme:infected_hazmat");
+check(!!airHazmat, "军事中心名单里有防化员");
+check(near(airHazmat.armorNormal, diff.entities["zombie_extreme:infected_hazmat"].base.armor, 0.02), "建筑血量加成不改护甲（普通甲 = 基础甲）");
+check(near(airHazmat.armorHard, 48, 0.02), `防化员困难护甲 48（实际 ${airHazmat.armorHard}）`);
+check(near(airHazmat.dmgHard, 27, 0.02), `防化员困难攻击 27（实际 ${airHazmat.dmgHard}）`);
 
 const police = byKey.get("multi_policestation");
 check(!!police, "存在派出所");
