@@ -34,3 +34,8 @@ wzsj-20261020/
 # OS
 Thumbs.db
 .DS_Store
+
+# local tool caches / profiles (session artifacts)
+.npm-cache/
+.ffhome/
+*.bundle

@@ -1,10 +1,14 @@
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import { timeout } from 'hono/timeout';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mediaHandler } from './media.js';
+
+// /media 请求上限：media.ts 自己的 S3 abort 通常先返回 504，这一层是最后一道网。
+const MEDIA_TIMEOUT_MS = 5000;
 
 const app = new Hono();
 
@@ -23,6 +27,9 @@ function resolveStaticRoot(): string {
 const staticRoot = resolveStaticRoot();
 
 app.get('/api/health', (c) => c.json({ ok: true, service: 'wzsj-atlas' }));
+
+// 必须在 /media 路由之前注册，作为整体兜底（避免单个媒体请求挂到 CF 的 100s origin 超时）。
+app.use('/media/*', timeout(MEDIA_TIMEOUT_MS));
 
 app.all('/media/:path{.+}', mediaHandler);
 
