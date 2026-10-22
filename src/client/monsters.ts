@@ -32,10 +32,12 @@ export const METRIC_LABEL: Record<Metric, string> = {
   armor: "护甲",
   toPlayer: "对玩家",
 };
+/** 图标按「1 个 = 1 点」取半心/半甲：游戏内满心 = 2 点生命、满甲 = 2 点护甲，
+ *  用满图标去配原始数值会把血量说成两倍。 */
 export const METRIC_ICON: Record<Metric, string> = {
-  hp: "/images/ui/stat-heart-full.png",
+  hp: "/images/ui/stat-heart-half.png",
   dmg: "/images/ui/stat-attack.png",
-  armor: "/images/ui/stat-armor-full.png",
+  armor: "/images/ui/stat-armor-half.png",
   toPlayer: "/images/ui/stat-heart-half.png",
 };
 export const ICON_EMPTY = "/images/ui/stat-heart-empty.png";

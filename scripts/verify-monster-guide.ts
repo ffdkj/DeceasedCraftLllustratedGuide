@@ -14,6 +14,7 @@ import {
   buildingStats,
   THREATS,
   TIERS,
+  METRIC_ICON,
   normalizeId,
 } from "../src/client/monsters";
 
@@ -211,6 +212,12 @@ check(app.includes('m.kind === "npc" ? "users"'), "无立绘时按类别给图�
 const css = readFileSync(join(ROOT, "public/css/app.css"), "utf8");
 check(css.includes('[data-theme="light"] .num-btn'), "数值按钮的白底只在浅色主题生效");
 check(!/(^|\n)\.num-btn \{ background: #fff; \}/.test(css), "没有裸 .num-btn 白底（暗色下会白字白底）");
+check(/\.ico-hp \{ background-image: url\("\/images\/ui\/stat-heart-half\.png"\);/.test(css), "生命图标用半心（1 个 = 1 点）");
+check(/\.ico-armor \{ background-image: url\("\/images\/ui\/stat-armor-half\.png"\);/.test(css), "护甲图标用半甲");
+check(!/\.ico-hp \{ background-image: url\("[^"]*full/.test(css), "生命图标不再是满心");
+check(!/\.ico-armor \{ background-image: url\("[^"]*full/.test(css), "护甲图标不再是满甲");
+check(METRIC_ICON.hp.includes("stat-heart-half"), "METRIC_ICON.hp 指向半心文件");
+check(METRIC_ICON.armor.includes("stat-armor-half"), "METRIC_ICON.armor 指向半甲文件");
 check(/\.music-fab \{[^}]*right: 0;/s.test(css), "音乐按钮贴屏幕最右边");
 check(!/\.music-fab \{[^}]*calc\(\(100vw - 760px\)/s.test(css), "音乐按钮不再按内容栏居中（面板 .music-panel 保持原样）");
 for (const icon of [
@@ -220,8 +227,12 @@ for (const icon of [
   "stat-armor-empty.png",
   "stat-attack.png",
   "stat-heart-half.png",
+  "stat-armor-half.png",
 ]) {
   check(existsSync(join(ROOT, "public/images/ui", icon)), `HUD 图标存在：${icon}`);
+}
+// 半点制之后，满心 / 满甲不再用在数值上（只留文件备查），实际用到的这五个必须被 CSS 引用
+for (const icon of ["stat-heart-half.png", "stat-armor-half.png", "stat-heart-empty.png", "stat-armor-empty.png", "stat-attack.png"]) {
   check(readFileSync(join(ROOT, "public/css/app.css"), "utf8").includes(icon), `CSS 用到图标 ${icon}`);
 }
 

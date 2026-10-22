@@ -2335,7 +2335,7 @@ import {
       (spawns && sections.length
         ? '<div class="section"><div class="section-head"><div class="section-title">数值矩阵</div><div class="section-note">场景 × 难度</div></div>' +
           matrixTableHTML(sections) +
-          '<div class="tiny dim" style="margin-top:10px">生命 / 护甲 / 攻击为叠加后的属性值；「对玩家」含原版难度系数。天数尸潮不吃区域加成；建筑尸潮按建筑所在区域叠一层；深渊尸潮为推算值，包里尚未配置。</div></div>'
+          '<div class="tiny dim" style="margin-top:10px">图标按「1 个 = 1 点」取半心 / 半甲（游戏内满心 = 2 点生命、满甲 = 2 点护甲，用满图标配原始数值会把血量说成两倍）。生命 / 护甲 / 攻击为叠加后的属性值；「对玩家」含原版难度系数，单位同样是生命点。天数尸潮不吃区域加成；建筑尸潮按建筑所在区域叠一层；深渊尸潮为推算值，包里尚未配置。</div></div>'
         : "") +
       (buildingTable ? '<div class="section"><div class="section-head"><div class="section-title">尸潮建筑数值</div><div class="section-note">困难难度 · ' + bstats.length + " 座</div></div>" + buildingTable + "</div>" : "") +
       (m.status === "unconfirmed"
