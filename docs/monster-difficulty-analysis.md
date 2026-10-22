@@ -514,15 +514,18 @@
 
 ### 8.5.5 两批规则都会跑到（别以为是「二选一」）
 
-`spawn.json` 开头先把**原版自然刷新的僵尸/尸壳/溺尸**全 `deny`（`spawntype: natural`），城市里的僵尸基本都由
-InControl 自己的刷怪器（`config/incontrol/spawner.json`，`persecond`/`attempts`/`biometags` 条件）刷出。
+`spawn.json` 用两层 `deny` 把自然刷新关掉了：第 1 条按 `phase: after_day1`（`phases.json` 里 `mindaycount 0 / maxdaycount 1`，
+即第 0–1 天）把**所有** hostile 的 `natural` / `spawner` / `mob_summoned` 全拒；第 2 条永久拒掉
+`creeper/skeleton/spider/witch/pillager/...` 这一串原版怪，第 5 条再永久拒掉 `zombie/husk/drowned` 的自然刷新。
+所以城市里的僵尸基本都由 InControl 自己的刷怪器刷出（`config/incontrol/spawner.json`，`persecond`/`attempts`/`biometags` 条件）。
 而该刷怪器在 `SpawnerSystem` 里显式调用了 `ForgeEventFactory.onFinalizeSpawn`（常量池证据），
 所以 `finalize` 批（A）与 `onjoin` 批（B/C）会**先后各跑一次**，倍率相乘 —— 8.5.3 的困难列即由此得出。
 
 ### 8.5.6 同一份配置里另外两个「按区域变强」的体现
 
-- `config/incontrol/spawner.json`：T1 刷 `Bandit`、T2 刷 `Raider`、T3 刷 `Plunderer`、T4 刷 `Soldier`（都是 `customnpcs:customnpc` 的克隆体），
-  T4 还追加 `Soldier` 与盗匪队列，说明「区域越深，敌人档次越高」是全局设计，不只是血量。
+- `config/incontrol/spawner.json`：NPC 盗匪档位按区换 —— T1 `Rogue`、T2 `Bandit`、T3 `Raider`、T4 `Plunderer` + `Soldier`
+  （都是 `customnpcs:customnpc` 的克隆体，速率 0.05/秒、1–2 只、`maxlocal` 从 3 收紧到 1），
+  说明「区域越深，敌人档次越高」是全局设计，不只是血量（完整名单见 §8.7）。
 - 47 座建筑里给僵尸换装（军装/生化/防护服）也是同一套 `multibuilding` 规则做的。
 
 ## 8.6 模组侧审计：谁真的会改怪物数据（已下载 21 个 jar 验证）
@@ -566,6 +569,149 @@ CurseForge 官网/`api.curseforge.com` 会被 Cloudflare 拦（403 `Just a momen
 - `Fungal Infection: Spore` 113 MB（超体积阈值）——它只给自己的孢子实体定数值，不缩放原版僵尸。
 - 其余约 390 个模组是优化（Embeddium/ModernFix/FerriteCore…）、装饰、载具、配方、UI、音效，与实体数值无关。
 - 要全量收口的成本：约 3–4 GB、400+ 次下载；按 8.6.2 同样的口径扫一遍，预期结论不变（没有第二个 `biometags + 倍率键` 的实现者）。
+
+## 8.7 区域刷怪名单：每个区刷的怪确实不一样
+
+**结论：怪物种类确实按区域换，而且分层很清楚 —— 但这一层完全由整合包的 `config/incontrol/spawner.json`（50 条规则）决定，跟模组无关。**
+
+本包的刷怪有两个来源，别混：
+
+| 层 | 谁在刷 | 是否分区域 |
+|---|---|---|
+| ① 区域刷怪器 | `incontrol/spawner.json` 的 50 条规则，用 `biometags`（区域标签）+ `incity` + 高度/光照/室内外条件匹配 | **是**，区内专属名单见下 |
+| ② 模组自带自然刷 | 各模组 jar 里的 `data/<mod>/forge/biome_modifier/*.json`（`forge:add_spawns`） | **否**，66 条全是 `biomes: {type: "forge:any"}` |
+
+速率口径：`persecond` = 每秒触发该规则的概率（触发后 `attempts` 次找点，成功就刷 `amount` 只；
+未写 `amount` 时取 InControl 默认值 `minSpawn=1 / maxSpawn=1`，已反编译 `SpawnerRule$Builder` 确认），
+`maxlocal` = 附近同类怪上限。
+
+### 8.7.1 强度与种类随区域递增
+
+| 子区 | 敌人种类 | 刷怪强度 | 该子区独有 |
+|---|---:|---:|---|
+| T1 郊区 | 6 | 0.35/秒（≈21 波/分） | `crawler`、`zig`、`zheep` |
+| T2 摩天办公 | 8 | 0.55/秒 | — |
+| T2 摩天住宅 | 8 | 0.50/秒 | — |
+| T3 酒店 | 11 | 0.65/秒 | `the_moonflower`、`theswarmer`、`clicker`、`zlama` |
+| T3 零售 | 11 | 0.60/秒 | `theskeeper`、`thespitter`、`boomer`、`zorse` |
+| T4 荒地 | 15（含两种 NPC 克隆） | 0.53/秒 | `infected_hazmat`、`inflated`、`therabidus`、`thedigger`、`guardian`、`bigsucker`、`theface`、`great_visage`、`zolf`、`zear`、`scarred_zear`、`boneman` |
+
+规律：**T1 = 3 种小怪（`crawler`/`zig`/`zheep`）+ 二档的 `infected_police`/`thesmoker` + 低级 NPC `Rogue`；
+T2 = 警察/吸烟者/轰炸者/腐尸/持杆者这一档，两个子区各配一套僵尸动物（办公 `zat`/`zoat`、住宅 `zhick`/`zow`）；
+T3 = 拆成酒店线（`the_moonflower`/`theswarmer`/`clicker`/`zlama`）与零售线（`thespitter`/`theskeeper`/`boomer`/`zorse`）两套专属；
+T4 = 15 种的大杂烩，生化服/防化服/大吸盘/Boss 级全在这**（`great_visage` 4000 血那种也只刷在荒地）。
+
+### 8.7.2 各阶级完整名单（`spawner.json` 原文数值）
+
+**T1**
+
+| 怪物 | 概率/秒 | 尝试 | 数量 | maxlocal | 条件 | 覆盖 |
+|---|---:|---:|---|---:|---|---|
+| `necroanimalict:zig` + `necroanimalict:zheep` | 0.1 | 25 | 1（默认） | 4 | y≥50 · 城市内 | T1郊区 |
+| `zombie_extreme:crawler` | 0.1 | 25 | 1（默认） | 8 | y≥60 · 城市内 | T1郊区 |
+| `zombie_extreme:infected_police` + `undead_revamp2:thesmoker` | 0.1 | 25 | 1（默认） | 12 | y≥50 · 城市内 | T1郊区、T2办公、T2摩天住宅 |
+| `customnpcs:customnpc`（Rogue） | 0.05 | 20 | 1–2 | 3 | y≥60 · 城市内 | T1郊区 |
+
+**T2**
+
+| 怪物 | 概率/秒 | 尝试 | 数量 | maxlocal | 条件 | 覆盖 |
+|---|---:|---:|---|---:|---|---|
+| `necroanimalict:zat` + `necroanimalict:zoat` | 0.1 | 25 | 1（默认） | 4 | y≥50 · 城市内 | T2办公 |
+| `necroanimalict:zhick` + `necroanimalict:zow` | 0.1 | 25 | 1（默认） | 4 | y≥50 · 城市内 | T2摩天住宅 |
+| `undead_revamp2:bomber` | 0.1 | 25 | 1（默认） | 10 | y≥50 · 城市内 | T2办公、T3酒店、T2摩天住宅、T3零售 |
+| `undead_revamp2:theordure` | 0.1 | 25 | 1（默认） | 8 | 室内 · y≥50 · 城市内 | T2办公、T3酒店、T2摩天住宅、T3零售 |
+| `undead_revamp2:therod` | 0.1 | 25 | 1（默认） | 8 | 街道 · y≥50 · 城市内 | T2办公、T3酒店 |
+| `zombie_extreme:infected_police` + `undead_revamp2:thesmoker` | 0.1 | 25 | 1（默认） | 12 | y≥50 · 城市内 | T1郊区、T2办公、T2摩天住宅 |
+| `customnpcs:customnpc`（Bandit） | 0.05 | 20 | 1–2 | 4 | y≥65 · 城市内 | T2办公、T2摩天住宅 |
+| `undead_revamp2:thehunter` | 0.05 | 25 | 1（默认） | 6 | 街道 · y≥50 · 城市内 | T2摩天住宅、T3零售 |
+
+**T3**
+
+| 怪物 | 概率/秒 | 尝试 | 数量 | maxlocal | 条件 | 覆盖 |
+|---|---:|---:|---|---:|---|---|
+| `necroanimalict:zat` + `necroanimalict:zoat` + `necroanimalict:zlama` | 0.1 | 25 | 1（默认） | 4 | y≥50 · 城市内 | T3酒店 |
+| `necroanimalict:zhick` + `necroanimalict:zow` + `necroanimalict:zorse` | 0.1 | 25 | 1（默认） | 4 | y≥50 · 城市内 | T3零售 |
+| `undead_revamp2:bomber` | 0.1 | 25 | 1（默认） | 10 | y≥50 · 城市内 | T2办公、T3酒店、T2摩天住宅、T3零售 |
+| `undead_revamp2:the_moonflower` + `undead_revamp2:theswarmer` + `zombie_extreme:clicker` | 0.1 | 25 | 1（默认） | 16 | y≥50 · 城市内 | T3酒店 |
+| `undead_revamp2:theordure` | 0.1 | 25 | 1（默认） | 8 | 室内 · y≥50 · 城市内 | T2办公、T3酒店、T2摩天住宅、T3零售 |
+| `undead_revamp2:therod` | 0.1 | 25 | 1（默认） | 8 | 街道 · y≥50 · 城市内 | T2办公、T3酒店 |
+| `undead_revamp2:thespitter` + `undead_revamp2:theskeeper` + `zombie_extreme:boomer` | 0.1 | 25 | 1（默认） | 16 | y≥50 · 城市内 | T3零售 |
+| `zombie_extreme:infected_military` | 0.1 | 25 | 1（默认） | 10 | y≥50 · 城市内 | T3酒店、T3零售 |
+| `customnpcs:customnpc`（Raider） | 0.05 | 20 | 1–2 | 4 | y≥65 · 城市内 | T3酒店、T3零售 |
+| `undead_revamp2:thehunter` | 0.05 | 25 | 1（默认） | 6 | 街道 · y≥50 · 城市内 | T2摩天住宅、T3零售 |
+
+**T4**
+
+| 怪物 | 概率/秒 | 尝试 | 数量 | maxlocal | 条件 | 覆盖 |
+|---|---:|---:|---|---:|---|---|
+| `deaceased:guardian` | 0.1 | 25 | 1（默认） | 4 | 室内 · y≥0 · 城市内 | T4荒地 |
+| `zombie_extreme:infected_hazmat` + `zombie_extreme:infected_military` | 0.1 | 25 | 1（默认） | 10 | y≥50 · 城市内 | T4荒地 |
+| `zombie_extreme:inflated` + `undead_revamp2:therabidus` + `deaceased:thedigger` | 0.1 | 25 | 1（默认） | 10 | y≥50 · 城市内 | T4荒地 |
+| `customnpcs:customnpc`（Plunderer） | 0.05 | 20 | 1–2 | 1 | y≥50 · 城市内 | T4荒地 |
+| `customnpcs:customnpc`（Soldier） | 0.05 | 20 | 1–2 | 2 | y≥50 · 城市内 | T4荒地 |
+| `necroanimalict:zear` + `necroanimalict:scarred_zear` | 0.05 | 25 | 1（默认） | 2 | y≥50 · 城市内 | T4荒地 |
+| `necroanimalict:zolf` + `necroanimalict:boneman` | 0.05 | 25 | 1（默认） | 4 | y≥50 · 城市内 | T4荒地 |
+| `undead_revamp2:bigsucker` + `deaceased:theface` | 0.025 | 10 | 1（默认） | 1 | 街道 · y≥50 | T4荒地 |
+| `naturalist:bluejay` + `naturalist:butterfly` + `naturalist:canary` + `naturalist:cardinal` + `naturalist:finch` + `naturalist:sparrow` + `naturalist:robin` + `naturalist:vulture` + `naturalist:snail` + `quark:shiba` + `minecraft:cat` + `minecraft:wolf` | 0.01 | 15 | 1–2 | 4 | — | T4荒地 |
+| `naturalist:elephant` + `naturalist:giraffe` + `naturalist:lion` + `naturalist:rhino` + `naturalist:zebra` + `naturalist:boar` + `naturalist:moose` | 0.01 | 5 | 1–2 | 2 | y≥50 · y≤96 | T4荒地 |
+| `deaceased:great_visage` | 0.005 | 10 | 1（默认） | 1 | y≥50 | T4荒地 |
+
+**全区通用（没有 `biometags` 条件，任何区域都按同一概率刷）**
+
+| 怪物 | 概率/秒 | 尝试 | 数量 | maxlocal | 条件 |
+|---|---:|---:|---|---:|---|
+| `minecraft:blaze` | 0.25 | 30 | 1–3 | 20 | 群系 volcanic_plains,volcano · y≥50 |
+| `minecraft:zombie` | 0.2 | 30 | 1–4 | — | y≥50 |
+| `zombie_extreme:goon` | 0.15 | 20 | 1（默认） | 6 | y≥-20 |
+| `zombie_extreme:revived` | 0.15 | 20 | 1（默认） | 6 | y≥-20 |
+| `zombie_extreme:infected_juggernaut` | 0.15 | 20 | 1（默认） | 6 | y≥-20 |
+| `zombie_extreme:night_hunter` + `zombie_extreme:faceless` | 0.15 | 20 | 1（默认） | 6 | y≥-40 |
+| `zombie_extreme:divided` + `zombie_extreme:ram` + `undead_revamp2:thespectre` | 0.15 | 20 | 1（默认） | 6 | y≥-40 |
+| `zombie_extreme:fetus` + `zombie_extreme:explosive_infected` + `undead_revamp2:thebidy` | 0.15 | 20 | 1（默认） | 6 | y≥-20 |
+| `spore:inf_human` + `spore:inf_hazmat` + `spore:inf_husk` + `spore:inf_player` + `spore:bairn` + `spore:chemist` | 0.15 | 20 | 1–2 | — | y≥-40 · y≤180 · 城市内 |
+| `minecraft:spider` + `minecraft:cave_spider` | 0.1 | 10 | 1–3 | 12 | 洞穴 · y≥-60 · y≤30 |
+| `undead_revamp2:thepregnant` | 0.1 | 25 | 1（默认） | 2 | y≥40 |
+| `undead_revamp2:thegliter` | 0.1 | 25 | 1（默认） | 2 | y≥40 |
+| `minecraft:hoglin` | 0.1 | 20 | 1–3 | — | 群系 volcanic_plains,volcano · y≥50 |
+| `undead_revamp2:thelurker` | 0.05 | 25 | 1（默认） | 2 | y≥40 |
+| `undead_revamp2:clogger` | 0.05 | 10 | 1（默认） | 2 | y≥-60 |
+| `undead_revamp2:theheavy` | 0.05 | 10 | 1（默认） | 2 | y≥-60 |
+| `zombie_extreme:demolisher` | 0.05 | 10 | 1（默认） | 2 | y≥-60 |
+| `zombie_extreme:zero_patient` | 0.05 | 10 | 1（默认） | 2 | y≥-60 |
+| `zombie_extreme:rat_king` + `deaceased:flayedmanhead` | 0.05 | 10 | 1（默认） | 2 | y≥-60 |
+
+### 8.7.3 模组自带的自然刷：全部 `forge:any`，不分区域
+
+从下载的 5 个刷怪相关 jar 里抽出 112 个 `biome_modifier` 文件，其中 **66 条真的带 `spawners`**（其余是植被/装饰）：
+
+| 模组 | 带刷怪的条目 | 生物群系条件 | 权重示例（weight） |
+|---|---:|---|---|
+| Zombie Extreme | 26（共 42 个 modifier 文件） | 全部 `forge:any` | `runner`/`infected_police`/`crawler`/`devestated` 20、`infected_military` 15、`night_hunter` 13、`rat_king` 10 |
+| THE UNDEAD REVAMPED | 26（共 56 个） | 全部 `forge:any` | `neocrorines` 90、`therabidus` 80、`thesomnolence` 35、`theskeeper` 8 |
+| Necro Animalict | 13 | 全部 `forge:any` | `zig` 8、`zoat/zlama/zow/zhick/zheep/zolf` 5、`scarred_zear` 3 |
+| Deceased Beast | 1 | `forge:any` | `bugger` **weight 0**（等于关掉自然刷，只在 T4 刷怪器里出现） |
+| Spore | 1（`biome_modifier/inf_spawns.json`） | 自定义类型 `spore:inf_spawns`（不按区域标签） | — |
+
+也就是说：玩家在野外看到的僵尸变种，是「区域刷怪器（强区差异）+ 模组自然刷（全图统一）」两层叠加的结果；
+真正"进了 T4 才见到"的那批怪，都来自 ①。
+
+### 8.7.4 顺带的区域差异：建筑里的僵尸换装
+
+`spawn.json` 的 `multibuilding` 规则给僵尸按建筑换整套护甲（`armorhelmet/chest/legs/boots`）：
+
+| 建筑 | 装备 |
+|---|---|
+| 军事基地 / 废弃机库 | 加拿大军装四件套 |
+| C-07 实验室 | 防化服（biohazard）四件套 |
+| 核电站 | 白色防护服（contamination suit）四件套 |
+
+这类僵尸的护甲值随 T 级倍率再乘（§8.5.2 的 `armormultiply`），所以高区域 + 军事建筑的僵尸特别硬。
+
+### 8.7.5 如果要上站
+
+建议新增 `public/data/spawn-areas.js`（生成脚本从 `spawner.json` + 六个区域标签复算）：
+按 T1–T4 给出「本区专属怪物 / 通用怪物 / 每秒概率 / maxlocal」，怪物详情页反查「哪些区会刷它」，
+尸潮页与区域页共用同一套实体 id。这样"这个怪在哪刷"这类问题站内就能自答。
 
 ## 9. 方法与可复现性
 

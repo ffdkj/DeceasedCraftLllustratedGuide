@@ -93,3 +93,9 @@
   - Result: `api.cfwidget.com` 解析 fileID → 文件名 → ForgeCDN 直链（CurseForge 本体被 Cloudflare 拦，CDN 不拦）；
     下 21 个 jar 扫 class 常量池，只有 InControl 同时具备「倍率键 + biometags」，其余模组只给自己新增实体写血量（报告 §8.6）
   - Files: `docs/monster-difficulty-analysis.md`、`.cache/dl-mods.py`、`.cache/attr-audit.cjs`（未入库）
+
+- [x] T19 区域刷怪名单（怪物种类也按区换）
+  - Acceptance: 给出每个区的专属/通用刷怪清单与速率，并说明是模组还是整合包配置决定的
+  - Result: `config/incontrol/spawner.json` 50 条规则，`biometags` + `incity` 分 6 个子区；
+    T1 6 种 / T2 8 种 ×2 / T3 11 种 ×2 / T4 15 种，强度 0.35–0.65/秒；模组侧 66 条 `forge:add_spawns` 全是 `forge:any`（不分区域）
+  - Files: `docs/monster-difficulty-analysis.md`（§8.7）
