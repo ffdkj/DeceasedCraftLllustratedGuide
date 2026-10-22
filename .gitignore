@@ -39,3 +39,13 @@ Thumbs.db
 .npm-cache/
 .ffhome/
 *.bundle
+
+# 本地 DSH 项目级技能与其 venv（仅本机使用，不入库）
+.dsh/
+
+# 整合包解包目录（本地核对数值用，体积过大不入库）
+DeceasedCraft5.11.19/
+
+# python bytecode from project skills
+__pycache__/
+*.pyc

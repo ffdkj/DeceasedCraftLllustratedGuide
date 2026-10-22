@@ -18,6 +18,7 @@
 
   const STATS = [
     { key: "damage", label: "伤害", unit: "", digits: 1, better: "high", max: 100 },
+    { key: "headshot", label: "爆头倍率", unit: "×", digits: 2, better: "high", max: 5 },
     { key: "rpm", label: "射速", unit: "RPM", digits: 0, better: "high", max: 1200 },
     { key: "mag", label: "弹容", unit: "发", digits: 0, better: "high", max: 100 },
     { key: "reload", label: "换弹", unit: "s", digits: 2, better: "low", max: 6 },
@@ -221,14 +222,113 @@
     return ex ? Object.assign({}, att, ex, { mods: (att.mods || []).concat(ex.mods || []) }) : att;
   }
 
+  /* 配件效果除了加数 / 百分比 / 乘数，TACZ 还允许写一段 "function" 表达式：
+     前三个乘区算完后把结果作为 x 传进去，返回值 y 覆盖原数值（见配件数据文件里的注释）。
+     这里只解析官方数据里实际出现的写法——if (x > n) then y = … else y = … end 与 y = n——
+     其余一律原样返回，免得一条读不懂的式子把面板弄坏。 */
+  function fnTokens(src) {
+    const out = [];
+    const s = String(src);
+    let i = 0;
+    while (i < s.length) {
+      const c = s.charAt(i);
+      if (c === " " || c === "\t" || c === "\n") { i += 1; continue; }
+      if ("+-*/()".indexOf(c) >= 0) { out.push(c); i += 1; continue; }
+      if (c === "x" || c === "X") { out.push("x"); i += 1; continue; }
+      const num = /^[0-9]*\.?[0-9]+/.exec(s.slice(i));
+      if (num) { out.push(parseFloat(num[0])); i += num[0].length; continue; }
+      return null;
+    }
+    return out;
+  }
+  function fnCalc(tokens, x) {
+    let i = 0;
+    function expr() {
+      let v = term();
+      while (tokens[i] === "+" || tokens[i] === "-") {
+        const op = tokens[i];
+        i += 1;
+        const r = term();
+        v = op === "+" ? v + r : v - r;
+      }
+      return v;
+    }
+    function term() {
+      let v = unary();
+      while (tokens[i] === "*" || tokens[i] === "/") {
+        const op = tokens[i];
+        i += 1;
+        const r = unary();
+        v = op === "*" ? v * r : (r === 0 ? v : v / r);
+      }
+      return v;
+    }
+    function unary() {
+      const t = tokens[i];
+      if (t === "-") { i += 1; return -unary(); }
+      i += 1;
+      if (t === "(") {
+        const v = expr();
+        if (tokens[i] === ")") i += 1;
+        return v;
+      }
+      if (t === "x") return x;
+      if (typeof t === "number") return t;
+      throw new Error("bad expr");
+    }
+    const v = expr();
+    return Number.isFinite(v) ? v : null;
+  }
+  function fnValue(src, x) {
+    const tokens = fnTokens(src);
+    if (!tokens) return null;
+    try { return fnCalc(tokens, x); } catch (e) { return null; }
+  }
+  function fnTest(cond, x) {
+    const m = /^(.*?)(>=|<=|==|!=|>|<)(.*)$/.exec(String(cond).trim());
+    if (!m) return null;
+    const a = fnValue(m[1], x);
+    const b = fnValue(m[3], x);
+    if (a == null || b == null) return null;
+    switch (m[2]) {
+      case ">": return a > b;
+      case ">=": return a >= b;
+      case "<": return a < b;
+      case "<=": return a <= b;
+      case "==": return a === b;
+      default: return a !== b;
+    }
+  }
+  function fnApply(src, x) {
+    if (!src) return x;
+    const s = String(src).replace(/\s+/g, " ").trim();
+    const cond = /^if ?\(([^()]*)\) ?then ?y ?= ?(.*?) ?else ?y ?= ?(.*?) ?end$/.exec(s);
+    if (cond) {
+      const hit = fnTest(cond[1], x);
+      if (hit == null) return x;
+      const v = fnValue(hit ? cond[2] : cond[3], x);
+      return v == null ? x : v;
+    }
+    const plain = /^y ?= ?(.*)$/.exec(s);
+    if (!plain) return x;
+    const v2 = fnValue(plain[1], x);
+    return v2 == null ? x : v2;
+  }
+
   function calc(gun, selected) {
     if (!gun) return { damage: 0, rpm: 0, mag: 0, reload: 0, recoilPitch: 0, recoilYaw: 0,
-      inaccStand: 0, inaccAim: 0, aimTime: 0, weight: 0, armorIgnore: 0, pierce: 0, speed: 0, range: 0, silence: 0 };
+      inaccStand: 0, inaccAim: 0, aimTime: 0, weight: 0, armorIgnore: 0, pierce: 0, speed: 0, range: 0, silence: 0, headshot: 1 };
     let damage = +gun.damage || 0;
     let rpm = +gun.rpm || 0;
     let mag = +gun.mag || 0;
     let weight = +gun.weight || 0;
     let adsAdd = 0, adsMult = 1;
+    let rangeAdd = 0, rangeMult = 1;
+    let armorAdd = 0, armorMult = 1;
+    let pierceAdd = 0, pierceMult = 1;
+    let headAdd = 0, headMult = 1;
+    // TACZ 把同一个属性的四个参数拆成三个乘区：加数先相加、乘数再连乘，最后才是 function。
+    let armorFns = [], pierceFns = [], headFns = [];
     let recoilPitch = +gun.recoilPitch || 0;
     let recoilYaw = +gun.recoilYaw || 0;
     let inaccStand = +((gun.inaccuracy || {}).stand) || 0;
@@ -257,28 +357,40 @@
       damage *= +a.damageMult || 1;
       rpm *= +a.rpmMult || 1;
       speed *= +a.ammoSpeedMult || 1;
-      if (a.armorIgnoreMult) armorIgnore *= a.armorIgnoreMult;
-      if (a.armorIgnoreAdd) armorIgnore += a.armorIgnoreAdd;
-      if (a.pierceAdd) pierce += a.pierceAdd;
-      if (a.rangeMult) range *= a.rangeMult;
-      if (a.rangeAdd) range += a.rangeAdd;
-      if (a.headshotMult) headshot *= a.headshotMult;
+      if (a.armorIgnoreAdd) armorAdd += +a.armorIgnoreAdd;
+      if (a.armorIgnoreMult != null) armorMult *= +a.armorIgnoreMult;
+      if (a.armorIgnoreFn) armorFns.push(a.armorIgnoreFn);
+      if (a.pierceAdd) pierceAdd += +a.pierceAdd;
+      if (a.pierceMult != null) pierceMult *= +a.pierceMult;
+      if (a.pierceFn) pierceFns.push(a.pierceFn);
+      if (a.rangeAdd) rangeAdd += +a.rangeAdd;
+      if (a.rangeMult != null) rangeMult *= +a.rangeMult;
+      if (a.headshotAdd) headAdd += +a.headshotAdd;
+      if (a.headshotMult != null) headMult *= +a.headshotMult;
+      if (a.headshotFn) headFns.push(a.headshotFn);
       if (a.silenceAdd) silence += a.silenceAdd;
       if (a.magLevel) magLevel = Math.max(magLevel, a.magLevel);
-      if (a.armorIgnoreSpecial) flags.push("穿甲特殊");
-      if (a.pierceSpecial) flags.push("穿透特殊");
+      if (a.armorIgnoreSpecial && !a.armorIgnoreFn) flags.push("穿甲特殊");
+      if (a.pierceSpecial && !a.pierceFn) flags.push("穿透特殊");
       if (a.rangeSpecial) flags.push("射程特殊");
-      if (a.headshotSpecial) flags.push("爆头特殊");
+      if (a.headshotSpecial && !a.headshotFn) flags.push("爆头特殊");
     });
     if (magLevel && Array.isArray(gun.extendedMag) && gun.extendedMag[magLevel - 1] != null) {
       mag = +gun.extendedMag[magLevel - 1] || mag;
     }
+    armorIgnore = (armorIgnore + armorAdd) * armorMult;
+    armorFns.forEach(function (f) { armorIgnore = fnApply(f, armorIgnore); });
+    pierce = (pierce + pierceAdd) * pierceMult;
+    pierceFns.forEach(function (f) { pierce = fnApply(f, pierce); });
+    headshot = (headshot + headAdd) * headMult;
+    headFns.forEach(function (f) { headshot = fnApply(f, headshot); });
+    range = (range + rangeAdd) * rangeMult;
     armorIgnore = Math.max(0, Math.min(1, armorIgnore));
     return {
       damage: damage, rpm: rpm, mag: mag, reload: +gun.reloadTactical || 0,
       recoilPitch: recoilPitch, recoilYaw: recoilYaw,
       inaccStand: inaccStand, inaccAim: inaccAim,
-      aimTime: (Number(gun.aimTime) || 0) * adsMult + adsAdd,
+      aimTime: ((Number(gun.aimTime) || 0) + adsAdd) * adsMult,
       weight: weight, armorIgnore: armorIgnore, pierce: pierce,
       speed: speed, range: range, headshot: headshot, silence: silence,
       flags: Array.from(new Set(flags)),
@@ -629,14 +741,15 @@
 
   function compareSummary(base, cur) {
     const out = [];
-    [["recoilPitch", "垂直后坐力", 1], ["recoilYaw", "水平后坐力", 1], ["inaccStand", "腰射散布", 1], ["inaccAim", "瞄准散布", 1],
-      ["damage", "伤害", 0], ["rpm", "射速", 0], ["mag", "弹容", 0], ["weight", "重量", 1], ["aimTime", "瞄准时间", 1]].forEach(function (x) {
-      const k = x[0], label = x[1], dg = x[2];
-      const d = (cur[k] || 0) - (base[k] || 0);
+    [["damage", "伤害", 0], ["headshot", "爆头倍率", 2], ["armorIgnore", "护甲穿透", 0, 100, "%"], ["pierce", "穿透", 0],
+      ["rpm", "射速", 0], ["mag", "弹容", 0], ["recoilPitch", "垂直后坐力", 1], ["recoilYaw", "水平后坐力", 1],
+      ["inaccStand", "腰射散布", 1], ["inaccAim", "瞄准散布", 1], ["weight", "重量", 1], ["aimTime", "瞄准时间", 1]].forEach(function (x) {
+      const k = x[0], label = x[1], dg = x[2], scale = x[3] || 1, unit = x[4] || "";
+      const d = ((cur[k] || 0) - (base[k] || 0)) * scale;
       if (Math.abs(d) < 0.0001) return;
       const lowerBetter = ["recoilPitch", "recoilYaw", "inaccStand", "inaccAim", "weight", "aimTime"].indexOf(k) >= 0;
       const good = lowerBetter ? d < 0 : d > 0;
-      out.push({ cls: good ? "good" : "bad", text: label + " " + (d > 0 ? "+" : "−") + fmt(Math.abs(d), dg) });
+      out.push({ cls: good ? "good" : "bad", text: label + " " + (d > 0 ? "+" : "−") + fmt(Math.abs(d), dg) + unit });
     });
     return out.slice(0, 4);
   }
