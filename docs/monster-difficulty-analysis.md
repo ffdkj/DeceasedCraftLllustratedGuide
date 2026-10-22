@@ -729,6 +729,48 @@ T4 = 15 种的大杂烩，生化服/防化服/大吸盘/Boss 级全在这**（`g
 = 区域 2× · 困难 2× · 事件 2× = **8× 基础血（160）**，护甲 ×4.5、攻击 ×3.375；非僵尸类（警察等）不吃
 `finalize` 那条僵尸专享规则，是 **4×**。
 
+## 8.9 尸潮建筑（LostSouls）与「未实装」怪物
+
+除 15 天一波的天数尸潮外，整合包还有**另一套尸潮**：LostSouls 的「尸潮建筑」——建筑里固定盘踞一波怪，
+清完才能搜刮（`kubejs`/任务文本：「必须先消灭尸潮，方可搜刮该建筑内的任何箱子」）。
+
+### 8.9.1 数据出处
+
+`DCTweaks` jar 里的 `data/deceasedcraft/lostsouls/buildings/<区域>/<建筑>.json`，共 **23 份定义 / 33 个建筑**：
+
+| 字段 | 含义 |
+|---|---|
+| `mobs[{name,weight}]` | 该建筑尸潮的出怪池与权重 |
+| `mobamounts{min,max}` | 整波规模（T1 派出所 10–15，核电站 80–90） |
+| `healthbonus{min,max}` | 这波怪的血量倍率（T1 派出所 ×0.75，荒地系列 ×1.25） |
+| `spawnmaxinbuilding` | 同屏上限（多数 20） |
+| `hauntedchance` | 建筑「闹鬼」概率（全是 1.0） |
+| `helmets/chestplates/leggings/boots` | 给这波怪穿什么（本包全空） |
+
+LostSouls 刷怪用的是 `MobSpawnType.MOB_SUMMONED`（反编译 `mcjty/lostsouls/ForgeEventHandlers` 确认），
+所以困难难度下 InControl 那条 `spawntype: [event, mob_summoned]` 的 ×2 也会命中：
+建筑僵尸困难血量 = 基础 × 建筑加成 × 区域 ×2 × 事件 ×2。
+
+### 8.9.2 结论：没有「只在尸潮出现」的怪
+
+把四个来源（区域刷怪器 / 模组自带的 `forge:add_spawns` / 天数尸潮 / 尸潮建筑）铺开对 130 个实体分类：
+
+| 分类 | 数量 | 说明 |
+|---|---:|---|
+| 正常刷新 | 70 | 其中 69 只在城市刷怪器里，`undead_revamp2:sucker` 只靠模组自然刷 |
+| 仅尸潮 | **0** | 尸潮名单里的实体全都能在平时刷到；只有 `sucker`/`night_hunter` 不在城市刷怪器里 |
+| 未实装 | **60** | 48 只 `spore:*`（真菌模组，社区视为未上线的 T5）+ `deaceased` 的部件/变体 + `hordes:*` 玩家变体 |
+
+- 站内标成「尸潮」的 8 个 `hordes:*`（僵尸玩家/堕落玩家/无价值玩家/感染的猪灵/商人/掠夺者/唤魔者/幻术师）
+  **整合包的天数尸潮表和建筑尸潮表一个都没引用**，实际刷不出来。
+- 尸潮表里有一条坏数据：`undead_revamp2:night_hunter` 在 `attribute.js` 没有覆盖，模组 jar 里也没有这个实体类
+  （`zombie_extreme:night_hunter` 才是真的），这条实际不会刷出任何东西。
+- 「感觉像尸潮专属」的那批（`great_visage` 0.01/秒、`theface` 0.03/秒、`flayedmanhead` 0.05/秒…）只是城市刷怪概率极低，
+  不是不在刷。
+
+机读数据与逐建筑清单见 §8.8 的同目录产物：`public/data/horde-buildings.js`、`docs/horde-buildings.md`
+（`npm run gen:hordebuildings` / `npm run verify:hordebuildings`，959 项断言）。
+
 ## 9. 方法与可复现性
 
 本次分析用若干一次性脚本解析：`attribute.js` 的 `event.modify(...)` 块、`guides.js` 的怪物条目、`horde_data/tables/*.json` 与 `scripts/*.json`、`hordes-common.toml`；未改动任何仓库文件。校验点：130 个实体全部解析出 `max_health` 与 `attack_damage`；115 个站内怪物数值与包内逐项比对，偏差 0。

@@ -105,3 +105,10 @@
   - Result: `npm run gen:monsters` 产出 `public/data/monsters-difficulty.js`（`WZ_MONSTER_DIFF`，235 KB，133 实体 × 5 场景 × 3 难度 + 尸潮野外/城区两套 + 17/21 张尸潮档）
     与 `docs/monster-difficulty-table.md`；`npm run verify:monsters` 13,471 项断言通过；`index.html` / SW 清单未动
   - Files: `scripts/gen-monster-difficulty.ts`、`scripts/verify-monster-difficulty.ts`、`public/data/monsters-difficulty.js`、`docs/monster-difficulty-table.md`、`package.json`
+
+- [x] T21 尸潮建筑清单 + 「未实装」标记
+  - Acceptance: 逐个尸潮建筑给出僵尸清单（出怪/权重/规模/血量），并标出只在尸潮出现与完全没实装的怪
+  - Result: `DCTweaks` jar 的 `lostsouls/buildings/*` 共 23 份定义 / 33 建筑 → `public/data/horde-buildings.js` +
+    `docs/horde-buildings.md`；130 实体分类：正常 70 / 仅尸潮 0 / 未实装 60（48 只 spore、deaceased 部件、hordes 玩家变体）；
+    发现 `undead_revamp2:night_hunter` 是坏 id；`npm run verify:hordebuildings` 959 项断言
+  - Files: `scripts/gen-horde-buildings.ts`、`scripts/verify-horde-buildings.ts`、`public/data/horde-buildings.js`、`docs/horde-buildings.md`、`package.json`
