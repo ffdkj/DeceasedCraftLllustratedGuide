@@ -430,9 +430,19 @@ function main() {
         hard: cellWith(s, multipliers(id, { tier: null, difficulty: "hard", event: false, abyss: false }), "hard"),
       },
       city,
+      // 尸潮：wild = 不在城区（只吃事件那条）；city = 落在城区（区域倍率再叠一层）
       horde: {
         normal: cellWith(s, multipliers(id, { tier: null, difficulty: "normal", event: true, abyss: false }), "normal"),
         hard: cellWith(s, multipliers(id, { tier: null, difficulty: "hard", event: true, abyss: false }), "hard"),
+        city: Object.fromEntries(
+          TIERS.map((t) => [
+            t,
+            {
+              normal: cellWith(s, multipliers(id, { tier: t, difficulty: "normal", event: true, abyss: false }), "normal"),
+              hard: cellWith(s, multipliers(id, { tier: t, difficulty: "hard", event: true, abyss: false }), "hard"),
+            },
+          ]),
+        ),
       },
     };
     if (spiders.some((r) => r.mobs?.includes(id))) {
@@ -572,7 +582,7 @@ function writeDoc(data: any, cfg: ReturnType<typeof readHordeCfg>, waves: number
   L.push("| 野外 | 无区域标签：血量/护甲/攻击不到 InControl 的区域倍率（简单仍 ×0.5） |");
   L.push("| 尸潮 | `spawntype: event` 在困难下额外 ×2 血 / ×1.5 甲 / ×1.5 攻击；简单再 ×0.5 |");
   L.push("| hostile 判定 | 除 `naturalist:*` 动物外，其余实体都按 `hostile: true` 处理（困难批只对 hostile 生效） |");
-  L.push("| 叠乘提醒 | 表里的「尸潮」列只算事件那一条；若尸潮落在城区且难度为困难，区域倍率还会再乘一层（代码里 `continue: true`，两批都跑） |");
+  L.push("| 尸潮分两种 | `尸潮 · 野外` 只吃 `spawntype: event` 那条；`尸潮 · 城区` 是尸潮落进区域标签范围，区域倍率会再叠一层（代码里 `continue: true`，两批都跑） |");
   L.push("");
   L.push(`每场尸潮：${cfg.spawnAmount} 只/次 × ${waves} 次 ≈ ${data.horde.expectedPerEvent} 只，同屏上限 ${cfg.spawnMax}，每 ${cfg.everyDays} 天一次。`);
   L.push("");
@@ -591,8 +601,10 @@ function writeDoc(data: any, cfg: ReturnType<typeof readHordeCfg>, waves: number
     row("野外 · 困难", e.wild.hard);
     for (const t of TIERS) row(`${t} 城市 · 普通`, e.city[t].normal);
     for (const t of TIERS) row(`${t} 城市 · 困难`, e.city[t].hard);
-    row("尸潮 · 普通", e.horde.normal);
-    row("尸潮 · 困难", e.horde.hard);
+    row("尸潮 · 野外 · 普通", e.horde.normal);
+    row("尸潮 · 野外 · 困难", e.horde.hard);
+    row("尸潮 · 城区 T1 · 困难", e.horde.city.T1.hard);
+    row("尸潮 · 城区 T4 · 困难", e.horde.city.T4.hard);
     for (const d of e.depth ?? []) row(`洞穴 y≤${d.maxY}`, d);
     L.push("");
   }

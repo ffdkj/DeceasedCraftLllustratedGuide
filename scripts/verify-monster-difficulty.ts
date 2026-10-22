@@ -135,6 +135,17 @@ for (const [id, e] of Object.entries<any>(E)) {
   check(!!e.horde && near(e.horde.hard.hp, e.base.hp * 2), `尸潮实体困难血量 ×2：${id}`);
 }
 
+/* 尸潮落在城区时：区域倍率再叠一层（困难荒地僵尸 = 2×2×2 = 8×） */
+check(near(zombie.horde.normal.hp, 20), "僵尸野外尸潮·普通 20 血");
+check(near(zombie.horde.hard.hp, 40), "僵尸野外尸潮·困难 40 血（事件 ×2）");
+check(near(zombie.horde.city.T1.hard.hp, 50), "僵尸城区 T1 尸潮·困难 50 血（2×1.25×2）");
+check(near(zombie.horde.city.T2.hard.hp, 75), "僵尸城区 T2 尸潮·困难 75 血");
+check(near(zombie.horde.city.T3.hard.hp, 105), "僵尸城区 T3 尸潮·困难 105 血");
+check(near(zombie.horde.city.T4.hard.hp, 160), "僵尸城区 T4 尸潮·困难 160 血（8×）");
+check(near(zombie.horde.city.T4.hard.armor, 9), "僵尸城区 T4 尸潮·困难 护甲 9（×4.5）");
+check(near(zombie.horde.city.T4.hard.dmg, 6.75), "僵尸城区 T4 尸潮·困难 攻击 6.75（×3.375）");
+check(near(police.horde.city.T4.hard.hp, police.base.hp * 4), "非僵尸类城区 T4 尸潮·困难 = 4×（区域 ×2 × 事件 ×2）");
+
 /* 剧面（4000 血）作为困难尸潮的锚点 */
 const visage = E["deaceased:great_visage"];
 check(visage && near(visage.base.hp, 4000), "狰狞巨脸基础 4000 血");

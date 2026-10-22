@@ -102,6 +102,6 @@
 
 - [x] T20 怪物难度数据表（生成物，未接站）
   - Acceptance: 一套由整合包真源复算、可复现生成的「难度 × 区域 × 尸潮」数值表，含血量/护甲/攻击，且站点未改
-  - Result: `npm run gen:monsters` 产出 `public/data/monsters-difficulty.js`（`WZ_MONSTER_DIFF`，173 KB，133 实体 × 5 场景 × 3 难度 + 17/21 张尸潮档）
+  - Result: `npm run gen:monsters` 产出 `public/data/monsters-difficulty.js`（`WZ_MONSTER_DIFF`，235 KB，133 实体 × 5 场景 × 3 难度 + 尸潮野外/城区两套 + 17/21 张尸潮档）
     与 `docs/monster-difficulty-table.md`；`npm run verify:monsters` 13,471 项断言通过；`index.html` / SW 清单未动
   - Files: `scripts/gen-monster-difficulty.ts`、`scripts/verify-monster-difficulty.ts`、`public/data/monsters-difficulty.js`、`docs/monster-difficulty-table.md`、`package.json`

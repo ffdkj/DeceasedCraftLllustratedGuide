@@ -724,8 +724,10 @@ T4 = 15 种的大杂烩，生化服/防化服/大吸盘/Boss 级全在这**（`g
 | `docs/monster-difficulty-table.md` | 人读版：口径说明 + 12 个抽样怪的场景对照表 + 尸潮全天数档名单 |
 | `scripts/verify-monster-difficulty.ts` | 13,471 项断言（`npm run verify:monsters`），含区域/难度锚点值与站点 NPC 章节的区域→阶级交叉校验 |
 
-两个已知口径（文档里也写了）：`hostile` 按「非 naturalist 动物」判定；尸潮列只算 `spawntype: event` 那一条，
-若尸潮落在城区且难度为困难，区域倍率会再叠一层（代码里两批都跑）。
+两个已知口径（文档里也写了）：`hostile` 按「非 naturalist 动物」判定；尸潮分 `horde.normal/hard`（野外，只算
+`spawntype: event` 那条）与 `horde.city.T1–T4`（落在城区，区域倍率再叠一层）。所以困难荒地城区的尸潮僵尸
+= 区域 2× · 困难 2× · 事件 2× = **8× 基础血（160）**，护甲 ×4.5、攻击 ×3.375；非僵尸类（警察等）不吃
+`finalize` 那条僵尸专享规则，是 **4×**。
 
 ## 9. 方法与可复现性
 
