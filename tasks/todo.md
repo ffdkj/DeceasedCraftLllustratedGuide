@@ -72,6 +72,24 @@
   - Acceptance: 选择器只列白名单、专属枪托不再出现、-135% 变 -35%、腰射散布 -0.5、无白名单枪显示提示
   - Verify: DOM 断言 22 项（m4a1 / lss / minigun / taurus943 / ak47）
   - Files: `src/client/gunsmith.ts`、`index.html`、`scripts/build-sw.ts`、`src/client/types/data.d.ts`
-- [ ] T16 用真实 tacz 模组 jar 重跑并复核
+- [x] T16 用真实 tacz 模组 jar 重跑并复核
   - Acceptance: `meta.source.jarTagFiles > 0`，warning 里的「未读到 jar」消失，分布复核
+  - Result: 下到 `tacz-1.20.1-1.1.8-hotfix.jar`（pid 1028108 / fid 8141310，57.5 MB）放进
+    `DeceasedCraft5.11.19/overrides/mods/` 后自动探测命中，`jarTagFiles 0 → 103`、`jars 1`；
+    组合数仍是 10,385 / 无白名单 22 把（说明额外 tag 没有改变结论），warnings 只剩 3 个未知配件 + 22 把无白名单
   - Files: `public/data/compat.js`
+
+## 第四轮（怪物数据来源追查）
+
+- [x] T17 定位「区域越深怪越肉」的实现者
+  - Acceptance: 找到具体模组/配置/数值，能解释「T1 20 血、T2 30 血」这类记忆
+  - Result: `config/incontrol/spawn.json`（InControl 1.20-9.5.0）用 `biometags` + `incity` + `difficulty`
+    匹配，`healthmultiply/damagemultiply/armormultiply` 直接改属性；普通难度 20/25/30/40（T1–T4），
+    简单再 ×0.5，困难再叠一批（25/37.5/52.5/80）；证据写进报告 §8.5
+  - Files: `docs/monster-difficulty-analysis.md`
+
+- [x] T18 模组侧审计（下载 + 反编译，确认没有第二个实现者）
+  - Acceptance: 找出会改实体属性的模组，逐个排除；给出下载链路
+  - Result: `api.cfwidget.com` 解析 fileID → 文件名 → ForgeCDN 直链（CurseForge 本体被 Cloudflare 拦，CDN 不拦）；
+    下 21 个 jar 扫 class 常量池，只有 InControl 同时具备「倍率键 + biometags」，其余模组只给自己新增实体写血量（报告 §8.6）
+  - Files: `docs/monster-difficulty-analysis.md`、`.cache/dl-mods.py`、`.cache/attr-audit.cjs`（未入库）

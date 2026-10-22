@@ -442,24 +442,131 @@
 - UI：怪物详情页加「难度换算」小表（血/护甲不变，伤害三档）；世界难度页补上「尸潮波次」与末日模式命令；尸潮分类的 8 条怪物修 id 并补数值。
 - 原则：所有数字都注明来源（`attribute.js` / horde 表 / 换算公式），避免再出现「数值不知哪来的」。
 
-## 8.5 关于「僵尸在 T1 区域 20 血、T2 区域 30 血」的核查结论
+## 8.5 「僵尸在 T1 区域 20 血、T2 区域 30 血」——机制确认：InControl 按区域标签乘算
 
-**整合包数据里不存在这样的机制。** 逐项排查过的位置：
+**结论：机制存在，而且就是按区域梯度的。** 实现者是 **InControl!**（`in-control`，pid 257356，包里是 `incontrol-1.20-9.5.0.jar`），
+配置文件 **`config/incontrol/spawn.json`**。它用「区域生物群系标签 + 是否在城市里（`incity`）」匹配刷怪规则，
+再用 `healthmultiply` / `damagemultiply` / `armormultiply` 直接改实体属性。
 
-| 检查对象 | 结果 |
+> 上一版报告写「包内不存在该机制」是**检索口径错了**：当时在 438 个配置里搜 `T1`–`T4`、`max_health`，
+> 而 InControl 的键是 `healthmultiply`、匹配维度是 `biometags`，两者都不在检索词里。
+
+### 8.5.1 区域标签 → 站点阶级
+
+标签定义在整合包自带模组 `DCTweaks` 的 `data/deceasedcraft/tags/worldgen/biome/*.json`，
+阶级对应 `public/data/guides.js` 的 `region → tier`：
+
+| 站点阶级 | 区域 | 生物群系标签 | 标签内包含（示例） |
+|---|---|---|---|
+| T1 | 郊区住宅区 | `deceasedcraft:suburb_residential` | `biomesoplenty:shrubland` / `grassland` / `overgrown_greens` |
+| T2 | 摩天办公区 / 摩天住宅区 | `deceasedcraft:highrise_office` / `highrise_residential` | `minecraft:plains` / `taiga`、`biomesoplenty:prairie` / `maple_woods` |
+| T3 | 摩天酒店区 / 零售商业区 | `deceasedcraft:highrise_hotel` / `retail_district` | `biomesoplenty:tropics` / `floodplain`、`minecraft:snowy_plains` |
+| T4 | 荒地 | `deceasedcraft:wasteland` | `biomesoplenty:wasteland` |
+
+### 8.5.2 血量/伤害/护甲倍率（`spawn.json` 原文数值）
+
+刷怪规则分两批：`when: finalize`（刷出瞬间）与 `when: onjoin`（实体入世界）。两批**各自独立匹配、独立乘算**。
+
+**A. 普通批（`finalize`，任何难度都生效；只作用于 `zombie` / `husk` / `drowned`，且 `incity: true`）**
+
+| 区域 | HP | 伤害 | 护甲 |
+|---|---|---|---|
+| T1 郊区住宅区 | ×1（无规则） | ×1 | ×1 |
+| T2 摩天办公/住宅 | ×1.25 | ×1.25 | ×1 |
+| T3 酒店/零售 | ×1.5 | ×1.5 | ×1.25 |
+| T4 荒地 | ×2.0 | ×1.5 | ×1.5 |
+
+**B. 困难批（`onjoin`，`difficulty: hard`，作用于全部 `hostile: true` 怪物，`incity: true`）**
+
+| 区域 | HP | 伤害 | 护甲 |
+|---|---|---|---|
+| T1 郊区住宅区 | ×1.25 | ×1.25 | ×1.25 |
+| T2 摩天办公/住宅 | ×1.5 | ×1.25 | ×1.5 |
+| T3 酒店/零售 | ×1.75 | ×1.5 | ×1.75 |
+| T4 荒地 | ×2.0 | ×1.5 | ×2.0 |
+| 深渊维度（`deceasedcraft:abyss`，城市内） | ×2.0 | ×1.5 | ×1.5 |
+| 事件/召唤刷出（`spawntype: event / mob_summoned`，**含困难尸潮**） | ×2.0 | ×1.5 | ×1.5 |
+
+**C. 简单批（`onjoin`，`difficulty: easy`，全部 `hostile: true`）**：HP ×0.5、护甲 ×0.5、伤害 ×0.5。
+
+**D. 洞穴蜘蛛（`finalize`，`spider`/`cave_spider`）**：`maxheight: 0` → HP/伤害 ×1.25；`maxheight: -30` → ×1.5。
+
+### 8.5.3 换算成实际血量（基础 `minecraft:zombie` = 20 血 / 2 伤害 / 2 护甲，来自 `kubejs/startup_scripts/entity/attribute.js`）
+
+| 区域 | 简单 | 普通 | 困难（两批叠乘） |
+|---|---:|---:|---:|
+| T1 郊区住宅区 | 10 | **20** | 25 |
+| T2 摩天办公/住宅 | 12.5 | **25** | 37.5 |
+| T3 酒店/零售 | 15 | **30** | 52.5 |
+| T4 荒地 | 20 | **40** | 80 |
+
+即普通难度下 20 → 25 → 30 → 40 的血量梯度（按档次每级 +25% / +20% / +33%），
+记忆里的「T1 20 血、T2 30 血」对应的是 **T1 20 血、T3 30 血**（T2 是 25）；简单难度把普通值再砍半。
+
+### 8.5.4 代码证据（反编译 `incontrol-1.20-9.5.0.jar`）
+
+| 位置 | 行为 |
 |---|---|
-| `kubejs/startup_scripts/entity/attribute.js`（130 个 `event.modify`） | 每个实体**只有一套**基础数值，没有区域/梯度维度；`minecraft:zombie` = 20 血 / 2 伤害 / 2 护甲，全图一致 |
-| 全部 107 个 KubeJS 脚本里的 `EntityEvents.spawned` / 属性写入 | 只改了掉落、挖掘倍率、末日装备，**没有任何按生物群系改血量/伤害的代码** |
-| `config/` 下 438 个配置（toml/json/json5/cfg）里搜 `T1`–`T4`、`max_health` | 无区域梯度血量表；`T1`–`T4` 只出现在 FTB 任务的**区域章节标题**与**护甲阶级**文案里 |
-| FTB 任务文本 + 整合包 `zh_cn` 语言文件（4799 条） | `T1`–`T4` 指「区域」（郊区/办公/酒店/零售/荒地）与「护甲阶级」，没有怪物血量描述 |
-| 尸潮 38 张表 + 22 条选表脚本 | 只按**天数档 + 难度**换阵容，不调单体数值 |
-| `modlist.html`（415 个模组） | 没有 Scaling Health / Leveled Mobs / Champions 之类按等级缩放怪物的模组 |
-| `public/data/guides.js`（167 条怪物） | 每条只有一套 `hp/damage/armor`，没有分区域变体 |
+| `mcjty/incontrol/ForgeEventHandlers.onEntitySpawnEvent` (FinalizeSpawn) | 取 `SpawnWhen.FINALIZE` 规则表逐条 `match()` → `action()`，`isDoContinue()` 为真才继续下一条 |
+| `mcjty/incontrol/ForgeEventHandlers.onEntityJoinWorld` (EntityJoinLevelEvent) | 同上，取 `SpawnWhen.ONJOIN` 规则表；**与 finalize 是两次独立遍历**，所以两批倍率会叠乘 |
+| `mcjty/incontrol/tools/rules/RuleBase`（血量类动作的乘算分支，字节码 `lambda$addActions$4`：全类唯一 `getBaseValue()*factor` 的一支） | `v = attributeInstance.getBaseValue() * factor; setBaseValue(v); entity.setHealth(v)` —— 乘的是**基础上限**并把当前血量拉满；因为乘的是 base，同一次刷怪里多匹配一条规则就会继续叠乘 |
+| `RuleKeys.ACTION_HEALTHMULTIPLY` 等 | 键名即 `healthmultiply` / `healthadd` / `healthset`、`damagemultiply`、`armormultiply` |
 
-真正按区域梯度变化的是：**掉落物**（T1–T4 战利品表）、**建筑**、**护甲阶级**（`armors/tier_1..4.js` 与任务里的 T1–T4 套装）、**NPC 章节**（T2 布莱克 / T3 查理 / T4 奥尔托博士）。怪物本身的强度变化只来自：世界难度（伤害 ×1.5/×0.5+1）、尸潮天数档换阵容、末日模式给僵尸加装备。
+### 8.5.5 两批规则都会跑到（别以为是「二选一」）
 
-如果游戏内确实观察到「T2 区域僵尸更肉」，最可能的解释是：T2+ 区域刷出的是**另一种僵尸变种**（如 `zombie_extreme:infected_police` 35 血、`undead_revamp2:thesmoker` 25 血），而不是同一只僵尸被加了血。
+`spawn.json` 开头先把**原版自然刷新的僵尸/尸壳/溺尸**全 `deny`（`spawntype: natural`），城市里的僵尸基本都由
+InControl 自己的刷怪器（`config/incontrol/spawner.json`，`persecond`/`attempts`/`biometags` 条件）刷出。
+而该刷怪器在 `SpawnerSystem` 里显式调用了 `ForgeEventFactory.onFinalizeSpawn`（常量池证据），
+所以 `finalize` 批（A）与 `onjoin` 批（B/C）会**先后各跑一次**，倍率相乘 —— 8.5.3 的困难列即由此得出。
+
+### 8.5.6 同一份配置里另外两个「按区域变强」的体现
+
+- `config/incontrol/spawner.json`：T1 刷 `Bandit`、T2 刷 `Raider`、T3 刷 `Plunderer`、T4 刷 `Soldier`（都是 `customnpcs:customnpc` 的克隆体），
+  T4 还追加 `Soldier` 与盗匪队列，说明「区域越深，敌人档次越高」是全局设计，不只是血量。
+- 47 座建筑里给僵尸换装（军装/生化/防护服）也是同一套 `multibuilding` 规则做的。
+
+## 8.6 模组侧审计：谁真的会改怪物数据（已下载 21 个 jar 验证）
+
+结论：**415 个模组里只有 InControl 一个具备「按生物群系/区域改血量」的能力**；其余模组就算碰 `MAX_HEALTH`，也只给自己新增的实体写一次基础值。
+
+### 8.6.1 下载链路（可复现）
+
+`manifest.json` 只给 `projectID`+`fileID`，不给文件名；而 ForgeCDN 直链必须是
+`https://mediafilez.forgecdn.net/files/{fileID/1000}/{fileID%1000}/{文件名}`。
+可行链路是 **CurseForge 的第三方只读 API `api.cfwidget.com`**：
+
+1. `GET https://api.cfwidget.com/{projectID}` → 返回 `files[]`（含 `id` / `name` / `filesize`）；
+2. 用 `manifest` 里的 `fileID` 精确命中 `files[]` 的那一条，取 `name`（**不能用 `?version=1.20.1` 的
+   `download` 字段，那是「最新一版」，经常是 Fabric 版或更新版本，下错侧**）；
+3. 拼 ForgeCDN 直链下载，校验 `filesize`。
+
+脚本落在 `.cache/dl-mods.py`（`python3 .cache/dl-mods.py <projectID...>`）；已下 21 个、约 61 MB。
+CurseForge 官网/`api.curseforge.com` 会被 Cloudflare 拦（403 `Just a moment...`），但 **ForgeCDN 本体不拦**。
+
+### 8.6.2 属性写入审计（`unzip` 解包 + class 常量池统计，`.cache/attr-audit.cjs`）
+
+在 srg 名 `f_22276_`(MAX_HEALTH) / `m_21153_`(setHealth) / `m_22100_`(setBaseValue) / `m_22115_`(getBaseValue)，
+以及 `healthmultiply|healthadd|healthset|damagemultiply|armormultiply`、`biometags` 上统计命中的**类**数：
+
+| jar（1.20.1 对应版本） | MAX_HEALTH | setHealth | setBaseValue | 倍率键 | biometags | 判定 |
+|---|---:|---:|---:|---:|---:|---|
+| `incontrol-1.20-9.5.0` | 1 | 1 | 1 | 1 | 1 | **区域缩放实现者** |
+| `THEUNDEADREVAMPED_2.1g` | 45 | 4 | 6 | 0 | 0 | 自己实体的血量（`AxestromEntity` 等） |
+| `naturalist-5.0pre5+forge` | 24 | 3 | 4 | 0 | 3 | 自己动物的血量 + 自己动物的刷怪群系 |
+| `Zombie Extreme 1.20.1 0.2.6.5` | 26 | 0 | 0 | 0 | 0 | 只声明自己实体的血量 |
+| `DeceasedBeast0.5c` | 14 | 3 | 3 | 0 | 0 | 同上（`BoulderEntity` 等） |
+| `CustomNPCs-Unofficial` | 5 | 12 | 6 | 0 | 0 | NPC 数值来自 NPC 存档数据，不在代码里做区域缩放 |
+| `entityjs-forge-0.7.5` | 5 | 0 | 0 | 0 | 0 | 只是给 KubeJS 的 API；包内 107 个脚本没有用它改血量 |
+| `ApothicAttributes` / `puffish_attributes` | 0–1 | 0 | 1–2 | 0 | 0 | 玩家/通用属性框架 |
+| `AttributeFix` / `MaxHealthFix` | 0–1 | 0–2 | 0 | 0 | 0 | 只放宽属性上限/修正显示 |
+| `enhancedai` / `SpawnerControl` / `eh2.0`(Enhanced Hordes) / `expandability` / `horror_element_mod` / `necroanimalict` / `Better Spiders` | 0–13 | 0 | 0–1 | 0 | 0 | 行为/刷怪逻辑，不按区域改数值 |
+
+### 8.6.3 没下的部分
+
+- `Fungal Infection: Spore` 113 MB（超体积阈值）——它只给自己的孢子实体定数值，不缩放原版僵尸。
+- 其余约 390 个模组是优化（Embeddium/ModernFix/FerriteCore…）、装饰、载具、配方、UI、音效，与实体数值无关。
+- 要全量收口的成本：约 3–4 GB、400+ 次下载；按 8.6.2 同样的口径扫一遍，预期结论不变（没有第二个 `biometags + 倍率键` 的实现者）。
 
 ## 9. 方法与可复现性
 
-本次分析用一段一次性脚本解析：`attribute.js` 的 `event.modify(...)` 块、`guides.js` 的怪物条目、`horde_data/tables/*.json` 与 `scripts/*.json`、`hordes-common.toml`；未改动任何仓库文件。校验点：130 个实体全部解析出 `max_health` 与 `attack_damage`；115 个站内怪物数值与包内逐项比对，偏差 0。
+本次分析用若干一次性脚本解析：`attribute.js` 的 `event.modify(...)` 块、`guides.js` 的怪物条目、`horde_data/tables/*.json` 与 `scripts/*.json`、`hordes-common.toml`；未改动任何仓库文件。校验点：130 个实体全部解析出 `max_health` 与 `attack_damage`；115 个站内怪物数值与包内逐项比对，偏差 0。
