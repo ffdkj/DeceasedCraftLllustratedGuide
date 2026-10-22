@@ -2557,6 +2557,62 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
 }
 .num-table tbody tr:last-child td { border-bottom: none; }
 [data-theme="light"] .num-table tr.nm-sec td { background: #eef2f7; color: #5c6b7a; }
-[data-theme="light"] .tier-dot.on { color: #fff; }
+[data-theme="light"] .tier-dot.on[data-tier="T1"],
+[data-theme="light"] .tier-dot.on[data-tier="T2"],
+[data-theme="light"] .tier-dot.on[data-tier="T3"],
+[data-theme="light"] .tier-dot.on[data-tier="T4"] { color: #fff; }
 [data-theme="light"] .num-none { flex: none; align-self: center; font-size: 11.5px; color: var(--dim); }
 .num-btn { background: #fff; }
+
+/* ============ 像素字体：缝合像素字体 Fusion Pixel 10px ============ */
+/* 授权 OFL-1.1，版权 (c) 2022 TakWolf；许可证全文见 public/fonts/OFL.txt。只用于界面元素，正文保持系统字。 */
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url("../fonts/fusion-pixel-10px-monospaced-latin.otf.woff2") format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+  unicode-range: U+0000-00FF, U+2000-206F, U+20A0-20CF;
+}
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url("../fonts/fusion-pixel-10px-monospaced-zh_hans.otf.woff2") format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+/* 界面骨架 / 标签 / 数字：像素字（单字重，靠字号与颜色分层） */
+.brand, .brand-title, .brand-sub,
+.tabbar .tab,
+.section-title, .section-note,
+.chip, .badge, .btn, .icon-btn,
+.hub-title, .hub-count, .hub-sub,
+.row-title, .row-en, .row-right .big, .row-right .cap,
+.threat-tag, .threat-tag em,
+.mini-stat b, .mini-stat span, .stat-box b, .stat-box span,
+.tier-dot, .tier-any, .stat-chip, .stat-none, .num-btn, .num-none,
+.spawn-title,
+.num-table th, .num-table td,
+.searchbar input::placeholder {
+  font-family: 'Fusion Pixel', 'Microsoft YaHei', 'PingFang SC', monospace;
+  font-synthesis: none;
+  -webkit-font-smoothing: none;
+  text-rendering: geometricPrecision;
+}
+
+/* 像素字在 10px 设计尺寸下：点阵标签与表格数字对齐到整数档 */
+.tier-dot { font-size: 10px; letter-spacing: 0; }
+.stat-chip { font-size: 12px; }
+.num-btn { font-size: 12px; }
+.num-table { font-size: 12px; }
+.num-table th { font-size: 11px; }
+
+/* 正文、长文案、刷新条件：保持系统字，可读性优先 */
+.hero-desc, .row-sub, .text-block, .guide-note, .callout, .kv, .kv dt, .kv dd,
+.spawn-sub, .threat-desc, .tiny, .dim, .desc, .hero-stat .k {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC",
+    "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+/* 动物页：中立生物，只有刷新规则 */
+.animal-row { align-items: flex-start; }
+.animal-row .row-title { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; -webkit-line-clamp: 2; }
+.animal-row .row-sub { display: block; -webkit-line-clamp: unset; overflow: visible; color: var(--muted); }
+.animal-row .animal-stats { margin-top: 6px; }

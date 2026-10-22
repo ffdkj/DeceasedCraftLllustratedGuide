@@ -40,6 +40,8 @@ async function main() {
     './data/recipes.js',
     './data/tiers.js',
     './data/changelog.js',
+    './fonts/fusion-pixel-10px-monospaced-latin.otf.woff2',
+    './fonts/fusion-pixel-10px-monospaced-zh_hans.otf.woff2',
     './data/monsters-difficulty.js',
     './data/horde-buildings.js',
     './data/monster-spawn-tiers.js',

@@ -55,6 +55,23 @@ check(Object.keys(spawn.entities).length === 153, `生成实体 153（实际 ${O
 check(cat.counts.total === 200, `合并后目录 200 条（实际 ${cat.counts.total}）`);
 check(cat.counts.curatedMerged === 120, `手写与生成合流 120 条（实际 ${cat.counts.curatedMerged}）`);
 check(cat.counts.spawns === 93, `会刷 93 条（实际 ${cat.counts.spawns}）`);
+check(cat.counts.animals === 21, `中立动物 21 条（实际 ${cat.counts.animals}）`);
+check(cat.counts.monsters === 72, `怪物 72 条 = 会刷 93 − 动物 21（实际 ${cat.counts.monsters}）`);
+check(cat.animalIds.length === 21, "动物清单 21 条");
+check(
+  cat.animalIds.every((id) => cat.byId.get(id)!.kind === "neutral" && cat.byId.get(id)!.status === "spawns"),
+  "动物清单全是中立且会刷",
+);
+const animalStats = cat.animalIds.filter((id) => cat.byId.get(id)!.hasStats);
+check(animalStats.length === 6, `6 种动物在属性脚本里有数值（实际 ${animalStats.length}）`);
+check(animalStats.includes("naturalist:elephant"), "大象有数值");
+check(!cat.byId.get("naturalist:giraffe")!.hasStats, "长颈鹿没有数值");
+check(cat.animalIds.includes("naturalist:giraffe") && cat.animalIds.includes("minecraft:cat"), "长颈鹿与猫在动物清单");
+check(!cat.animalIds.includes("necroanimalict:zheep"), "僵尸羊仍留在怪物清单");
+const monsterT4 = cat.tierIds.T4.filter((id) => cat.byId.get(id)!.kind !== "neutral").length;
+const monsterAny = cat.anywhereIds.filter((id) => cat.byId.get(id)!.kind !== "neutral").length;
+check(monsterT4 === 15, `怪物页 T4 分组 15 条（实际 ${monsterT4}）`);
+check(monsterAny === 28, `怪物页全图分组 28 条（实际 ${monsterAny}）`);
 check(cat.counts.unimplemented === 60, `确认未实装 60 条（实际 ${cat.counts.unimplemented}）`);
 check(cat.counts.unconfirmed === 47, `来源未确认 47 条（实际 ${cat.counts.unconfirmed}）`);
 check(
@@ -169,7 +186,15 @@ const html = readFileSync(join(ROOT, "index.html"), "utf8");
 for (const f of ["monsters-difficulty.js", "horde-buildings.js", "monster-spawn-tiers.js"]) {
   check(html.includes("/data/" + f), `index.html 引入 ${f}`);
 }
-const sw = readFileSync(join(ROOT, "scripts/build-sw.ts"), "utf8");
+const swSrc = readFileSync(join(ROOT, "scripts/build-sw.ts"), "utf8");
+for (const f of ["fusion-pixel-10px-monospaced-latin.otf.woff2", "fusion-pixel-10px-monospaced-zh_hans.otf.woff2"]) {
+  check(existsSync(join(ROOT, "public/fonts", f)), `像素字体存在：${f}`);
+  check(readFileSync(join(ROOT, "public/css/app.css"), "utf8").includes(f), `CSS 引入字体 ${f}`);
+  check(swSrc.includes("./fonts/" + f), `SW 预缓存字体 ${f}`);
+}
+check(existsSync(join(ROOT, "public/fonts/OFL.txt")), "字体许可证 OFL.txt 随包分发");
+check(readFileSync(join(ROOT, "public/fonts/OFL.txt"), "utf8").includes("SIL OPEN FONT LICENSE"), "OFL 全文完整");
+const sw = swSrc;
 for (const f of ["monsters-difficulty.js", "horde-buildings.js", "monster-spawn-tiers.js"]) {
   check(sw.includes("./data/" + f), `Service Worker 预缓存 ${f}`);
 }
@@ -177,6 +202,10 @@ const app = readFileSync(join(ROOT, "src/client/app.ts"), "utf8");
 check(app.includes("buildCatalog("), "app.ts 走 buildCatalog");
 check(app.includes('data-action="monster-nums"'), "列表行有「数值」入口");
 check(app.includes("monsterCatalog()"), "目录只构建一次");
+check(app.includes("renderAnimals"), "动物页存在");
+check(app.includes("#/creatures/animals"), "生物 hub 有动物入口");
+check(app.includes('m.kind !== "neutral"'), "怪物清单排除动物");
+check(app.includes("animalSpawnText"), "动物行给的是刷新规则");
 for (const icon of [
   "stat-heart-full.png",
   "stat-heart-empty.png",

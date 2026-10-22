@@ -131,3 +131,15 @@
     梯度点阵 + 威胁二级筛选 + 列表行「数值」快览 sheet + 详情页场景×难度矩阵（生命 / 护甲 / 攻击 / 对玩家 四列，HUD 像素图标）；
     `npm run verify:monsterguide` 354 项断言锁口径
   - Files: `src/client/monsters.ts`、`src/client/app.ts`、`public/css/app.css`、`index.html`、`scripts/build-sw.ts`、`scripts/verify-monster-guide.ts`、`docs/monster-guide-ui.md`、`package.json`
+
+- [x] T25 动物独立分类 + 像素字体
+  - Acceptance: 把中立动物移出怪物清单单独一页；接入部署版里的像素字体与素材
+  - Result: 生物图鉴变「怪物 72 / 动物 21 / NPC」三张卡；动物页只给刷新规则（6 种带属性原值）、不分组、无详情页；
+    接入 Fusion Pixel 10px（OFL-1.1 + 许可证随包），只用于界面骨架，正文保持系统字
+  - Files: `src/client/monsters.ts`、`src/client/app.ts`、`public/css/app.css`、`public/fonts/`、`scripts/build-sw.ts`、`scripts/verify-monster-guide.ts`、`CONTEXT.md`、`docs/monster-guide-ui.md`
+
+- [ ] T26 回灌部署版独有的四项功能（待做）
+  - Acceptance: 怪物网格视图 / 对比表 / 返回顶部 / 战利品梯度卡从部署产物 `js/app.js` 复原成源码并接回
+  - Context: 这四项只在部署构建里存在（`#monster-list.monster-grid`、`.compare-row`、`.back-top`、`#loot-tiers .tier-grid`），
+    仓库源码 0 处；回灌时优先网格视图（正好配合生物图鉴）。素材见 `.cache/zip/`（部署包解压，gitignore）
+  - Files: 待定（`src/client/app.ts`、`public/css/app.css`）

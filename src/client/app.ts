@@ -76,6 +76,7 @@ import {
     download: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/>',
     upload: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/>',
     skull: '<path d="M12 2a7 7 0 00-7 7v4a3 3 0 003 3h1v4h6v-4h1a3 3 0 003-3V9a7 7 0 00-7-7z"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M10 16v3M14 16v3"/>',
+    paw: '<circle cx="6.5" cy="8" r="1.7"/><circle cx="12" cy="5.5" r="1.7"/><circle cx="17.5" cy="8" r="1.7"/><path d="M12 10.5c3.2 0 5.8 2.3 5.8 4.9 0 2-1.7 3.6-3.8 3.6-.9 0-1.3-.3-2-.3s-1.1.3-2 .3c-2.1 0-3.8-1.6-3.8-3.6 0-2.6 2.6-4.9 5.8-4.9z"/>',
     gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1.11-1.55 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.7 1.7 0 004.6 15a1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09A1.7 1.7 0 004.6 9a1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06A1.7 1.7 0 009 4.6a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.55 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06A1.7 1.7 0 0019.4 9a1.7 1.7 0 001.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.51 1z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/>',
     box: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
@@ -494,13 +495,14 @@ import {
   function renderCreaturesHub() {
     renderTopbar({});
     document.title = "生物图鉴 · 亡者世界";
-    const monsterCount = allMonsters().length;
+    const monsterCount = monsterCatalog().counts.monsters;
     const npcCount = (GUIDE.npcs || []).length;
     q("view").innerHTML =
-      '<div class="detail-hero' + heroClass("creatures") + '"' + heroStyle("creatures") + '><h1>生物图鉴</h1><div class="meta"><span class="badge">怪物</span><span class="badge custom">NPC</span><span class="badge">按区域划分</span></div>' +
-        '<div class="hero-desc" style="margin-top:10px">感染者、变异体、Boss，以及幸存者、敌对势力与 PMC 雇佣兵。怪物按威胁等级筛选，NPC 按阵营划分。</div></div>' +
+      '<div class="detail-hero' + heroClass("creatures") + '"' + heroStyle("creatures") + '><h1>生物图鉴</h1><div class="meta"><span class="badge">怪物</span><span class="badge custom">动物</span><span class="badge">NPC</span><span class="badge">按刷怪梯度</span></div>' +
+        '<div class="hero-desc" style="margin-top:10px">感染者、变异体与 Boss 按刷怪梯度归档；中立动物单独一页，只看刷新规则不给战斗数值；幸存者、敌对势力与 PMC 雇佣兵归 NPC。</div></div>' +
       '<div class="section"><div class="hub-grid">' +
-        hubCard({ href: "#/creatures/monsters", icon: "skull", title: "怪物", sub: "普通 / 特殊 / 小头目 / 头领 / 灾厄 / 真菌", count: monsterCount, unit: "种", accent: "#e07a5f" }) +
+        hubCard({ href: "#/creatures/monsters", icon: "skull", title: "怪物", sub: "按刷怪梯度 T1–T4 / 全图 / 深渊", count: monsterCount, unit: "种", accent: "#e07a5f" }) +
+        hubCard({ href: "#/creatures/animals", icon: "paw", title: "动物", sub: "中立生物 · 不主动攻击", count: monsterCatalog().counts.animals, unit: "种", accent: "#7fc79a" }) +
         hubCard({ href: "#/creatures/npcs", icon: "users", title: "NPC", sub: "友军 / 敌对 / 雇佣兵", count: npcCount, unit: "个", accent: "#7fc79a" }) +
       "</div></div>" +
       '<div class="section"><div class="guide-note">' + icon("info", 18) + "<div>怪物按自然刷新、尸潮/结构刷新收录；血量、伤害、护甲取自 KubeJS 属性脚本，缺失时保留实测值或「待补充」。</div></div></div>";
@@ -1209,6 +1211,7 @@ import {
       renderItem(p[1]);
     } else if (root === "creatures") {
       if (p[1] === "monsters") renderMonsters();
+      else if (p[1] === "animals") renderAnimals();
       else if (p[1] === "npcs") renderGuideList("npcs");
       else if (p[1] === "npc" && p[2]) renderGuideDetail("npcs", p[2]);
       else renderCreaturesHub();
@@ -1939,11 +1942,13 @@ import {
   }
   function statValue(v) { return v == null ? "—" : String(fmtNum(v)); }
   const COND_NAME = { overworld: "主世界", abyss: "深渊" };
+  const BIOME_NAME = { is_forest: "森林", is_river: "河流", is_ocean: "海洋" };
   function condText(c) {
     const m1 = /^维度 (\w+)$/.exec(c);
     if (m1) return "维度 " + (COND_NAME[m1[1]] || m1[1]);
     const m2 = /^群系标签 (\w+)$/.exec(c);
-    if (m2) return "群系 " + m2[1];
+    if (m2) return (BIOME_NAME[m2[1]] || m2[1]) + "群系";
+    if (c === "见天") return "露天";
     return c;
   }
   function condListText(list) {
@@ -2006,7 +2011,8 @@ import {
   function monsterScope(tab) {
     return allMonsters().filter(function (m) {
       if (tab === "unimplemented") return m.status === "unimplemented" || m.status === "unconfirmed";
-      return m.status !== "unimplemented" && m.status !== "unconfirmed";
+      // 中立动物已独立成页，不再进怪物清单
+      return m.status !== "unimplemented" && m.status !== "unconfirmed" && m.kind !== "neutral";
     });
   }
   function monsterMatch(m, f, query) {
@@ -2037,7 +2043,7 @@ import {
       title: isUn ? "未实装生物" : "生物图鉴",
       sub: isUn
         ? cat.counts.unimplemented + " 不会生成 · " + cat.counts.unconfirmed + " 待确认"
-        : cat.counts.spawns + " 条会刷 · 共 " + cat.counts.total + " 条资料",
+        : cat.counts.monsters + " 条会刷 · 未实装 " + (cat.counts.unimplemented + cat.counts.unconfirmed) + " 条",
       actions: ['<button class="icon-btn accent" data-action="add-monster" aria-label="录入怪物">' + icon("plus") + "</button>"]
     });
     document.title = (isUn ? "未实装生物" : "生物图鉴") + " · 亡者世界";
@@ -2141,6 +2147,59 @@ import {
     box.innerHTML = '<div class="list">' + list.map(monsterRowHTML).join("") + "</div>";
   }
 
+  /* ---------------- 动物（中立生物） ---------------- */
+  const MOD_NAME = {
+    naturalist: "Naturalist",
+    quark: "Quark",
+    minecraft: "原版",
+    necroanimalict: "NecroAnimalict",
+    spore: "Spore",
+    zombie_extreme: "Zombie Extreme",
+    undead_revamp2: "The Undead Revamped",
+    deaceased: "Deceased Beast",
+    customnpcs: "CustomNPCs",
+    hordes: "The Hordes"
+  };
+  function modName(id) {
+    const ns = String(id).split(":")[0];
+    return MOD_NAME[ns] || ns;
+  }
+  function animalSpawnText(m) {
+    const parts = [];
+    TIERS.forEach(function (t) {
+      if ((m.tiers || []).indexOf(t) < 0) return;
+      const d = (m.cityDetail || {})[t];
+      parts.push(TIER_SHORT[t] + " · 每秒 " + (d ? d.rate : "?") + (d && d.conditions.length ? " · " + condListText(d.conditions) : ""));
+    });
+    if (m.anywhere) {
+      parts.push("全图 · 每秒 " + m.anywhere.rate + (m.anywhere.conditions.length ? " · " + condListText(m.anywhere.conditions) : ""));
+    }
+    return parts.join(" ｜ ") || "无刷怪规则";
+  }
+  function animalRowHTML(m) {
+    return '<div class="row-card animal-row">' +
+      '<div class="row-main">' +
+        '<div class="row-title">' + esc(m.name) +
+          '<span class="badge">中立</span><span class="badge">' + esc(modName(m.id)) + "</span></div>" +
+        '<div class="row-sub">' + esc(animalSpawnText(m)) + "</div>" +
+        (m.hasStats ? '<div class="animal-stats">' + statChipsHTML(m.base) + "</div>" : "") +
+      "</div></div>";
+  }
+  function renderAnimals() {
+    const cat = monsterCatalog();
+    const list = cat.animalIds.map(function (id) { return cat.byId.get(id); }).filter(Boolean)
+      .sort(function (a, b) { return a.name.localeCompare(b.name, "zh"); });
+    renderTopbar({ back: "#/creatures", title: "动物", sub: list.length + " 种中立生物" });
+    document.title = "动物 · 亡者世界";
+    q("view").innerHTML =
+      '<div class="detail-hero' + heroClass("creatures") + '"' + heroStyle("creatures") + '><h1>动物</h1>' +
+        '<div class="meta"><span class="badge">中立</span><span class="badge">不主动攻击</span><span class="badge">只看刷新规则</span></div>' +
+        '<div class="hero-desc" style="margin-top:10px">荒地（T4）与少数野外群系里的中立生物。刷新规则来自 InControl 的区域刷怪器：每行是每秒触发概率与额外条件。' + cat.animalIds.filter(function (id) { const e = cat.byId.get(id); return e && e.hasStats; }).length + ' 种在属性脚本里有数值，按原值列出；其余只有刷新规则，不猜数值。</div></div>' +
+      '<div class="section"><div class="guide-note">' + icon("info", 18) + "<div>多数动物只在 T4 荒地、y 50–96 的高度刷；灰熊与鳄鱼走全图群系规则（森林 / 河流）。它们不会进尸潮，也不会在城区刷怪器里出现。</div></div></div>" +
+      '<div class="section"><div class="section-head"><div class="section-title">全部动物</div><div class="section-note">' + list.length + " 种</div></div>" +
+        '<div class="list">' + list.map(animalRowHTML).join("") + "</div></div>";
+  }
+
   /* ---------------- 数值矩阵 ---------------- */
   function metricHeadsHTML() {
     return ["hp", "armor", "dmg", "toPlayer"].map(function (k) {
@@ -2206,12 +2265,12 @@ import {
         '<div class="spawn-main"><div class="spawn-title">随原版刷新</div><div class="spawn-sub">' + esc((m.evidence || []).filter(function (x) { return x.indexOf("原版变体") === 0; })[0] || "不挑区域") + "</div></div></div>");
     }
     if ((m.horde.normal || []).length || (m.horde.hard || []).length) {
-      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="horde">潮</i>' +
+      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="horde">尸潮</i>' +
         '<div class="spawn-main"><div class="spawn-title">天数尸潮</div><div class="spawn-sub">' +
         '普通 · 第 ' + ((m.horde.normal || []).join(" / ") || "—") + " 天档；困难 · 第 " + ((m.horde.hard || []).join(" / ") || "—") + " 天档</div></div></div>");
     }
     if ((m.buildings || []).length) {
-      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="build">筑</i>' +
+      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="build">建筑</i>' +
         '<div class="spawn-main"><div class="spawn-title">尸潮建筑 · ' + m.buildings.length + ' 座</div><div class="spawn-sub">' +
         esc(m.buildings.slice(0, 4).map(function (b) { return b.name; }).join("、")) +
         (m.buildings.length > 4 ? " 等（明细见下表）" : "") + "</div></div></div>");

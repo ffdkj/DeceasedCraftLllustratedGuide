@@ -149,6 +149,8 @@ export interface Catalog {
   counts: {
     total: number;
     spawns: number;
+    animals: number;
+    monsters: number;
     unimplemented: number;
     unconfirmed: number;
     curatedMerged: number;
@@ -161,6 +163,8 @@ export interface Catalog {
   anywhereIds: string[];
   /** 只在深渊维度刷新的实体 id */
   abyssIds: string[];
+  /** 中立动物（从怪物清单里拆出去，单独一页） */
+  animalIds: string[];
 }
 
 export interface CatalogInput {
@@ -386,7 +390,9 @@ export function buildCatalog(input: CatalogInput): Catalog {
   const tierIds = { T1: [], T2: [], T3: [], T4: [] } as Record<Tier, string[]>;
   const anywhereIds: string[] = [];
   const abyssIds: string[] = [];
+  const animalIds: string[] = [];
   for (const e of entries) {
+    if (e.kind === "neutral" && e.status === "spawns") animalIds.push(e.id);
     if (e.status !== "spawns") continue;
     for (const t of e.tiers) tierIds[t].push(e.id);
     if (e.tiers.length) continue;
@@ -394,12 +400,15 @@ export function buildCatalog(input: CatalogInput): Catalog {
     else if (e.anywhere || e.horde.normal.length || e.horde.hard.length || VARIANT_OF[e.id]) anywhereIds.push(e.id);
   }
 
+  const spawns = entries.filter((e) => e.status === "spawns").length;
   return {
     entries,
     byId,
     counts: {
       total: entries.length,
-      spawns: entries.filter((e) => e.status === "spawns").length,
+      spawns,
+      animals: animalIds.length,
+      monsters: spawns - animalIds.length,
       unimplemented: entries.filter((e) => e.status === "unimplemented").length,
       unconfirmed: entries.filter((e) => e.status === "unconfirmed").length,
       curatedMerged,
@@ -409,6 +418,7 @@ export function buildCatalog(input: CatalogInput): Catalog {
     tierIds,
     anywhereIds,
     abyssIds,
+    animalIds,
   };
 }
 
