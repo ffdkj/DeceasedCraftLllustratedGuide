@@ -39,6 +39,8 @@ declare global {
     WZ_GUNSMITH: any;
     WZ_RECIPES: any;
     WZ_RECIPES_UI: any;
+    WZ_TIERS: any;
+    WZ_TIERS_UI: any;
     WZ_CHANGELOG: any;
     WZ_TEXTURES: any;
     WZ_BUILDING_THUMBS: Record<string, string>;

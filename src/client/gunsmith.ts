@@ -434,6 +434,9 @@
   function recipesUI() {
     return window.WZ_RECIPES_UI || null;
   }
+  function tiersUI() {
+    return window.WZ_TIERS_UI || null;
+  }
   function isUnreleased(id) {
     const R = recipesUI();
     return !!(R && R.isUnreleased(id));
@@ -558,6 +561,7 @@
         '<div class="gs-badges">' + modes + '</div>' +
         '<div class="gs-head-ammo">' + esc(item.ammo || (gs && gs.ammoName) || "—") + (gs && gs.bulletAmount > 1 ? " · " + gs.bulletAmount + " 弹丸" : "") + '</div></div>' +
         '<button class="gs-switch" data-gs-action="gun-picker">换枪</button>' +
+        ((tiersUI() && tiersUI().available()) ? tiersUI().strip(gunId) : "") +
       '</div>' +
       '<div class="gs-actions"><button class="gs-btn" data-gs-action="reset">' + icon("trash", 16) + ' 清空配件</button>' +
         '<button class="gs-btn primary" data-gs-action="save">' + icon("check", 16) + (dirty ? " 保存当前方案" : " 当前已保存") + '</button>' +

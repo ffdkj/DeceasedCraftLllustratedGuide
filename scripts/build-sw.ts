@@ -37,6 +37,7 @@ async function main() {
     './data/guides.js',
     './data/gunsmith.js',
     './data/recipes.js',
+    './data/tiers.js',
     './data/changelog.js',
     './textures/atlas.webp',
     './manifest.webmanifest',

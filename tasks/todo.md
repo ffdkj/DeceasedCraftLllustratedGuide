@@ -1,26 +1,41 @@
-# Todo
+# Todo: 枪械梯度 + 子弹梯度
 
-- [x] T1 共享读取工具（scripts/pack-readers.ts）
-  - Acceptance: 能读出 gun/attachment 配方、GunId 集合（jar/商店/命令池）、tags 映射
-  - Verify: tsx 直跑打印统计与 5.11.19 事实一致
-- [x] T2 配方数据生成（scripts/gen-recipes.ts → public/data/recipes.js）
-  - Acceptance: 枪 164 / 配件 191 / 未实装恰 11；材料字典可解析；两次输出一致（实测通过）
-  - Verify: `npm run gen:recipes` + md5 复跑
-- [x] T3 图集补图（scripts/gen-atlas-extra.ts）
-  - Acceptance: 3 个缺失材料有图标（1 本地 + 2 原版，失败退近似）；幂等
-  - Verify: textures.js 新条目存在 + atlas 尺寸不变 + 页面显示真实图标
-- [x] T4 数据接入（index.html / build-sw / data.d.ts）
-  - Acceptance: 构建产物含 recipes.js 且 SW 预缓存
-  - Verify: `npm run verify`
-- [x] T5 数据断言脚本（scripts/verify-recipes.ts）
-  - Acceptance: 覆盖率/名单/图标全绿
-  - Verify: `tsx scripts/verify-recipes.ts`
-- [x] T6 未实装分类（app.ts / gunsmith.ts / css）
-  - Acceptance: 四个落点生效，11 条从原分类移除，改枪台仍可用
-  - Verify: 页面 + DOM 检查
-- [x] T7 枪械掉落来源修复 + 造价块（app.ts / gunsmith.ts / css）
-  - Acceptance: 两处位置正确、合计规则正确、三种缺配方状态正确
-  - Verify: M4A1 造价、taurus943 无配方提示、11 把未实装文案、375px 布局
-- [x] T8 全量验收
-  - Acceptance: `npm run verify` 通过；页面/截图验收
-  - Verify: 上述命令 + 截图
+- [x] T1 梯度生成器（scripts/gen-tiers.ts）
+  - Acceptance: `npm run gen:tiers` 产出 `public/data/tiers.js`，178 把枪 / 15 口径全有档位，两次运行字节一致
+  - Verify: `tsx scripts/gen-tiers.ts` 打印分布，与 spec 基线表一致
+  - Files: `scripts/gen-tiers.ts`、`public/data/tiers.js`、`package.json`
+
+- [x] T2 数据断言（scripts/verify-tiers.ts）
+  - Acceptance: 分布基线 + 抽样枪 + 模具最低区域档 + 三态弹药 + 图标可解析全部断言通过
+  - Verify: `npm run verify:tiers` 非零退出即失败
+  - Files: `scripts/verify-tiers.ts`、`package.json`
+
+- [x] T3 组件（src/client/tiers.ts）
+  - Acceptance: `window.WZ_TIERS_UI.strip(gunId)` 输出两行同构 HTML，枪械行/子弹行/推断/无模具/无弹药五态齐全
+  - Verify: 临时 jsdom 断言 HTML 含正确 `data-go`、徽章文字、`· 推断` 后缀
+  - Files: `src/client/tiers.ts`、`src/client/main.ts`、`src/client/types/data.d.ts`
+
+- [x] T4 挂载到改枪台头部
+  - Acceptance: `#view > div.gs-head` 末尾出现 `.tier-strip`，窄屏不挤掉「换枪」
+  - Verify: `#/gear/gunsmith/tacz:m4a1`、`tacz:minigun`、`gz:m16a2`、`suffuse:knife`、`tacz:m320` 五个样本目视
+  - Files: `src/client/gunsmith.ts`、`public/css/app.css`
+
+- [x] T5 挂载到枪械详情页头部
+  - Acceptance: `.detail-hero` 的 `.meta` 之后出现同一条 `.tier-strip`，与改枪台完全同构
+  - Verify: `#/gear/gun/tacz:m4a1` 目视 + 点击两行跳转
+  - Files: `src/client/app.ts`、`public/css/app.css`
+
+- [x] T6 站内跳转与样式
+  - Acceptance: 枪械行 → 元件物品页、子弹行 → 模具物品页，hash 路由无整页刷新，返回可回原枪
+  - Verify: 点击四个方向（含推断不可点、无模具不可点）
+  - Files: `src/client/tiers.ts`、`public/css/app.css`
+
+- [x] T7 数据接入与预缓存
+  - Acceptance: `index.html` 加载 `tiers.js`，SW 清单含 `./data/tiers.js`，构建后离线可用
+  - Verify: `npm run verify`（build + tsc + check:assets）
+  - Files: `index.html`、`scripts/build-sw.ts`、`src/client/types/data.d.ts`
+
+- [x] T8 文档与提交
+  - Acceptance: spec / plan / todo / CONTEXT 术语齐全，一次提交入库
+  - Verify: `git status` 仅预期文件；`npm run verify` + `npm run verify:tiers` 全绿
+  - Files: `specs/SPEC-gun-tiers.md`、`tasks/plan.md`、`tasks/todo.md`、`CONTEXT.md`

@@ -1059,6 +1059,7 @@
     q("view").innerHTML =
       hero +
       '<div class="detail-hero"><h1>' + esc(item.name || "未命名") + "</h1><div class=\"meta\">" + meta + "</div>" +
+        (type === "guns" && window.WZ_TIERS_UI && window.WZ_TIERS_UI.available() ? window.WZ_TIERS_UI.strip(item.id) : "") +
         (item.description ? '<div class="text-block" style="margin-top:12px">' + esc(item.description) + "</div>" : "") +
       "</div>" +
       guideDetailExtra(type, item) +
