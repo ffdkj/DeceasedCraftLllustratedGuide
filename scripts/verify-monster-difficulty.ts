@@ -94,6 +94,18 @@ for (const id of ["minecraft:spider", "minecraft:cave_spider"]) {
   check(near(depth[1].hp, E[id].base.hp * 1.5), `${id} y≤-30 血量 ×1.5`);
 }
 
+/* ---------------- 2.5 深渊维度 ---------------- */
+check(near(zombie.abyss.normal.hp, 20), "深渊普通难度不吃倍率（20 血）");
+check(near(zombie.abyss.hard.hp, 40), "深渊困难血量 ×2（40）");
+check(near(zombie.abyss.hard.armor, 3), "深渊困难护甲 ×1.5（3）");
+check(near(zombie.abyss.hard.dmg, 3), "深渊困难攻击 ×1.5（3）");
+check(Array.isArray(data.abyssSpawns) && data.abyssSpawns.length === 6, `深渊刷怪名单 6 只（实际 ${data.abyssSpawns?.length}）`);
+for (const sp of data.abyssSpawns) check(near(sp.rate, 0.15, 1e-9), `深渊刷怪速率 0.15/秒：${sp.id}`);
+const human = E["spore:inf_human"];
+check(!!human && near(human.abyss.hard.hp, 180, 0.02) && near(human.abyss.hard.armor, 45, 0.02), "菌染人类深渊困难 180 血 / 45 甲");
+const chemist = E["spore:chemist"];
+check(!!chemist && near(chemist.abyss.hard.hp, 220, 0.02) && near(chemist.abyss.hard.dmg, 22.5, 0.02), "药剂师深渊困难 220 血 / 22.5 攻");
+
 /* ---------------- 3. 尸潮 ---------------- */
 const H = data.horde;
 check(H.spawnAmount === 20, `每波 20 只（实际 ${H.spawnAmount}）`);

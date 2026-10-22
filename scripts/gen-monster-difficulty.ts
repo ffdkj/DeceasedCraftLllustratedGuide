@@ -376,7 +376,7 @@ function main() {
         }
       }
     }
-    if (ctx.abyss) for (const r of hardAbyss) if (hostile) m = mul(m, r.mult);
+    if (ctx.abyss && ctx.difficulty === "hard") for (const r of hardAbyss) if (hostile) m = mul(m, r.mult);
     if (ctx.difficulty === "easy") for (const r of easy) if (hostile) m = mul(m, r.mult);
     if (ctx.event && ctx.difficulty === "hard") m = mul(m, hordeEventMult);
     return m;
@@ -452,6 +452,11 @@ function main() {
         ),
       },
     };
+    // 深渊维度：只有 spawn.json 里那条 deceasedcraft:abyss 规则（困难 ×2 血 / ×1.5 甲 / ×1.5 攻）
+    e.abyss = {
+      normal: cellWith(s, multipliers(id, { tier: null, difficulty: "normal", event: false, abyss: true }), "normal"),
+      hard: cellWith(s, multipliers(id, { tier: null, difficulty: "hard", event: false, abyss: true }), "hard"),
+    };
     if (spiders.some((r) => r.mobs?.includes(id))) {
       e.depth = spiders
         .filter((r) => r.mobs?.includes(id))
@@ -475,6 +480,22 @@ function main() {
     };
   }
 
+  const abyssRaw = JSON.parse(readFileSync(join(PACK, "overrides/config/incontrol/spawner.json"), "utf8")) as any[];
+  const abyssSpawns = abyssRaw
+    .filter((r) => JSON.stringify(r.conditions ?? {}).includes("deceasedcraft:abyss"))
+    .flatMap((r) => {
+      const mobs = Array.isArray(r.mob) ? r.mob : [r.mob];
+      const amount = r.amount ?? {};
+      return mobs.map((m: any) => ({
+        id: typeof m === "string" ? m : String(m?.mob),
+        rate: Number(r.persecond ?? 0),
+        attempts: Number(r.attempts ?? 0),
+        min: amount.minimum ?? 1,
+        max: amount.maximum ?? 1,
+        note: "InControl spawner · dimension deceasedcraft:abyss",
+      }));
+    });
+
   const data = {
     generated: new Date().toISOString().slice(0, 10),
     source: {
@@ -495,6 +516,7 @@ function main() {
       easy: easy.map(summary),
     },
     districts: Object.fromEntries(TIERS.map((t) => [t, { name: TIER_TAGS[t].name, tags: TIER_TAGS[t].tags }])),
+    abyssSpawns,
     horde: {
       spawnAmount: cfg.spawnAmount,
       intervalTicks: cfg.interval,
@@ -616,6 +638,29 @@ function writeDoc(data: any, cfg: ReturnType<typeof readHordeCfg>, waves: number
     for (const d of e.depth ?? []) row(`洞穴 y≤${d.maxY}`, d);
     L.push("");
   }
+  L.push("## 2.5 深渊维度（deceasedcraft:abyss）");
+  L.push("");
+  L.push("深渊只有 `spawn.json` 这一条专属规则（`dimension: deceasedcraft:abyss`、`incity: true`）：");
+  L.push("困难难度 **血量 ×2、护甲 ×1.5、攻击 ×1.5**；深渊里**没有任何尸潮**——天数尸潮在模组里直接判定");
+  L.push("`dimension != overworld` 就返回（反编译 `HordeEventHandler`），建筑尸潮的 LostSouls 定义里也没有深渊建筑");
+  L.push("（回落默认配置 `hauntedChance = 0.0`）。所以「尸潮 / 非尸潮」两列在深渊里是同一套数值。");
+  L.push("");
+  L.push("另外，`spawn.json` 里「自然刷新 deny」只写了 `minecraft:overworld`，所以原版僵尸/尸壳/溺尸在深渊里仍会自然刷；");
+  L.push("而 `undead_revamp2 / zombie_extreme / necroanimalict` 这三个模组的非 InControl 刷怪在深渊被显式 deny，");
+  L.push("所以深渊能刷到的主要是下表 6 只菌染怪 + 原版僵尸（困难 40 血 / 3 甲 / 3 攻）。");
+  L.push("");
+  L.push("| 怪物 | 基础 血/甲/攻 | 深渊·普通 | 深渊·困难 |");
+  L.push("|---|---|---|---|");
+  for (const sp of data.abyssSpawns) {
+    const e = data.entities[sp.id];
+    if (!e) {
+      L.push(`| ${sp.id} | —（整合包无属性覆盖） | — | — |`);
+      continue;
+    }
+    const f = (c: any) => `${c.hp ?? "—"} / ${c.armor ?? "—"} / ${c.dmg ?? "—"}`;
+    L.push(`| ${e.name ?? sp.id}（${sp.id}） | ${f(e.base)} | ${f(e.abyss.normal)} | ${f(e.abyss.hard)} |`);
+  }
+  L.push("");
   L.push("## 3. 尸潮天数档（单波 20 只的期望，×5 波 = 每场）");
   L.push("");
   for (const diff of ["normal", "hard"] as const) {

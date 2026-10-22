@@ -822,6 +822,37 @@ ATTACK_DAMAGE 各乘一个 `rand*(max-min)+min`；`MobSettings.getHealthBonus()`
 一个容易误会的巧合：**困难 T4 的普通僵尸和建筑尸潮僵尸都是 80 血** —— 城里是 2.0（`finalize`）×2.0（困难），
 建筑尸潮是 2.0（困难）×2.0（事件），两条不同的路径恰好都是 4 倍；T3 就分开了（城里 52.5、尸潮 70）。
 
+## 8.11 深渊维度（`deceasedcraft:abyss`）：没有尸潮，只有一条 ×2/×1.5/×1.5
+
+### 8.11.1 数值口径
+
+深渊只有 `config/incontrol/spawn.json` 里这一条专属倍率（`dimension: deceasedcraft:abyss`、`hostile: true`、
+`difficulty: hard`、`incity: true`）：**血量 ×2、护甲 ×1.5、攻击 ×1.5**。
+原因是区域标签（`suburb/wasteland…`）都是主世界生物群系，深渊的 `deceasedcraft:undiscovered` 一个都匹配不上，
+所以 `finalize` 批与困难区域批都不生效，只剩这一条。
+
+### 8.11.2 深渊里没有尸潮（两个独立的证据）
+
+| 尸潮类型 | 为什么没有 |
+|---|---|
+| 天数尸潮 | 反编译 `HordeEventHandler`：`if (player.level.dimension() != Level.OVERWORLD) return;` —— 非主世界直接返回 |
+| 建筑尸潮（闹鬼） | LostSouls 的 23 份定义只覆盖主世界六个子区（`suburb_residential`…`wasteland`），深渊建筑没有定义，回落 `lostsouls-server.toml` 的默认 `hauntedChance = 0.0` |
+
+所以「深渊尸潮 / 深渊非尸潮」是同一套数值 —— 就算用 `/hordes` 命令在深渊强开，事件那条倍率写了
+`dimension: minecraft:overworld`，也不会命中。
+
+### 8.11.3 深渊能刷的怪
+
+- `spawner.json` 的深渊规则：**6 只菌染怪**（`spore:inf_human / inf_hazmat / inf_husk / inf_player / bairn / chemist`），
+  0.15/秒、每次 1–2 只、`incity` + 亮度 ≤5。
+- 原版僵尸/尸壳/溺尸：`spawn.json` 里那条自然刷新 deny 只写了 `minecraft:overworld`，深渊不拦，仍会自然刷。
+- `undead_revamp2 / zombie_extreme / necroanimalict` 三个模组的**非 InControl** 刷怪在深渊被显式 deny
+  （`mod: [...]` + `dimension: [overworld, abyss]` + `incontrol: false`），所以深渊看不到它们。
+- Spore 自己的 biome modifier 在包里是空的（`sporeconfig.toml` 的 `"mob|weight|minimum|maximum" = []`）。
+
+逐只数值见 `docs/monster-difficulty-table.md` 的「2.5 深渊维度」表，机读数据在
+`public/data/monsters-difficulty.js` 的 `entities[*].abyss.{normal,hard}` 与 `abyssSpawns`。
+
 ## 9. 方法与可复现性
 
 本次分析用若干一次性脚本解析：`attribute.js` 的 `event.modify(...)` 块、`guides.js` 的怪物条目、`horde_data/tables/*.json` 与 `scripts/*.json`、`hordes-common.toml`；未改动任何仓库文件。校验点：130 个实体全部解析出 `max_health` 与 `attack_damage`；115 个站内怪物数值与包内逐项比对，偏差 0。
