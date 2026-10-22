@@ -2459,3 +2459,104 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
   .gs-desc { padding: 8px 10px; font-size: 11.5px; }
   .gs-desc-row { gap: 6px; }
 }
+
+/* ============ 生物图鉴 · 梯度视图 ============ */
+/* HUD 指标图标：9x9 / 16x16 原图，靠 CSS 放大保持像素边缘 */
+.stat-ico {
+  display: inline-block; width: 15px; height: 15px; flex: none;
+  vertical-align: -3px;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  image-rendering: pixelated;
+}
+.ico-hp { background-image: url("/images/ui/stat-heart-full.png"); }
+.ico-hp-empty { background-image: url("/images/ui/stat-heart-empty.png"); }
+.ico-armor { background-image: url("/images/ui/stat-armor-full.png"); }
+.ico-armor-empty { background-image: url("/images/ui/stat-armor-empty.png"); }
+.ico-attack { background-image: url("/images/ui/stat-attack.png"); }
+.ico-toplayer { background-image: url("/images/ui/stat-heart-half.png"); }
+
+.stat-chips { display: inline-flex; align-items: center; gap: 10px; }
+.stat-none { font-size: 12px; color: var(--dim); }
+.stat-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--text);
+}
+
+/* 梯度点阵：四个固定槽位，实心=该梯度会刷；色阶只用一种颜色的浓淡表示危险递进 */
+.tier-dots { display: inline-flex; align-items: center; gap: 3px; }
+.tier-dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 16px; border-radius: 4px;
+  border: 1px solid var(--line);
+  font-size: 9.5px; font-style: normal; font-weight: 700; letter-spacing: 0.2px;
+  color: var(--dim); background: transparent;
+}
+.tier-dot.on { border-color: transparent; color: #10130f; }
+.tier-dot.on[data-tier="T1"] { background: rgba(224, 122, 95, 0.45); }
+.tier-dot.on[data-tier="T2"] { background: rgba(224, 122, 95, 0.6); }
+.tier-dot.on[data-tier="T3"] { background: rgba(224, 122, 95, 0.75); }
+.tier-dot.on[data-tier="T4"] { background: rgba(224, 122, 95, 0.92); }
+.tier-dot.on[data-tier="any"],
+.tier-dot.on[data-tier="horde"],
+.tier-dot.on[data-tier="build"] {
+  width: auto; padding: 0 6px; color: var(--text);
+  background: var(--panel-3); border-color: var(--line-strong);
+}
+.tier-any {
+  font-style: normal; font-size: 11px; color: var(--muted);
+  margin-left: 2px;
+}
+
+.monster-row { flex-wrap: nowrap; align-items: center; }
+.monster-row .row-main { flex: 1 1 auto; }
+.monster-row .row-title { -webkit-line-clamp: 1; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.monster-row .row-sub {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px;
+  margin-top: 5px; -webkit-line-clamp: unset; overflow: visible;
+}
+.row-en { font-size: 11.5px; font-weight: 500; color: var(--dim); }
+.num-none { flex: none; align-self: center; font-size: 11.5px; color: var(--dim); }
+.num-btn {
+  flex: none; align-self: center;
+  font-family: inherit; appearance: none; -webkit-appearance: none;
+  padding: 5px 10px; border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  font-size: 12px; font-weight: 650; color: var(--text);
+  background: var(--panel-2);
+  cursor: pointer;
+}
+.num-btn:hover, .num-btn:focus-visible { border-color: var(--amber); color: var(--amber-2); }
+
+/* 刷怪定位 */
+.spawn-list { display: flex; flex-direction: column; gap: 6px; }
+.spawn-row {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--panel);
+  opacity: 0.55;
+}
+.spawn-row.on { opacity: 1; background: var(--panel-2); }
+.spawn-row .tier-dot { margin-top: 1px; }
+.spawn-main { flex: 1; min-width: 0; }
+.spawn-title { font-size: 13px; font-weight: 650; }
+.spawn-sub { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+
+/* 数值矩阵 */
+.num-wrap { margin-top: 2px; }
+.num-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.num-table th, .num-table td {
+  padding: 6px 8px; text-align: right; white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.num-table th { background: var(--panel-2); color: var(--muted); font-size: 11.5px; font-weight: 600; }
+.num-table th:first-child, .num-table td:first-child { text-align: left; }
+.num-table td.num { font-variant-numeric: tabular-nums; color: var(--text); }
+.num-table tr.nm-sec td {
+  text-align: left; background: var(--bg-2); color: var(--muted);
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.2px;
+}
+.num-table tbody tr:last-child td { border-bottom: none; }
+[data-theme="light"] .num-table tr.nm-sec td { background: #eef2f7; color: #5c6b7a; }
+[data-theme="light"] .tier-dot.on { color: #fff; }
+[data-theme="light"] .num-none { flex: none; align-self: center; font-size: 11.5px; color: var(--dim); }
+.num-btn { background: #fff; }

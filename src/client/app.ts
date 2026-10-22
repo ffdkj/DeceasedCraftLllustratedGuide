@@ -1,5 +1,9 @@
 // @ts-nocheck
 // TODO(types): legacy SPA renderer; split into router/store/render modules and type incrementally.
+import {
+  buildCatalog, entryMatrix, quickRows, buildingStats,
+  TIERS, TIER_LABEL, METRIC_LABEL, THREATS
+} from "./monsters";
 /* ============ 亡者世界 · 生存图鉴 ============ */
 (function () {
   "use strict";
@@ -11,6 +15,9 @@
     trinkets: [], defense: [], vehicles: [], npcs: [], monsters: []
   };
   const TEX = window.WZ_TEXTURES || null;
+  const SPAWNDATA = window.WZ_MONSTER_SPAWN || null;
+  const DIFFDATA = window.WZ_MONSTER_DIFF || null;
+  const HBDATA = window.WZ_HORDE_BUILDINGS || null;
   const STORE_KEY = "wz_guide_v1";
   const THEME_KEY = "wz_theme";
   const VIEW_MODE_KEY = "wz_viewmode_v2";
@@ -263,8 +270,6 @@
     regionQuery: {},
     buildingPart: {},
     monsterQuery: "",
-    monsterCat: "全部",
-    monsterZone: "全部",
     machineQuery: "",
     machineCat: "全部",
     guideQuery: {},
@@ -424,20 +429,16 @@
     blockMap.get(b.id).push(b);
   });
 
-  // 机器/怪物合并视图
+  // 生物目录：手写条目 + 生成数据合并后的 200 条（见 monsters.ts），再叠本地覆盖与自制条目
   function allMonsters() {
-    // 只使用整合包实体清单；旧版联网种子中的预览/非刷新怪物不再混入
     const out = [];
-    (GUIDE.monsters || []).forEach(function (m) {
-      function baseName(v) { return String(v || "").split(" / ")[0].trim(); }
-      const idx = out.findIndex(function (x) { return x.id === m.id || baseName(x.name) === baseName(m.name); });
-      const ov = state.overrides.monsters[m.id];
-      const obj = ov ? Object.assign({}, m, ov, { _override: true }) : Object.assign({}, m, { _guide: true });
-      // 图鉴数据优先于内置种子，避免同名旧条目覆盖新贴图与新分级
-      if (idx >= 0) out[idx] = obj; else out.push(obj);
+    monsterCatalog().entries.forEach(function (e) {
+      const ov = state.overrides.monsters[e.id];
+      out.push(ov ? Object.assign({}, e, ov, { _override: true }) : Object.assign({}, e));
     });
     state.customMonsters.forEach(function (m) {
-      out.push(Object.assign({}, m, { _custom: true }));
+      out.push(Object.assign({ status: "spawns", tiers: [], cityDetail: {}, anywhere: null,
+        horde: { normal: [], hard: [] }, buildings: [], evidence: [], conflicts: [] }, m, { _custom: true }));
     });
     return out;
   }
@@ -1123,7 +1124,6 @@
   }
 
   /* ---------------- 怪物等级（普通 / 特殊 / 小头目 / 头领 / 灾厄 / 真菌） ---------------- */
-  const MONSTER_LEVELS = ["全部", "普通", "特殊", "小头目", "头领", "灾厄", "真菌"];
   function monsterLevelKey(m) {
     const lv = m && m.level;
     if (lv === "普通" || lv === "特殊" || lv === "小头目" || lv === "头领" || lv === "灾厄" || lv === "真菌" || lv === "友好") return lv;
@@ -1135,18 +1135,6 @@
     if (m && m.category === "友好生物") return "友好";
     if (m && String(m.source || "").indexOf("Spore") >= 0) return "真菌";
     return "特殊";
-  }
-  function monsterZoneLabel(m) {
-    const lv = monsterLevelKey(m);
-    if (lv === "小头目") {
-      const t = Math.max(1, Math.min(3, Number(m.minorTier || 1)));
-      return "小头目 " + ["I", "II", "III"][t - 1];
-    }
-    return lv;
-  }
-  function monsterZoneMatch(m, level) {
-    if (level === "全部") return true;
-    return monsterLevelKey(m) === level;
   }
 
   /* ---------------- 路由 ---------------- */
@@ -1385,13 +1373,16 @@
   }
   function monsterThreatDesc(m) {
     const info = monsterThreatInfo(m);
+    if (m.status === "unimplemented" || m.status === "unconfirmed") {
+      return info.label + "：评级按基础属性与模组定位推定；当前不会生成，只作资料参考，不代表会在哪个梯度遇到它。";
+    }
     if (info.key === "calamity") {
       const base = "灾厄：当前最高威胁等级。建议组队、准备重火力与逃生路线，不要在没有掩体的情况下正面硬抗。";
-      return info.fungus ? base + " 属于真菌灾厄生物，分布在 T5 区域（推测）。" : base;
+      return info.fungus ? base + " 属于真菌灾厄生物。" : base;
     }
     if (info.key === "leader") return "头领：由原一级灾厄与高阶 Boss 下沉后的阶级，拥有独特机制或阶段变化。先清理召唤物，再集中火力处理本体。";
     if (info.key === "minor") return "小头目 " + ["I", "II", "III"][Math.max(0, Math.min(2, Number(info.minorTier || 1) - 1))] + "：T2 起地标建筑尸潮才会刷新的高血量单位，血量高于普通僵尸。红色圆点 1–3 表示级别。优先清理周围小怪，再集中火力处理。";
-    if (info.key === "fungus") return "真菌感染体，分布在 T5 区域（推测）。攻击常附带孢子、感染或范围效果。保持距离，避免被孢子云包围。";
+    if (info.key === "fungus") return "真菌感染体。攻击常附带孢子、感染或范围效果。保持距离，避免被孢子云包围。";
     if (info.key === "normal") return "普通感染体，单体威胁较低，但成群时仍可能拖垮弹药与体力。";
     if (info.key === "friendly") return "友好生物，不会主动攻击。可交易或提供任务。";
     if (info.key === "custom") return "本地录入的自定义威胁等级。";
@@ -1937,68 +1928,295 @@
     ui.showAllSources = false;
   }
 
-  /* ---------------- 怪物 ---------------- */
+  /* ---------------- 生物图鉴（按刷怪梯度） ---------------- */
+  const MONSTER_INPUT = { guides: GUIDE, spawn: SPAWNDATA, diff: DIFFDATA, buildings: HBDATA };
+  const TIER_SHORT = { T1: "郊区", T2: "办公·住宅", T3: "酒店·商业", T4: "荒地" };
+  const METRIC_CLASS = { hp: "ico-hp", dmg: "ico-attack", armor: "ico-armor", toPlayer: "ico-toplayer" };
+  let MONSTER_CAT = null;
+  function monsterCatalog() {
+    if (!MONSTER_CAT) MONSTER_CAT = buildCatalog(MONSTER_INPUT);
+    return MONSTER_CAT;
+  }
+  function statValue(v) { return v == null ? "—" : String(fmtNum(v)); }
+  const COND_NAME = { overworld: "主世界", abyss: "深渊" };
+  function condText(c) {
+    const m1 = /^维度 (\w+)$/.exec(c);
+    if (m1) return "维度 " + (COND_NAME[m1[1]] || m1[1]);
+    const m2 = /^群系标签 (\w+)$/.exec(c);
+    if (m2) return "群系 " + m2[1];
+    return c;
+  }
+  function condListText(list) {
+    return (list || []).map(condText).join(" / ");
+  }
+  function statChipsHTML(stats, keys) {
+    const list = keys || ["hp", "armor", "dmg"];
+    return '<span class="stat-chips">' + list.map(function (k) {
+      const v = stats ? stats[k] : null;
+      const cls = v == null ? (k === "armor" ? "ico-armor-empty" : "ico-hp-empty") : METRIC_CLASS[k];
+      return '<span class="stat-chip" title="' + METRIC_LABEL[k] + '"><i class="stat-ico ' + cls + '"></i>' + statValue(v) + "</span>";
+    }).join("") + "</span>";
+  }
+  function tierDotsHTML(m) {
+    if (m.status === "unimplemented" || m.status === "unconfirmed") return "";
+    const tiers = Array.isArray(m.tiers) ? m.tiers : [];
+    const anywhere = m.status === "spawns" && !tiers.length;
+    const isAbyss = anywhere && ((m.anywhere && (m.anywhere.conditions || []).indexOf("维度 abyss") >= 0));
+    return '<span class="tier-dots" role="img" aria-label="' +
+      (anywhere ? (isAbyss ? "深渊维度" : "全图刷新") : tiers.length ? "梯度 " + tiers.join(" ") : "无刷怪梯度") + '">' +
+      TIERS.map(function (t) {
+        return '<i class="tier-dot ' + (tiers.indexOf(t) >= 0 ? "on" : "") + '" data-tier="' + t + '">' + t + "</i>";
+      }).join("") + "</span>" + (anywhere ? '<i class="tier-any">' + (isAbyss ? "深渊" : "全图") + "</i>" : "");
+  }
+  function monsterBadgesHTML(m) {
+    let h = "";
+    if (m.kind === "npc") h += '<span class="badge custom">NPC</span>';
+    else if (m.kind === "neutral") h += '<span class="badge">中立</span>';
+    if (m.status === "unconfirmed") h += '<span class="badge override">来源未确认</span>';
+    if (m._custom) h += '<span class="badge custom">自制</span>';
+    else if (m._override) h += '<span class="badge override">已补充</span>';
+    return h;
+  }
+  function monsterRowHTML(m) {
+    return '<div class="row-card monster-row" data-go="#/monster/' + encodeURIComponent(m.id) + '" role="button" tabindex="0">' +
+      '<div class="row-main">' +
+        '<div class="row-title">' + esc(m.name) + (m.en ? ' <span class="row-en">' + esc(m.en) + "</span>" : "") + monsterBadgesHTML(m) + "</div>" +
+        '<div class="row-sub">' + tierDotsHTML(m) + (m.hasStats === false ? '<span class="stat-none">无数值</span>' : statChipsHTML(m.base)) + "</div>" +
+      "</div>" +
+      (m.status === "unimplemented" || m.status === "unconfirmed"
+        ? '<span class="num-none">无梯度</span>'
+        : '<button class="num-btn" type="button" data-action="monster-nums" data-id="' + esc(m.id) + '">数值</button>') +
+      "</div>";
+  }
+  function monsterFilter() {
+    const parts = parseHash().parts;
+    const qs = parseHash().query;
+    return {
+      tab: parts[0] === "creatures" && parts[2] === "unimplemented" ? "unimplemented" : "all",
+      tier: qs.get("t") || "全部",
+      threat: qs.get("th") || "全部"
+    };
+  }
+  function monsterHref(tab, tier, threat) {
+    const qs = [];
+    if (tier && tier !== "全部") qs.push("t=" + encodeURIComponent(tier));
+    if (threat && threat !== "全部") qs.push("th=" + encodeURIComponent(threat));
+    return "#/creatures/monsters" + (tab === "unimplemented" ? "/unimplemented" : "") + (qs.length ? "?" + qs.join("&") : "");
+  }
+  function monsterScope(tab) {
+    return allMonsters().filter(function (m) {
+      if (tab === "unimplemented") return m.status === "unimplemented" || m.status === "unconfirmed";
+      return m.status !== "unimplemented" && m.status !== "unconfirmed";
+    });
+  }
+  function monsterMatch(m, f, query) {
+    if (f.tier !== "全部") {
+      const tiers = m.tiers || [];
+      const abyssOnly = tiers.length === 0 && ((m.anywhere || {}).conditions || []).some(function (c) { return c === "维度 abyss"; });
+      if (f.tier === "全图") { if (tiers.length || abyssOnly) return false; }
+      else if (f.tier === "深渊") { if (!abyssOnly) return false; }
+      else if (tiers.indexOf(f.tier) < 0) return false;
+    }
+    if (f.threat !== "全部" && m.threat !== f.threat) return false;
+    if (!query) return true;
+    const hay = [m.name, m.en, m.category, m.threat, m.id, m.strategy, m.behavior, m.spawnText,
+      (m.buildings || []).map(function (b) { return b.name; }).join(" ")].join(" ").toLowerCase();
+    return hay.indexOf(query) >= 0;
+  }
+  function monsterTierRank(m) {
+    const t = (m.tiers || [])[0];
+    return t ? TIERS.indexOf(t) : TIERS.length;
+  }
+
   function renderMonsters() {
+    const cat = monsterCatalog();
+    const f = monsterFilter();
+    const isUn = f.tab === "unimplemented";
     renderTopbar({
       back: "#/creatures",
-      title: "怪物图鉴",
-      sub: allMonsters().length + " 种 · 按威胁等级分类",
+      title: isUn ? "未实装生物" : "生物图鉴",
+      sub: isUn
+        ? cat.counts.unimplemented + " 不会生成 · " + cat.counts.unconfirmed + " 待确认"
+        : cat.counts.spawns + " 条会刷 · 共 " + cat.counts.total + " 条资料",
       actions: ['<button class="icon-btn accent" data-action="add-monster" aria-label="录入怪物">' + icon("plus") + "</button>"]
     });
-    document.title = "怪物图鉴 · 亡者世界";
+    document.title = (isUn ? "未实装生物" : "生物图鉴") + " · 亡者世界";
     q("view").innerHTML =
-      '<div class="detail-hero' + heroClass("monsters") + '"' + heroStyle("monsters") + '><h1>怪物图鉴</h1><div class="meta"><span class="badge">整合包资料核对</span><span class="badge custom">普通 / 特殊 / 小头目 / 头领 / 灾厄 / 真菌</span><span class="badge">可自行补充</span></div>' +
-        '<div class="hero-desc" style="margin-top:10px">记录感染体、变异体、Boss 与 Spore 真菌怪物。不再按辐射区域分类，改为按普通、特殊、小头目、头领、灾厄与真菌感染体划分威胁等级。图片可能来自官方宣传视频、任务书立绘或社区创作者，部分来源难以逐一确认，版权归原作者。</div></div>' +
-      '<div class="section"><div class="searchbar">' + icon("search") + '<input id="monster-search" type="search" placeholder="搜怪物名称、类别或特性" value="' + esc(ui.monsterQuery) + '" autocomplete="off"></div></div>' +
-      '<div class="section"><div class="chip-row" id="monster-cats"></div></div>' +
-      '<div class="section"><div class="chip-row" id="monster-zones"></div></div>' +
-      '<div class="section"><div class="list" id="monster-list"></div></div>' +
+      '<div class="detail-hero' + heroClass("monsters") + '"' + heroStyle("monsters") + '><h1>' + (isUn ? "未实装生物" : "生物图鉴") + "</h1>" +
+        '<div class="meta"><span class="badge">' + cat.counts.total + ' 条收录</span><span class="badge custom">会刷 ' + cat.counts.spawns + "</span>" +
+          (isUn ? '<span class="badge unreleased">不参与筛选</span>' : "") + "</div>" +
+        '<div class="hero-desc" style="margin-top:10px">' + (isUn
+          ? "这些生物当前不会生成，或找不到会生成的证据。只列它原本的属性与判定依据，不给梯度与尸潮的假设数值。"
+          : "按刷怪梯度分区：每行四个点＝T1–T4，实心即会在该梯度刷；「全图」不挑区域。点「数值」看困难难度下各场景的具体数字（取自 attribute.js、InControl spawn.json 与尸潮表）。") +
+        "</div></div>" +
+      '<div class="section"><div class="chip-row">' +
+        '<button class="chip ' + (isUn ? "" : "active") + '" data-go="' + monsterHref("all", f.tier, f.threat) + '">会刷 <span class="n">' + cat.counts.spawns + "</span></button>" +
+        '<button class="chip ' + (isUn ? "active" : "") + '" data-go="' + monsterHref("unimplemented", f.tier, f.threat) + '">未实装 <span class="n">' + (cat.counts.unimplemented + cat.counts.unconfirmed) + "</span></button>" +
+      "</div></div>" +
+      (isUn ? '<div class="section"><div class="guide-note">' + icon("info", 18) + "<div>不参与其他筛选：上排是四个刷怪来源全空的 " + cat.counts.unimplemented + " 只；下排是包内有注册名、但四个来源都扫不到刷怪规则的 " + cat.counts.unconfirmed + " 只。它们不会出现在梯度列表与数值查询里。</div></div></div>" : "") +
+      '<div class="section"><div class="searchbar">' + icon("search") + '<input id="monster-search" type="search" placeholder="搜名称、英文名、模组或建筑" value="' + esc(ui.monsterQuery) + '" autocomplete="off"></div></div>' +
+      (isUn ? "" : '<div class="section"><div class="chip-row" id="monster-tiers"></div></div>') +
+      '<div class="section"><div class="chip-row" id="monster-threats"></div></div>' +
+      '<div class="section" id="monster-sections"></div>' +
       '<button class="fab" data-action="add-monster" aria-label="录入怪物">' + icon("plus", 20) + "</button>";
 
     q("monster-search").addEventListener("input", debounce(function (e) {
       ui.monsterQuery = e.target.value;
       renderMonsterList();
     }, 100));
-    renderMonsterCats();
-    renderMonsterZones();
+    renderMonsterTierChips();
+    renderMonsterThreatChips();
     renderMonsterList();
   }
-  function renderMonsterZones() {
-    const box = q("monster-zones");
+  function renderMonsterTierChips() {
+    const box = q("monster-tiers");
     if (!box) return;
-    box.innerHTML = MONSTER_LEVELS.map(function (z) {
-      return '<button class="chip ' + (ui.monsterZone === z ? "active" : "") + '" data-action="monster-zone" data-zone="' + esc(z) + '">' + esc(z) + "</button>";
+    const f = monsterFilter();
+    const scope = monsterScope("all");
+    const chips = [{ key: "全部", label: "全部", n: scope.length }];
+    TIERS.forEach(function (t) {
+      chips.push({
+        key: t,
+        label: t + " " + TIER_SHORT[t],
+        n: scope.filter(function (m) { return (m.tiers || []).indexOf(t) >= 0; }).length
+      });
+    });
+    chips.push({
+      key: "全图",
+      label: "全图",
+      n: scope.filter(function (m) {
+        return !(m.tiers || []).length && !((m.anywhere || {}).conditions || []).some(function (c) { return c === "维度 abyss"; });
+      }).length
+    });
+    chips.push({
+      key: "深渊",
+      label: "深渊",
+      n: scope.filter(function (m) {
+        return !(m.tiers || []).length && ((m.anywhere || {}).conditions || []).some(function (c) { return c === "维度 abyss"; });
+      }).length
+    });
+    box.innerHTML = chips.map(function (c) {
+      return '<button class="chip ' + (f.tier === c.key ? "active" : "") + '" data-go="' + monsterHref("all", c.key, f.threat) + '">' +
+        esc(c.label) + ' <span class="n">' + c.n + "</span></button>";
     }).join("");
   }
-
-  function monsterCats() {
-    const set = new Set(["全部"]);
-    allMonsters().forEach(function (m) { if (m.category) set.add(m.category); });
-    return Array.from(set);
-  }
-  function renderMonsterCats() {
-    const cats = monsterCats();
-    q("monster-cats").innerHTML = cats.map(function (c) {
-      const n = c === "全部" ? allMonsters().length : allMonsters().filter(function (m) { return m.category === c; }).length;
-      return '<button class="chip ' + (ui.monsterCat === c ? "active" : "") + '" data-action="monster-cat" data-cat="' + esc(c) + '">' + esc(c) + ' <span class="n">' + n + "</span></button>";
+  function renderMonsterThreatChips() {
+    const box = q("monster-threats");
+    if (!box) return;
+    const f = monsterFilter();
+    const scope = monsterScope(f.tab);
+    const chips = [{ key: "全部", n: scope.length }];
+    THREATS.forEach(function (t) {
+      const n = scope.filter(function (m) { return m.threat === t; }).length;
+      if (n) chips.push({ key: t, n: n });
+    });
+    box.innerHTML = chips.map(function (c) {
+      return '<button class="chip ' + (f.threat === c.key ? "active" : "") + '" data-go="' + monsterHref(f.tab, f.tier, c.key) + '">' +
+        esc(c.key) + ' <span class="n">' + c.n + "</span></button>";
     }).join("");
   }
   function renderMonsterList() {
+    const f = monsterFilter();
     const query = ui.monsterQuery.trim().toLowerCase();
-    const list = allMonsters().filter(function (m) {
-      if (ui.monsterCat !== "全部" && m.category !== ui.monsterCat) return false;
-      if (!monsterZoneMatch(m, ui.monsterZone || "全部")) return false;
-      if (!query) return true;
-      return [m.name, m.en, m.category, m.behavior, m.spawn, m.strategy, m.drops].join(" ").toLowerCase().indexOf(query) >= 0;
+    const box = q("monster-sections");
+    if (!box) return;
+    const list = monsterScope(f.tab)
+      .filter(function (m) { return monsterMatch(m, f, query); })
+      .sort(function (a, b) { return monsterTierRank(a) - monsterTierRank(b) || a.name.localeCompare(b.name, "zh"); });
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的生物</div><div class="em-sub">换个梯度、威胁等级或关键词</div></div>';
+      return;
+    }
+    if (f.tab === "unimplemented") {
+      const groups = [
+        { key: "unimplemented", title: "确认不会生成", sub: "四个刷怪来源全空", list: list.filter(function (m) { return m.status === "unimplemented"; }) },
+        { key: "unconfirmed", title: "来源未确认", sub: "包内有注册名，扫不到刷怪规则", list: list.filter(function (m) { return m.status !== "unimplemented"; }) }
+      ];
+      box.innerHTML = groups.filter(function (g) { return g.list.length; }).map(function (g) {
+        return '<div class="section-head"><div class="section-title">' + g.title + " · " + g.list.length + ' 条</div><div class="section-note">' + g.sub + "</div></div>" +
+          '<div class="list">' + g.list.map(monsterRowHTML).join("") + "</div>";
+      }).join("");
+      return;
+    }
+    box.innerHTML = '<div class="list">' + list.map(monsterRowHTML).join("") + "</div>";
+  }
+
+  /* ---------------- 数值矩阵 ---------------- */
+  function metricHeadsHTML() {
+    return ["hp", "armor", "dmg", "toPlayer"].map(function (k) {
+      return '<th><i class="stat-ico ' + METRIC_CLASS[k] + '"></i>' + METRIC_LABEL[k] + "</th>";
+    }).join("");
+  }
+  function matrixCellsHTML(stats) {
+    return ["hp", "armor", "dmg", "toPlayer"].map(function (k) {
+      return '<td class="num">' + statValue(stats ? stats[k] : null) + "</td>";
+    }).join("");
+  }
+  function matrixTableHTML(sections) {
+    let h = '<div class="table-wrap num-wrap"><table class="num-table"><thead><tr><th>难度</th>' + metricHeadsHTML() + "</tr></thead><tbody>";
+    sections.forEach(function (sec) {
+      h += '<tr class="nm-sec"><td colspan="5">' + esc(sec.title) + "</td></tr>";
+      sec.rows.forEach(function (r) { h += "<tr><td>" + esc(r.label) + "</td>" + matrixCellsHTML(r.stats) + "</tr>"; });
     });
-    q("monster-list").innerHTML = list.length ? list.map(function (m) {
-      return '<button class="row-card monster-row" data-go="#/monster/' + encodeURIComponent(m.id) + '">' +
-        monsterAvatar(m, 42) +
-        '<div class="row-main"><div class="row-title">' + esc(m.name) + (m._custom ? ' <span class="badge custom">自制</span>' : m._override ? ' <span class="badge override">已补充</span>' : "") + "</div>" +
-          '<div class="row-sub">' + esc(m.en || m.category || "") + " · " + esc(monsterZoneLabel(m)) + (m.variants > 1 ? " · " + m.variants + " 个变体" : "") + "</div></div>" +
-        '<div class="row-right">' + monsterThreatBadge(m) + "</div>" +
-        "</button>";
-    }).join("") : '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的怪物</div><div class="em-sub">换个关键词或区域，或点右下角录入新条目</div></div>';
+    return h + "</tbody></table></div>";
+  }
+  function openMonsterNumbers(id) {
+    const m = findMonster(id);
+    if (!m) return;
+    if (m.status === "unimplemented" || m.status === "unconfirmed") { go("#/monster/" + encodeURIComponent(m.id)); return; }
+    const rows = quickRows(m, MONSTER_INPUT);
+    if (!rows.length) {
+      openSheet({
+        title: m.name,
+        body: '<div class="tiny dim">这只怪没有可用的数值数据。</div>',
+        foot: '<button class="btn primary block" data-action="close-sheet">知道了</button>'
+      });
+      return;
+    }
+    let t = '<div class="table-wrap num-wrap"><table class="num-table"><thead><tr><th>场景 · 困难</th>' + metricHeadsHTML() + "</tr></thead><tbody>";
+    rows.forEach(function (r) { t += "<tr><td>" + esc(r.label) + "</td>" + matrixCellsHTML(r.stats) + "</tr>"; });
+    t += "</tbody></table></div>";
+    openSheet({
+      title: m.name + " · 困难数值",
+      body: t + '<div class="tiny dim" style="margin-top:10px">梯度按 InControl 的区域标签，建筑尸潮按建筑所在区域。「对玩家」是含原版难度系数的实际伤害。</div>',
+      foot: '<button class="btn primary block" data-go="#/monster/' + encodeURIComponent(m.id) + '">看完整矩阵</button>'
+    });
+  }
+
+  /* ---------------- 怪物详情 ---------------- */
+  function spawnRowsHTML(m) {
+    const out = [];
+    TIERS.forEach(function (t) {
+      if ((m.tiers || []).indexOf(t) < 0) return;
+      const d = (m.cityDetail || {})[t];
+      out.push('<div class="spawn-row on">' +
+        '<i class="tier-dot on" data-tier="' + t + '">' + t + "</i>" +
+        '<div class="spawn-main"><div class="spawn-title">' + esc(TIER_LABEL[t]) + "</div>" +
+        '<div class="spawn-sub">' + (d
+          ? esc((d.districts || []).join("、")) + (d.conditions.length ? " · " + esc(condListText(d.conditions)) : "") + " · 每秒 " + d.rate
+          : "会刷新") + "</div></div></div>");
+    });
+    if (m.anywhere) {
+      const abyss = (m.anywhere.conditions || []).indexOf("维度 abyss") >= 0;
+      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="any">' + (abyss ? "深渊" : "全图") + '</i>' +
+        '<div class="spawn-main"><div class="spawn-title">' + (abyss ? "深渊维度" : "全图任意区域") + '</div><div class="spawn-sub">每秒 ' + m.anywhere.rate +
+        (m.anywhere.conditions.length ? " · " + esc(condListText(m.anywhere.conditions)) : "") + "</div></div></div>");
+    } else if (m.status === "spawns" && !(m.tiers || []).length) {
+      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="any">全图</i>' +
+        '<div class="spawn-main"><div class="spawn-title">随原版刷新</div><div class="spawn-sub">' + esc((m.evidence || []).filter(function (x) { return x.indexOf("原版变体") === 0; })[0] || "不挑区域") + "</div></div></div>");
+    }
+    if ((m.horde.normal || []).length || (m.horde.hard || []).length) {
+      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="horde">潮</i>' +
+        '<div class="spawn-main"><div class="spawn-title">天数尸潮</div><div class="spawn-sub">' +
+        '普通 · 第 ' + ((m.horde.normal || []).join(" / ") || "—") + " 天档；困难 · 第 " + ((m.horde.hard || []).join(" / ") || "—") + " 天档</div></div></div>");
+    }
+    if ((m.buildings || []).length) {
+      out.push('<div class="spawn-row on"><i class="tier-dot on" data-tier="build">筑</i>' +
+        '<div class="spawn-main"><div class="spawn-title">尸潮建筑 · ' + m.buildings.length + ' 座</div><div class="spawn-sub">' +
+        esc(m.buildings.slice(0, 4).map(function (b) { return b.name; }).join("、")) +
+        (m.buildings.length > 4 ? " 等（明细见下表）" : "") + "</div></div></div>");
+    }
+    return out.join("");
   }
 
   function renderMonster(id) {
@@ -2014,29 +2232,68 @@
       ]
     });
     document.title = m.name + " · 怪物图鉴";
-    const incomplete = ["hp", "attack", "armor", "attackType", "spawn", "behavior", "strategy", "drops"].some(function (k) {
-      return !m[k] || m[k] === "待补充";
-    });
     const ti = monsterThreatInfo(m);
+    const spawns = m.status === "spawns";
+    const sections = spawns ? entryMatrix(m, MONSTER_INPUT) : [];
+    const bstats = buildingStats(m, MONSTER_INPUT);
+    const base = m.base || { hp: null, dmg: null, armor: null };
+
+    const buildingTable = bstats.length
+      ? '<div class="table-wrap num-wrap"><table class="num-table"><thead><tr><th>建筑</th><th>梯度</th><th>困难血量</th><th>护甲</th><th>攻击</th><th>对玩家</th><th>占比</th></tr></thead><tbody>' +
+        bstats.map(function (b) {
+          return "<tr><td>" + esc(b.name) + "</td><td>" + esc(b.tier || "—") + '</td><td class="num">' + statValue(b.hp) +
+            '</td><td class="num">' + statValue(b.armor) + '</td><td class="num">' +
+            (b.dmgMin == null ? "—" : b.dmgMin === b.dmgMax ? statValue(b.dmgMin) : b.dmgMin + "–" + b.dmgMax) +
+            '</td><td class="num">' + statValue(b.toPlayer) + '</td><td class="num">' + (b.share == null ? "—" : b.share + "%") + "</td></tr>";
+        }).join("") + "</tbody></table></div>"
+      : "";
+
+    const evidence = (m.evidence || []).slice();
+    if ((m.conflicts || []).length) evidence.push.apply(evidence, m.conflicts);
+
     q("view").innerHTML =
-      '<div class="detail-hero"><div style="display:flex;align-items:center;gap:12px">' + monsterAvatar(m, 54) + '<div style="flex:1;min-width:0"><h1>' + esc(m.name) + "</h1><div class=\"meta\">" + (m.en ? '<span class="badge">' + esc(m.en) + "</span>" : "") + '<span class="badge">' + esc(m.category || "未分类") + '</span><span class="badge threat-meta ' + ti.key + '">' + esc(ti.label) + '</span><span class="badge custom">等级 · ' + esc(monsterZoneLabel(m)) + "</span>" + (m.variants > 1 ? '<span class="badge">' + m.variants + " 个变体</span>" : "") + (m.version ? '<span class="badge override">' + esc(m.version) + "</span>" : "") + (m._custom ? '<span class="badge custom">自制</span>' : m._override ? '<span class="badge override">已补充</span>' : "") + "</div></div></div>" +
-        '<div class="detail-stats"><div><b>' + esc(fmtNum(m.hp)) + '</b><span>生命</span></div><div><b>' + esc(fmtNum(m.attack)) + '</b><span>攻击</span></div><div><b>' + esc(fmtNum(m.armor)) + '</b><span>护甲</span></div></div>' +
-      "</div>" +
-      monsterHeroHTML(m) +
-      (incomplete ? '<div class="section callout"><div class="callout-title">资料待补充</div>这条资料的属性或打法还不完整。点右上角编辑按钮，把你知道的数据补进去，会保存在本机。</div>' : "") +
-      '<div class="section threat-section ' + ti.key + '"><div class="section-head"><div class="section-title">威胁评级</div><div class="section-note">' + (ti.key === "calamity" ? "灾厄 · 最高威胁" : ti.key === "leader" ? "头领级" : ti.key === "minor" ? ti.label : ti.key === "fungus" ? "真菌感染 · T5 推测" : "常规评级") + "</div></div>" +
-        '<div class="threat-block">' + monsterThreatBadge(m) + '<div class="threat-desc">' + esc(monsterThreatDesc(m)) + "</div></div></div>" +
-      '<div class="section"><div class="section-head"><div class="section-title">基础属性</div></div><dl class="kv">' +
-        '<dt>攻击方式</dt><dd>' + esc(m.attackType || "待补充") + "</dd>" +
-        '<dt>刷新方式</dt><dd>' + esc((m.spawnTypes || []).join("、") || "待补充") + "</dd>" +
-        '<dt>刷新说明</dt><dd>' + esc(m.spawn || "待补充") + "</dd>" +
+      '<div class="detail-hero"><div style="display:flex;align-items:center;gap:12px">' + monsterAvatar(m, 54) +
+        '<div style="flex:1;min-width:0"><h1>' + esc(m.name) + "</h1>" +
+          '<div class="meta">' + (m.en ? '<span class="badge">' + esc(m.en) + "</span>" : "") +
+            (m.category ? '<span class="badge">' + esc(m.category) + "</span>" : "") +
+            (m.threat === "未评级"
+              ? '<span class="badge">中立 · 无威胁评级</span>'
+              : (ti.label === m.category ? "" : '<span class="badge threat-meta ' + ti.key + '">' + esc(ti.label) + "</span>")) +
+            monsterBadgesHTML(m) +
+            (m.status === "unimplemented" ? '<span class="badge unreleased">未实装</span>' : "") +
+          "</div></div></div>" +
+        '<div class="detail-stats">' +
+          '<div><b><i class="stat-ico ico-hp"></i>' + statValue(base.hp) + "</b><span>基础生命</span></div>" +
+          '<div><b><i class="stat-ico ico-armor"></i>' + statValue(base.armor) + "</b><span>基础护甲</span></div>" +
+          '<div><b><i class="stat-ico ico-attack"></i>' + statValue(base.dmg) + "</b><span>基础攻击</span></div>" +
+        "</div></div>" +
+      (!m._custom && spawns ? '<div class="section"><div class="section-head"><div class="section-title">刷怪定位</div><div class="section-note">按生成数据的刷怪来源</div></div><div class="spawn-list">' + spawnRowsHTML(m) + "</div></div>" : "") +
+      (spawns && sections.length
+        ? '<div class="section"><div class="section-head"><div class="section-title">数值矩阵</div><div class="section-note">场景 × 难度</div></div>' +
+          matrixTableHTML(sections) +
+          '<div class="tiny dim" style="margin-top:10px">生命 / 护甲 / 攻击为叠加后的属性值；「对玩家」含原版难度系数。天数尸潮不吃区域加成；建筑尸潮按建筑所在区域叠一层；深渊尸潮为推算值，包里尚未配置。</div></div>'
+        : "") +
+      (buildingTable ? '<div class="section"><div class="section-head"><div class="section-title">尸潮建筑数值</div><div class="section-note">困难难度 · ' + bstats.length + " 座</div></div>" + buildingTable + "</div>" : "") +
+      (m.status === "unconfirmed"
+        ? '<div class="section callout"><div class="callout-title">为什么归到「来源未确认」</div>包内能看到它的注册名，但四个刷怪来源（区域刷怪器 / 模组自然刷 / 天数尸潮 / 尸潮建筑）都扫不到它，所以不给数值矩阵，避免和真实数据混在一起。</div>'
+        : "") +
+      (m.status === "unimplemented"
+        ? '<div class="section callout"><div class="callout-title">为什么判定未实装</div>四个刷怪来源全空，也没有任何刷怪表引用它。下面只列它原本的属性，不给梯度与尸潮的假设数值。</div>'
+        : "") +
+      (m.threat === "未评级" ? "" : '<div class="section threat-section ' + ti.key + '"><div class="section-head"><div class="section-title">威胁评级</div><div class="section-note">' + esc(ti.label) + "</div></div>" +
+        '<div class="threat-block">' + monsterThreatBadge(m) + '<div class="threat-desc">' + esc(monsterThreatDesc(m)) + "</div></div></div>") +
+      (m.behavior ? '<div class="section"><div class="section-head"><div class="section-title">行为特性</div></div><div class="text-block">' + esc(m.behavior) + "</div></div>" : "") +
+      (m.strategy ? '<div class="section"><div class="section-head"><div class="section-title">打法建议</div></div><div class="callout red"><div class="callout-title">生存提示</div><div class="text-block">' + esc(m.strategy) + "</div></div></div>" : "") +
+      (m.drops ? '<div class="section"><div class="section-head"><div class="section-title">掉落</div></div><div class="text-block">' + esc(m.drops) + "</div></div>" : "") +
+      '<div class="section"><div class="section-head"><div class="section-title">数据来源</div></div><dl class="kv">' +
+        "<dt>实体 ID</dt><dd class=\"mono\">" + esc(m.id) + "</dd>" +
+        "<dt>模组</dt><dd>" + esc(m.source || (m.id.split(":")[0])) + "</dd>" +
+        "<dt>判定依据</dt><dd>" + esc(evidence.length ? evidence.join("；") : "—") + "</dd>" +
       "</dl></div>" +
-      '<div class="section"><div class="section-head"><div class="section-title">行为特性</div></div><div class="text-block">' + esc(m.behavior || "待补充") + "</div></div>" +
-      '<div class="section"><div class="section-head"><div class="section-title">打法建议</div></div><div class="callout red"><div class="callout-title">生存提示</div><div class="text-block">' + esc(m.strategy || "待补充") + "</div></div></div>" +
-      '<div class="section"><div class="section-head"><div class="section-title">掉落</div></div><div class="text-block">' + esc(m.drops || "待补充") + "</div></div>" +
-      '<div class="section"><div class="section-head"><div class="section-title">资料来源</div></div><div class="tiny dim">' + esc(m.source || "自行录入") + "</div></div>" +
-      '<div class="section" style="display:flex;gap:8px"><button class="btn" style="flex:1" data-action="edit-monster" data-id="' + esc(m.id) + '">' + icon("edit", 17) + "编辑/补充</button>" +
-        (m._custom ? '<button class="btn danger" data-action="delete-monster" data-id="' + esc(m.id) + '">' + icon("trash", 17) + "删除</button>" : (m._override ? '<button class="btn ghost" data-action="reset-monster" data-id="' + esc(m.id) + '">恢复初始</button>' : "")) +
+      '<div class="section" style="display:flex;gap:8px">' +
+        '<button class="btn" style="flex:1" data-action="edit-monster" data-id="' + esc(m.id) + '">' + icon("edit", 17) + "编辑/补充</button>" +
+        (m._custom ? '<button class="btn danger" data-action="delete-monster" data-id="' + esc(m.id) + '">' + icon("trash", 17) + "删除</button>"
+          : (m._override ? '<button class="btn ghost" data-action="reset-monster" data-id="' + esc(m.id) + '">恢复初始</button>' : "")) +
       "</div>";
   }
 
@@ -2594,6 +2851,10 @@
       ui.itemBack = currentHash();
       go("#/item/" + encodeURIComponent(e.target.dataset.itemId));
     }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-go]")) {
+      e.preventDefault();
+      go(e.target.dataset.go);
+    }
   });
 
   function handleAction(action, el, e) {
@@ -2638,8 +2899,7 @@
       case "fav-monster": toggleFav("monsters", el.dataset.id); break;
       case "fav-machine": toggleFav("machines", el.dataset.id); break;
       case "show-all-sources": ui.showAllSources = true; renderItem(parseHash().parts[1]); break;
-      case "monster-cat": ui.monsterCat = el.dataset.cat; renderMonsterCats(); renderMonsterList(); break;
-      case "monster-zone": ui.monsterZone = el.dataset.zone; renderMonsterZones(); renderMonsterList(); break;
+      case "monster-nums": openMonsterNumbers(el.dataset.id); break;
       case "guide-group": ui.guideGroup[el.dataset.type] = el.dataset.group; renderGuideGroups(el.dataset.type); renderGuideRows(el.dataset.type); break;
       case "building-region": ui.buildingRegion = el.dataset.region; renderBuildingRegions(); renderBuildingRows(); break;
       case "machine-cat": ui.machineCat = el.dataset.cat; renderMachineCats(); renderMachineList(); break;

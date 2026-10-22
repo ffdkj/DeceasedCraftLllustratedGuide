@@ -124,3 +124,10 @@
   - Result: `npm run gen:spawntiers` 产出 `public/data/monster-spawn-tiers.js` + `docs/monster-spawn-tiers.md`
     （153 条目：T1 6 / T2 11 / T3 18 / T4 34 含 19 动物；天数尸潮 31；建筑尸潮 32；未实装 60）
   - Files: `scripts/gen-monster-spawn-tiers.ts`、`scripts/verify-monster-spawn-tiers.ts`、`public/data/monster-spawn-tiers.js`、`docs/monster-spawn-tiers.md`、`package.json`
+
+- [x] T24 生物图鉴按梯度重构
+  - Acceptance: 按梯度区分、增加未实装分类且不参与其他筛选、能看某怪在哪几档刷、能快捷确认困难 T1 尸潮等具体数值
+  - Result: 手写 167 ∪ 生成 153 → 200 条目录（会刷 93 / 确认未实装 60 / 来源未确认 47）；
+    梯度点阵 + 威胁二级筛选 + 列表行「数值」快览 sheet + 详情页场景×难度矩阵（生命 / 护甲 / 攻击 / 对玩家 四列，HUD 像素图标）；
+    `npm run verify:monsterguide` 354 项断言锁口径
+  - Files: `src/client/monsters.ts`、`src/client/app.ts`、`public/css/app.css`、`index.html`、`scripts/build-sw.ts`、`scripts/verify-monster-guide.ts`、`docs/monster-guide-ui.md`、`package.json`
