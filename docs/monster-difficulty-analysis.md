@@ -399,6 +399,15 @@
 
 单次生成 20 只：① 先按 `min_spawns` 保底；② 剩余名额按 `weight` 权重分配；③ 单种怪不超过 `max_spawns`（配置里写 0 表示不限），超出的名额回流再分配。所以像「普通第 15 天」= 僵尸 30 权重 + 被感染的警察 5 权重（1–3 只）→ 警察 3 只、僵尸 17 只。
 
+## 5.7 与难度相关的其它脚本（不在数值表里，但会改变体验）
+
+| 脚本 | 效果 |
+|---|---|
+| `kubejs/server_scripts/functions/loot_difficulty.js` | **箱子战利品数量随世界难度变化**：简单 ×1.25、困难 ×0.5（普通不变） |
+| 同上（spawned 钩子） | 带 `forge:hordes` 标签的怪，**手部与护甲掉落率归零**（尸潮不掉装备） |
+| `kubejs/server_scripts/functions/mining_mobs.js` | 19 种怪（Undead Revamp 2、Necroanimalict 系列）获得 `time_to_break_multiplier`（0.5–2.0）；若存在 `extremeMode` 标记则再减半 |
+| `…/apocalypse_difficulty.js` | 见第 6 节末日模式 |
+
 ## 6. 末日模式（apocalypseMode）
 
 不是原版难度，是整合包自己的开关：
@@ -432,6 +441,24 @@
 - 数据层：新增 `public/data/monsters-difficulty.js`，含 `entities[entityId].{hp, dmg, armor, speed, follow}`、`guns` 无关的 `horde: {normal|hard: [{day, range, mobs:[{entity, weight, min, max, expect}]}]}`、`apocalypse` 效果表。可由一段生成脚本从 `attribute.js` + horde 表 + `hordes-common.toml` 复算，保证与包同步。
 - UI：怪物详情页加「难度换算」小表（血/护甲不变，伤害三档）；世界难度页补上「尸潮波次」与末日模式命令；尸潮分类的 8 条怪物修 id 并补数值。
 - 原则：所有数字都注明来源（`attribute.js` / horde 表 / 换算公式），避免再出现「数值不知哪来的」。
+
+## 8.5 关于「僵尸在 T1 区域 20 血、T2 区域 30 血」的核查结论
+
+**整合包数据里不存在这样的机制。** 逐项排查过的位置：
+
+| 检查对象 | 结果 |
+|---|---|
+| `kubejs/startup_scripts/entity/attribute.js`（130 个 `event.modify`） | 每个实体**只有一套**基础数值，没有区域/梯度维度；`minecraft:zombie` = 20 血 / 2 伤害 / 2 护甲，全图一致 |
+| 全部 107 个 KubeJS 脚本里的 `EntityEvents.spawned` / 属性写入 | 只改了掉落、挖掘倍率、末日装备，**没有任何按生物群系改血量/伤害的代码** |
+| `config/` 下 438 个配置（toml/json/json5/cfg）里搜 `T1`–`T4`、`max_health` | 无区域梯度血量表；`T1`–`T4` 只出现在 FTB 任务的**区域章节标题**与**护甲阶级**文案里 |
+| FTB 任务文本 + 整合包 `zh_cn` 语言文件（4799 条） | `T1`–`T4` 指「区域」（郊区/办公/酒店/零售/荒地）与「护甲阶级」，没有怪物血量描述 |
+| 尸潮 38 张表 + 22 条选表脚本 | 只按**天数档 + 难度**换阵容，不调单体数值 |
+| `modlist.html`（415 个模组） | 没有 Scaling Health / Leveled Mobs / Champions 之类按等级缩放怪物的模组 |
+| `public/data/guides.js`（167 条怪物） | 每条只有一套 `hp/damage/armor`，没有分区域变体 |
+
+真正按区域梯度变化的是：**掉落物**（T1–T4 战利品表）、**建筑**、**护甲阶级**（`armors/tier_1..4.js` 与任务里的 T1–T4 套装）、**NPC 章节**（T2 布莱克 / T3 查理 / T4 奥尔托博士）。怪物本身的强度变化只来自：世界难度（伤害 ×1.5/×0.5+1）、尸潮天数档换阵容、末日模式给僵尸加装备。
+
+如果游戏内确实观察到「T2 区域僵尸更肉」，最可能的解释是：T2+ 区域刷出的是**另一种僵尸变种**（如 `zombie_extreme:infected_police` 35 血、`undead_revamp2:thesmoker` 25 血），而不是同一只僵尸被加了血。
 
 ## 9. 方法与可复现性
 
