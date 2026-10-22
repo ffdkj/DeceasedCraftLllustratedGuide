@@ -1583,13 +1583,8 @@ body.gs-modal-open { overflow: hidden; }
 }
 .npc-currency-chip.money { color: #ffd45c; border-color: rgba(224, 169, 74, 0.35); background: rgba(224, 169, 74, 0.1); }
 .npc-currency-chip.barter { color: var(--green); border-color: rgba(127, 199, 154, 0.3); background: var(--green-soft); }
-.quote-toggle {
-  margin-left: auto; padding: 4px 8px; border-radius: 6px;
-  border: 1px solid var(--line); background: var(--panel); color: var(--amber-2);
-  font-size: 9.5px; font-weight: 700;
-}
+.npc-quote-total { margin-left: auto; font-size: 10px; font-weight: 700; color: var(--muted); }
 .quote-list { display: flex; flex-direction: column; gap: 7px; }
-.quote-row-wrap[hidden] { display: none !important; }
 .quote-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
@@ -2108,11 +2103,11 @@ body.view-pc .view {
 .poster-img { object-fit: contain !important; background: #0b0f0d; }
 body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-ratio: auto; }
 
-/* 建筑列表分页 */
-.page-bar { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 14px 0 6px; }
-.page-btn { border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-.page-btn:hover { border-color: var(--line-strong); }
-.page-bar span { color: var(--muted); font-size: 13px; }
+/* 建筑列表滚动加载 */
+.region-sentinel {
+  margin-top: 10px; padding: 14px 0;
+  text-align: center; font-size: 12px; color: var(--dim);
+}
 
 /* 海报 + 建筑档案侧栏 */
 .poster-layout { display: flex; gap: 14px; align-items: stretch; }

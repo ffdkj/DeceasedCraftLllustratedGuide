@@ -269,7 +269,7 @@
     machineCat: "全部",
     guideQuery: {},
     guideGroup: {},
-    npcTradeOpen: {},
+    regionShown: {},
     favTab: "items",
     itemBack: "#/loot",
     showAllSources: false,
@@ -872,17 +872,14 @@
     }
     const items = t.items || [];
     const isMoney = t.currencyKind === "money";
-    const limit = 6;
-    const open = !!ui.npcTradeOpen[n.id];
-    const rows = items.map(function (it, idx) {
-      const extra = idx >= limit;
-      return '<div class="quote-row-wrap"' + (extra ? ' data-npc-extra="' + esc(n.id) + '"' + (open ? "" : " hidden") : "") + ">" + npcTradeRow(t, it) + "</div>";
+    const rows = items.map(function (it) {
+      return npcTradeRow(t, it);
     }).join("");
     return head +
       '<div class="npc-quote-bar">' +
         '<div class="npc-shop-title">' + icon(isMoney ? "gem" : "box", 15) + "<span>" + esc(t.title || "交易") + "</span></div>" +
         '<div class="npc-currency-chip ' + (isMoney ? "money" : "barter") + '">' + (isMoney ? "💰" : "⇄") + " " + esc(t.currencyName || "以物易物") + "</div>" +
-        (items.length > limit ? '<button class="quote-toggle" data-action="npc-trade-toggle" data-id="' + esc(n.id) + '" data-total="' + items.length + '">' + (open ? "收起" : "展开全部 " + items.length + " 条") + "</button>" : "") +
+        '<div class="npc-quote-total">' + items.length + " 条</div>" +
       "</div>" +
       '<div class="quote-list">' + rows + "</div>" +
       '<div class="quote-foot">' + (isMoney ? "➜ 使用货币购买；右侧为获得数量。" : "⇄ 以物易物；左侧为支付数量，右侧为获得数量。") + "</div>";
@@ -1647,6 +1644,8 @@
     restart();
   }
 
+  const REGION_PAGE = 6;
+
   function renderRegion(rid) {
     const region = DATA.regions.filter(function (r) { return r.id === rid; })[0];
     if (!region) { renderLootHome(""); return; }
@@ -1667,6 +1666,8 @@
     const input = q("region-search");
     if (input) input.addEventListener("input", debounce(function () {
       ui.regionQuery[rid] = input.value;
+      // 搜索条件变化时回到第一批，滚动加载重新开始
+      if (ui.regionShown) ui.regionShown[rid] = REGION_PAGE;
       renderRegionList(region);
     }, 100));
     renderRegionList(region);
@@ -1678,17 +1679,15 @@
     const list = region.buildings.filter(function (b) {
       return !query || b.name.toLowerCase().indexOf(query) >= 0 || b.id.toLowerCase().indexOf(query) >= 0;
     });
+    const box = q("region-list");
+    if (!box) return;
     const countEl = q("region-count");
     if (countEl) countEl.textContent = list.length + " / " + region.buildings.length + " 座";
-    if (!ui.regionPage) ui.regionPage = {};
-    const per = 6;
-    const pages = Math.max(1, Math.ceil(list.length / per));
-    let page = ui.regionPage[region.id] || 1;
-    if (page > pages) page = pages;
-    if (page < 1) page = 1;
-    ui.regionPage[region.id] = page;
-    const shown = list.slice((page - 1) * per, page * per);
-    q("region-list").innerHTML = shown.length ? shown.map(function (b) {
+    if (!ui.regionShown) ui.regionShown = {};
+    const shownCount = Math.min(list.length, Math.max(REGION_PAGE, ui.regionShown[region.id] || REGION_PAGE));
+    ui.regionShown[region.id] = shownCount;
+    const shown = list.slice(0, shownCount);
+    box.innerHTML = shown.length ? shown.map(function (b) {
       return '<button class="row-card building-row ' + climateClass(region) + '" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '">' +
         buildingThumb(b, 42) +
         '<div class="row-main"><div class="row-title b-title-wrap">' + buildingTitleHTML(b) + "</div>" +
@@ -1696,10 +1695,31 @@
         '<div class="row-right"><div class="big">' + b._entries.toLocaleString() + '</div><div class="cap">条目</div><div class="prob-mini"><i style="width:' + Math.min(100, Math.max(4, b._entries / Math.max(1, region._entries) * 100 * 4)) + '%"></i></div></div>' +
         "</button>";
     }).join("") : '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的建筑</div><div class="em-sub">换个关键词试试</div></div>';
-    const old = q("region-list").parentElement.querySelector(".page-bar");
+
+    // 滚动加载：上一轮监听先解绑，列表底部留一个哨兵
+    if (ui._regionObs) { ui._regionObs.disconnect(); ui._regionObs = null; }
+    const old = box.parentElement.querySelector(".region-sentinel");
     if (old) old.remove();
-    if (list.length > per) {
-      q("region-list").insertAdjacentHTML("afterend", '<div class="page-bar"><button class="page-btn" data-action="region-page" data-region="' + esc(region.id) + '" data-delta="-1">上一页</button><span>' + page + " / " + pages + '</span><button class="page-btn" data-action="region-page" data-region="' + esc(region.id) + '" data-delta="1">下一页</button></div>');
+    const rest = list.length - shown.length;
+    if (rest > 0) {
+      box.insertAdjacentHTML("afterend", '<div class="region-sentinel" id="region-sentinel">向下滚动加载更多 · 还有 ' + rest + " 座</div>");
+      const sentinel = q("region-sentinel");
+      if (sentinel && window.IntersectionObserver) {
+        ui._regionObs = new IntersectionObserver(function (entries) {
+          for (let i = 0; i < entries.length; i++) {
+            if (!entries[i].isIntersecting) continue;
+            if (ui._regionObs) { ui._regionObs.disconnect(); ui._regionObs = null; }
+            ui.regionShown[region.id] = (ui.regionShown[region.id] || REGION_PAGE) + REGION_PAGE;
+            ui._regionObs = null;
+            renderRegionList(region);
+            break;
+          }
+        }, { rootMargin: "300px 0px" });
+        ui._regionObs.observe(sentinel);
+      } else {
+        ui.regionShown[region.id] = list.length;
+        renderRegionList(region);
+      }
     }
   }
 
@@ -1736,14 +1756,14 @@
       return floor.map(function (f, floorIndex) {
         const itemCount = f.containers.reduce(function (a, c) { return a + c.items.length; }, 0);
         const containers = f.containers.map(function (c, ci) {
-          return '<div class="container-block" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '">' +
+          return '<div class="container-block open" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '">' +
             '<button class="container-head" data-action="toggle-container">' +
               '<span class="container-name">' + esc(c.name) + '</span><span class="container-count">' + c.items.length + " 项</span>" + icon("chevron", 16) +
             "</button>" +
             '<div class="container-items" data-loaded="0"></div>' +
           "</div>";
         }).join("");
-        return '<div class="accordion ' + (floorIndex === 0 ? "open" : "") + '">' +
+        return '<div class="accordion open">' +
           '<button class="acc-head" data-action="toggle-acc">' +
             '<div class="acc-title">' + esc(f.name) + '<div class="acc-sub">' + f.containers.length + " 个容器 · " + itemCount + " 条掉落</div></div>" + icon("chevron", 18) +
           "</button>" +
@@ -1773,11 +1793,13 @@
       buildingHero +
       partChips +
       '<div class="section" style="margin-top:14px"><div class="section-head"><div class="section-title">按楼层查看</div><div class="section-note">当前 ' + entriesShown.toLocaleString() + " 条</div></div>" + floorsHTML + "</div>" +
-      '<div class="section tiny dim">点击容器展开物品；点击物品查看全图所有掉落来源。</div>';
+      '<div class="section tiny dim">楼层与容器默认展开，点击标题可收起；点击物品查看全图所有掉落来源。</div>';
 
-    // 保存当前建筑供容器懒加载
+    // 保存当前建筑供容器填充使用
     ui.currentBuilding = building;
     ui.currentPartIndex = shown.length === 1 ? shown[0].i : null;
+    // 默认展开全部容器：渲染后一次性填充掉落行
+    Array.prototype.forEach.call(q("view").querySelectorAll(".container-block"), fillContainer);
   }
 
   function itemRowHTML(it, showStar) {
@@ -2578,25 +2600,9 @@
       case "fav-monster": toggleFav("monsters", el.dataset.id); break;
       case "fav-machine": toggleFav("machines", el.dataset.id); break;
       case "show-all-sources": ui.showAllSources = true; renderItem(parseHash().parts[1]); break;
-      case "region-page": {
-        if (!ui.regionPage) ui.regionPage = {};
-        const rid = el.dataset.region || "";
-        const delta = parseInt(el.dataset.delta || "0", 10) || 0;
-        ui.regionPage[rid] = Math.max(1, (ui.regionPage[rid] || 1) + delta);
-        const reg = DATA.regions.filter(function (r) { return r.id === rid; })[0];
-        if (reg) renderRegionList(reg);
-        break;
-      }
       case "monster-cat": ui.monsterCat = el.dataset.cat; renderMonsterCats(); renderMonsterList(); break;
       case "monster-zone": ui.monsterZone = el.dataset.zone; renderMonsterZones(); renderMonsterList(); break;
       case "guide-group": ui.guideGroup[el.dataset.type] = el.dataset.group; renderGuideGroups(el.dataset.type); renderGuideRows(el.dataset.type); break;
-      case "npc-trade-toggle": {
-        const open = !ui.npcTradeOpen[el.dataset.id];
-        ui.npcTradeOpen[el.dataset.id] = open;
-        document.querySelectorAll('[data-npc-extra="' + el.dataset.id + '"]').forEach(function (row) { row.hidden = !open; });
-        el.textContent = open ? "收起" : "展开全部 " + (el.dataset.total || "") + " 条";
-        break;
-      }
       case "building-region": ui.buildingRegion = el.dataset.region; renderBuildingRegions(); renderBuildingRows(); break;
       case "machine-cat": ui.machineCat = el.dataset.cat; renderMachineCats(); renderMachineList(); break;
       case "fav-tab": ui.favTab = el.dataset.tab; renderFavorites(); break;
