@@ -453,9 +453,12 @@ function main() {
       },
     };
     // 深渊维度：只有 spawn.json 里那条 deceasedcraft:abyss 规则（困难 ×2 血 / ×1.5 甲 / ×1.5 攻）
+    const abyssHard = multipliers(id, { tier: null, difficulty: "hard", event: false, abyss: true });
     e.abyss = {
       normal: cellWith(s, multipliers(id, { tier: null, difficulty: "normal", event: false, abyss: true }), "normal"),
-      hard: cellWith(s, multipliers(id, { tier: null, difficulty: "hard", event: false, abyss: true }), "hard"),
+      hard: cellWith(s, abyssHard, "hard"),
+      // 推算：深渊尸潮还没写（配置里没有），这里按天数尸潮的加强规律再叠一层事件批
+      hordeHard: cellWith(s, mul(abyssHard, hordeEventMult), "hard"),
     };
     if (spiders.some((r) => r.mobs?.includes(id))) {
       e.depth = spiders
@@ -659,6 +662,23 @@ function writeDoc(data: any, cfg: ReturnType<typeof readHordeCfg>, waves: number
     }
     const f = (c: any) => `${c.hp ?? "—"} / ${c.armor ?? "—"} / ${c.dmg ?? "—"}`;
     L.push(`| ${e.name ?? sp.id}（${sp.id}） | ${f(e.base)} | ${f(e.abyss.normal)} | ${f(e.abyss.hard)} |`);
+  }
+  L.push("");
+  L.push("## 2.6 深渊·困难·尸潮（推算，配置尚未实现）");
+  L.push("");
+  L.push("深渊目前没有尸潮配置。若按天数尸潮的加强规律（abyss 规则 ×2 血/×1.5 甲/×1.5 攻，尸潮再叠事件 ×2/×1.5/×1.5），");
+  L.push("结果是 **血量 ×4、护甲 ×2.25、攻击 ×2.25**。下表列出全部菌染怪（按基础血量降序），BOSS 级另标。");
+  L.push("");
+  L.push("| 怪物 | 基础 血/甲/攻 | 深渊·困难 | 深渊·困难·尸潮（推算） | BOSS 级 |");
+  L.push("|---|---|---|---|---|");
+  const sporeIds = Object.keys(data.entities)
+    .filter((id) => id.startsWith("spore:") && data.entities[id].base?.hp !== null)
+    .sort((a, b) => (data.entities[b].base.hp ?? 0) - (data.entities[a].base.hp ?? 0));
+  for (const id of sporeIds) {
+    const e = data.entities[id];
+    const b = e.base;
+    const f = (c: any) => `${c.hp ?? "—"} / ${c.armor ?? "—"} / ${c.dmg ?? "—"}`;
+    L.push(`| ${e.name ?? id}（${id}） | ${f(b)} | ${f(e.abyss.hard)} | ${f(e.abyss.hordeHard)} | ${b.hp >= 500 ? "是" : ""} |`);
   }
   L.push("");
   L.push("## 3. 尸潮天数档（单波 20 只的期望，×5 波 = 每场）");

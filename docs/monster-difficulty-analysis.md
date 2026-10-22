@@ -853,6 +853,19 @@ ATTACK_DAMAGE 各乘一个 `rand*(max-min)+min`；`MobSettings.getHealthBonus()`
 逐只数值见 `docs/monster-difficulty-table.md` 的「2.5 深渊维度」表，机读数据在
 `public/data/monsters-difficulty.js` 的 `entities[*].abyss.{normal,hard}` 与 `abyssSpawns`。
 
+### 8.11.4 深渊尸潮（尚未实现，按规律推算）
+
+深渊的尸潮配置现在还没写。若照天数尸潮的加强规律（深渊规则 ×2 血 / ×1.5 甲 / ×1.5 攻，尸潮再叠事件
+×2 / ×1.5 / ×1.5），结果是 **血量 ×4、护甲 ×2.25、攻击 ×2.25**；生成器已把它作为推算值写进
+`entities[*].abyss.hordeHard`，完整 54 只菌染怪的表在 `docs/monster-difficulty-table.md` 的 §2.6。
+
+基础血 ≥500 的 13 只「BOSS 级」：菌械重炮 6000、沉渊魔 5000、菌械空堡 4000、噬袭魔 4000、凝袭魔 3400、
+强袭魔 3000、钢戮魔 3000、雏型蜂巢思维 1000、`howit_arm` 625、食人魔 600、邪菌术士 / 铁斧投手 / 审判者 500。
+例：菌械重炮深渊困难 12000 血 / 127.5 甲 / 63 攻；若在尸潮里 → 24000 / 191.25 / 94.5（打向玩家 141.75）。
+
+注意两点：①`sporeconfig.toml` 的 `Global Health Modifier` 与 `Global Armor Modifier` 都是 1.0，不会再加一层；
+②真要做深渊尸潮，得把 `spawn.json` 里事件那条的 `dimension: minecraft:overworld` 放开，否则尸潮进深渊也吃不到那层倍率。
+
 ## 9. 方法与可复现性
 
 本次分析用若干一次性脚本解析：`attribute.js` 的 `event.modify(...)` 块、`guides.js` 的怪物条目、`horde_data/tables/*.json` 与 `scripts/*.json`、`hordes-common.toml`；未改动任何仓库文件。校验点：130 个实体全部解析出 `max_health` 与 `attack_damage`；115 个站内怪物数值与包内逐项比对，偏差 0。

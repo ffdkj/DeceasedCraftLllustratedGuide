@@ -106,6 +106,18 @@ check(!!human && near(human.abyss.hard.hp, 180, 0.02) && near(human.abyss.hard.a
 const chemist = E["spore:chemist"];
 check(!!chemist && near(chemist.abyss.hard.hp, 220, 0.02) && near(chemist.abyss.hard.dmg, 22.5, 0.02), "药剂师深渊困难 220 血 / 22.5 攻");
 
+/* 深渊·困难·尸潮（推算）：abyss 批 × 事件批 = 血 ×4 / 甲 ×2.25 / 攻 ×2.25 */
+const howitzer = E["spore:howitzer"];
+check(!!howitzer && near(howitzer.abyss.hard.hp, 12000, 0.02), `菌械重炮深渊困难 12000 血（实际 ${howitzer?.abyss?.hard?.hp}）`);
+check(near(howitzer.abyss.hard.armor, 127.5, 0.02) && near(howitzer.abyss.hard.dmg, 63, 0.02), "菌械重炮深渊困难 127.5 甲 / 63 攻");
+check(near(howitzer.abyss.hordeHard.hp, 24000, 0.02), `菌械重炮深渊尸潮 24000 血（实际 ${howitzer.abyss.hordeHard.hp}）`);
+check(near(howitzer.abyss.hordeHard.armor, 191.25, 0.02) && near(howitzer.abyss.hordeHard.dmg, 94.5, 0.02), "菌械重炮深渊尸潮 191.25 甲 / 94.5 攻");
+check(near(E["spore:kraken"].abyss.hordeHard.hp, 20000, 0.02), "沉渊魔深渊尸潮 20000 血");
+check(near(E["spore:hohlfresser"].abyss.hordeHard.armor, 225, 0.02), "噬袭魔深渊尸潮 225 甲");
+check(near(human.abyss.hordeHard.hp, 360, 0.02), "菌染人类深渊尸潮 360 血");
+const bossCount = Object.keys(E).filter((id) => id.startsWith("spore:") && (E[id].base?.hp ?? 0) >= 500).length;
+check(bossCount === 13, `菌染 BOSS 级（基础血 ≥500）13 只（实际 ${bossCount}）`);
+
 /* ---------------- 3. 尸潮 ---------------- */
 const H = data.horde;
 check(H.spawnAmount === 20, `每波 20 只（实际 ${H.spawnAmount}）`);
