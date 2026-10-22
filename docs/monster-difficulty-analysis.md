@@ -519,7 +519,9 @@
 `creeper/skeleton/spider/witch/pillager/...` 这一串原版怪，第 5 条再永久拒掉 `zombie/husk/drowned` 的自然刷新。
 所以城市里的僵尸基本都由 InControl 自己的刷怪器刷出（`config/incontrol/spawner.json`，`persecond`/`attempts`/`biometags` 条件）。
 而该刷怪器在 `SpawnerSystem` 里显式调用了 `ForgeEventFactory.onFinalizeSpawn`（常量池证据），
-所以 `finalize` 批（A）与 `onjoin` 批（B/C）会**先后各跑一次**，倍率相乘 —— 8.5.3 的困难列即由此得出。
+当时以为 `finalize` 批（A）与 `onjoin` 批（B/C）会**先后各跑一次**、倍率相乘。
+**实测推翻了这一条**（见 §8.10）：尸潮刷出的怪只吃到 `onjoin` 批，`finalize` 批在尸潮上没生效；
+城市里正常刷的怪才两批都吃。§8.5.3 的困难列只适用于「区域刷怪器刷出的怪」。
 
 ### 8.5.6 同一份配置里另外两个「按区域变强」的体现
 
@@ -742,18 +744,16 @@ T4 = 15 种的大杂烩，生化服/防化服/大吸盘/Boss 级全在这**（`g
 |---|---|
 | `mobs[{name,weight}]` | 该建筑尸潮的出怪池与权重 |
 | `mobamounts{min,max}` | 整波规模（T1 派出所 10–15，核电站 80–90） |
-| `healthbonus{min,max}` | 这波怪的血量倍率（T1 派出所 ×0.75，荒地系列 ×1.25）——**只加血，不加护甲/攻击** |
+| `healthbonus{min,max}` | 定义里写了 0.75–1.25，但 **LostSouls 4.1.7 没有调用点**（`MobSettings.getHealthBonus()` 全文无引用），实际不生效 —— 见 §8.10 |
 | `spawnmaxinbuilding` | 同屏上限（多数 20） |
 | `hauntedchance` | 建筑「闹鬼」概率（全是 1.0） |
 | `helmets/chestplates/leggings/boots` | 给这波怪穿什么（本包全空） |
 
 LostSouls 刷怪用的是 `MobSpawnType.MOB_SUMMONED`（反编译 `mcjty/lostsouls/ForgeEventHandlers` 确认），
 所以困难难度下 InControl 那条 `spawntype: [event, mob_summoned]` 的 ×2 也会命中：
-建筑僵尸困难血量 = 基础 × 建筑加成 × 区域 ×2 × 事件 ×2。
-
-护甲/攻击不吃建筑加成，只叠「区域 + 困难区域 + 事件」：荒地军事中心僵尸
-普通 50 血 / 3 甲 / 3 攻，困难 200 血 / 9 甲 / 6.75 攻（打向玩家 10.13）；
-非僵尸类（不命中 `finalize` 那条）普通甲/攻就是基础值，困难才 ×2 甲 ×2.25 攻。
+建筑僵尸困难血量 = 基础 × 区域 ×2 × 事件 ×2（**没有**建筑加成那一层，见 §8.10）。
+LostSouls 真正加的是**攻击**：`boostEntity` 把 ATTACK_DAMAGE 乘上 toml 全局
+`minDamageBonus…maxDamageBonus`（本包 0.5–1.0），血量乘 `minHealthBonus…maxHealthBonus`（本包 1.0）。
 
 ### 8.9.2 结论：没有「只在尸潮出现」的怪
 
@@ -774,6 +774,47 @@ LostSouls 刷怪用的是 `MobSpawnType.MOB_SUMMONED`（反编译 `mcjty/lostsou
 
 机读数据与逐建筑清单见 §8.8 的同目录产物：`public/data/horde-buildings.js`、`docs/horde-buildings.md`
 （`npm run gen:hordebuildings` / `npm run verify:hordebuildings`，959 项断言）。
+
+## 8.10 实测校核：尸潮不吃 `finalize` 批，建筑 healthbonus 不生效
+
+拿游戏内实测值反推，得到两条修正（都已并入生成器）：
+
+### 8.10.1 尸潮 mob 只吃 `onjoin` 批
+
+| 实测（困难） | 基础 | 实测倍率 | 对应公式 |
+|---|---:|---:|---|
+| T3 尸潮僵尸 70 血 / 5 甲 | 20 / 2 | ×3.5 / ×2.6 | 1.75（困难区域）×2（事件） |
+| T4 尸潮僵尸 80 血 | 20 | ×4.0 | 2.0 × 2 |
+| T4 城内普通僵尸 80 血 | 20 | ×4.0 | 2.0（区域 finalize）×2（困难区域） |
+| T4 尸潮 沉重斗尸 2800 / 120 甲 | 700 / 40 | ×4.0 / ×3.0 | 2.0 × 2 / 2.0 × 1.5 |
+| T4 尸潮 鼠王 3200 / 90 甲 | 800 / 30 | ×4.0 / ×3.0 | 同上 |
+| T4 尸潮 腐豕 3600 / 120 甲 | 900 / 40 | ×4.0 / ×3.0 | 同上 |
+| T2 尸潮 孕胎者 1020 / 22 甲 | 340 / 10 | ×3.0 / ×2.25 | 1.5 × 2 / 1.5 × 1.5 |
+| T3 尸潮 伏从魔 1470 / 30 甲 | 420 / 12 | ×3.5 / ×2.6 | 1.75 × 2 |
+| T3 尸潮 感染军人 280 / 32 甲 | 80 / 12 | ×3.5 / ×2.6 | 1.75 × 2 |
+
+如果按「两批都跑」，T3 尸潮僵尸应该是 20×1.5×1.75×2 = 105 血、甲 7.9；T4 应该是 160 血、甲 9。
+实测都是 `onjoin` 批的单独结果。城市里正常刷的僵尸（非尸潮）才两批都吃（T4 80 血 = 2×2）。
+
+### 8.10.2 建筑 `healthbonus` 是死配置，LostSouls 加的是攻击
+
+反编译 `mcjty/lostsouls/ForgeEventHandlers.boostEntity`：它读的是 **toml 全局配置**
+`minHealthBonus / maxHealthBonus / minDamageBonus / maxDamageBonus`，把 MAX_HEALTH 和
+ATTACK_DAMAGE 各乘一个 `rand*(max-min)+min`；`MobSettings.getHealthBonus()`（建筑 JSON 里那个）
+在 4.1.7 里**没有任何调用点**。本包 `defaultconfigs/lostsouls-server.toml` 设置：
+血量 ×1.0（不变）、攻击 ×0.5–1.0（随机），护甲完全不动。
+
+所以尸潮建筑里：
+- 血量 = 基础 × 区域/难度倍率（和天数尸潮同口径，建筑不再加血）
+- 护甲 = 基础 × 区域/难度倍率（建筑不加甲）
+- 攻击 = 上面再 × [0.5, 1.0] 随机 → 生成器输出区间
+
+### 8.10.3 还没对上的两个点
+
+| 实测 | 表里算出来 | 可能原因 |
+|---|---|---|
+| T3 尸潮月光花 700 血 / 36 甲 | 175 / 15.75（基础 50 / 6） | 要么该实例不在 T3 且在闹鬼建筑里叠了别的倍率，要么其基础值不是 attribute.js 的 50/6（需要确认是不是同一只 `undead_revamp2:the_moonflower`） |
+| T3 非尸潮感染军人 120 血 / 22 甲 | 140 / 21（困难 T3 区域刷怪器） | 120 = 80×1.5 更像 T2 困难；22 甲也不整 —— 需要确认当时所在子区（办公/住宅）与难度 |
 
 ## 9. 方法与可复现性
 

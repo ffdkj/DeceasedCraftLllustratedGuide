@@ -321,6 +321,11 @@ interface Context {
   difficulty: "easy" | "normal" | "hard";
   event: boolean;
   abyss: boolean;
+  /**
+   * 尸潮（天数尸潮 / 建筑尸潮）实测不吃 `finalize` 批（见 docs §8.10）：
+   * 困难 T3 僵尸尸潮 = 70 = 20×1.75×2，少了 1.5 那层。所以两者分开算。
+   */
+  noFinalize?: boolean;
 }
 
 function main() {
@@ -356,10 +361,12 @@ function main() {
     let m = NO_MULT();
     const hostile = !animals.has(id);
     if (ctx.tier) {
-      for (const r of finalize) {
-        if (!r.mobs?.includes(id)) continue;
-        if (!r.tiers!.includes(ctx.tier)) continue;
-        m = mul(m, r.mult);
+      if (!ctx.noFinalize) {
+        for (const r of finalize) {
+          if (!r.mobs?.includes(id)) continue;
+          if (!r.tiers!.includes(ctx.tier)) continue;
+          m = mul(m, r.mult);
+        }
       }
       if (ctx.difficulty === "hard") {
         for (const r of hardDistrict) {
@@ -432,14 +439,14 @@ function main() {
       city,
       // 尸潮：wild = 不在城区（只吃事件那条）；city = 落在城区（区域倍率再叠一层）
       horde: {
-        normal: cellWith(s, multipliers(id, { tier: null, difficulty: "normal", event: true, abyss: false }), "normal"),
-        hard: cellWith(s, multipliers(id, { tier: null, difficulty: "hard", event: true, abyss: false }), "hard"),
+        normal: cellWith(s, multipliers(id, { tier: null, difficulty: "normal", event: true, abyss: false, noFinalize: true }), "normal"),
+        hard: cellWith(s, multipliers(id, { tier: null, difficulty: "hard", event: true, abyss: false, noFinalize: true }), "hard"),
         city: Object.fromEntries(
           TIERS.map((t) => [
             t,
             {
-              normal: cellWith(s, multipliers(id, { tier: t, difficulty: "normal", event: true, abyss: false }), "normal"),
-              hard: cellWith(s, multipliers(id, { tier: t, difficulty: "hard", event: true, abyss: false }), "hard"),
+              normal: cellWith(s, multipliers(id, { tier: t, difficulty: "normal", event: true, abyss: false, noFinalize: true }), "normal"),
+              hard: cellWith(s, multipliers(id, { tier: t, difficulty: "hard", event: true, abyss: false, noFinalize: true }), "hard"),
             },
           ]),
         ),
@@ -582,7 +589,8 @@ function writeDoc(data: any, cfg: ReturnType<typeof readHordeCfg>, waves: number
   L.push("| 野外 | 无区域标签：血量/护甲/攻击不到 InControl 的区域倍率（简单仍 ×0.5） |");
   L.push("| 尸潮 | `spawntype: event` 在困难下额外 ×2 血 / ×1.5 甲 / ×1.5 攻击；简单再 ×0.5 |");
   L.push("| hostile 判定 | 除 `naturalist:*` 动物外，其余实体都按 `hostile: true` 处理（困难批只对 hostile 生效） |");
-  L.push("| 尸潮分两种 | `尸潮 · 野外` 只吃 `spawntype: event` 那条；`尸潮 · 城区` 是尸潮落进区域标签范围，区域倍率会再叠一层（代码里 `continue: true`，两批都跑） |");
+  L.push("| 尸潮 | 实测不吃 `finalize`（区域）那一批，只吃 `onjoin` 批：困难 = 区域 × 事件，普通 ×1，简单 ×0.5 |");
+  L.push("| 尸潮 · 野外 / 城区 | 野外没有区域标签；城区是尸潮落进区域标签范围，困难时叠区域倍率 |");
   L.push("");
   L.push(`每场尸潮：${cfg.spawnAmount} 只/次 × ${waves} 次 ≈ ${data.horde.expectedPerEvent} 只，同屏上限 ${cfg.spawnMax}，每 ${cfg.everyDays} 天一次。`);
   L.push("");

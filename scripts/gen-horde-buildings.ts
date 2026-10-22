@@ -96,6 +96,23 @@ function readLostsoulsDefs(jar: string): { file: string; district: string; raw: 
 /* 2. 名称表                                                           */
 /* ------------------------------------------------------------------ */
 
+/** LostSouls 真正生效的加成来自 defaultconfigs/lostsouls-server.toml（建筑 JSON 里的 healthbonus 在 4.1.7 里没被调用）。 */
+function readLostSoulsConfig() {
+  const file = join(PACK, "overrides/defaultconfigs/lostsouls-server.toml");
+  const text = existsSync(file) ? readFileSync(file, "utf8") : "";
+  const num = (key: string, fallback: number) => {
+    const m = new RegExp(`^\\s*${key}\\s*=\\s*(-?[\\d.]+)`, "m").exec(text);
+    return m ? Number(m[1]) : fallback;
+  };
+  return {
+    minHealthBonus: num("minHealthBonus", 1),
+    maxHealthBonus: num("maxHealthBonus", 1),
+    minDamageBonus: num("minDamageBonus", 0.5),
+    maxDamageBonus: num("maxDamageBonus", 1),
+    spawnMaxInBuilding: num("spawnMaxInBuilding", 15),
+  };
+}
+
 function readBuildingNames(): Map<string, string> {
   const loot = readGlobal(ROOT, "public/data/loot.js", "WZ_DATA");
   const map = new Map<string, string>();
@@ -194,6 +211,7 @@ function main() {
   const eventArmorMult = Number(eventRule.armor ?? 1.5);
   const vanillaFactor = (difficulty: "normal" | "hard", d: number) => (difficulty === "hard" ? 1.5 * d : d);
 
+  const ls = readLostSoulsConfig();
   const jar = findPackJar();
   const defs = readLostsoulsDefs(jar);
   const buildingNames = readBuildingNames();
@@ -234,30 +252,30 @@ function main() {
 
     const rows = mobs.map((m: any) => {
       const e = stats[m.id];
-      const baseHp = e?.base?.hp ?? null;
-      const cityNormal = tier ? e?.city?.[tier]?.normal?.hp ?? null : e?.wild?.normal?.hp ?? null;
-      const cityHard = tier ? e?.city?.[tier]?.hard?.hp ?? null : e?.wild?.hard?.hp ?? null;
-      const cellNormal = tier ? e?.city?.[tier]?.normal : e?.wild?.normal;
-      const cellHard = tier ? e?.city?.[tier]?.hard : e?.wild?.hard;
-      // 建筑加成只作用血量；护甲/攻击只吃「区域 + 难度 + 事件」三档
+      // 建筑尸潮走的是 onjoin 批（不吃 finalize），所以取 horde.city 而不是 city
+      const cellNormal = tier ? e?.horde?.city?.[tier]?.normal : e?.horde?.normal;
+      const cellHard = tier ? e?.horde?.city?.[tier]?.hard : e?.horde?.hard;
       const armorNormal = cellNormal?.armor ?? null;
-      const armorHard = cellHard?.armor === null || cellHard?.armor === undefined ? null : r2(cellHard.armor * eventArmorMult);
+      const armorHard = cellHard?.armor ?? null;
       const dmgNormal = cellNormal?.dmg ?? null;
-      const dmgHard = cellHard?.dmg === null || cellHard?.dmg === undefined ? null : r2(cellHard.dmg * eventDmgMult);
+      const dmgHard = cellHard?.dmg ?? null;
       return {
         id: m.id,
         name: mobNames.get(m.id) ?? e?.name ?? null,
         weight: m.weight,
         share: r2((m.weight / totalWeight) * 100),
         expect: r1((avg * m.weight) / totalWeight),
-        hpNormal: cityNormal === null ? null : r2(cityNormal * hb),
-        hpHard: cityHard === null ? null : r2(cityHard * hb * eventHpMult),
+        hpNormal: cellNormal?.hp ?? null,
+        hpHard: cellHard?.hp ?? null,
         armorNormal,
         armorHard,
-        dmgNormal,
-        dmgHard,
-        toPlayerNormal: dmgNormal === null ? null : r2(vanillaFactor("normal", dmgNormal)),
-        toPlayerHard: dmgHard === null ? null : r2(vanillaFactor("hard", dmgHard)),
+        // LostSouls 的 boostEntity 会把攻击力乘上全局 [minDamageBonus, maxDamageBonus]
+        dmgNormalMin: dmgNormal === null ? null : r2(dmgNormal * ls.minDamageBonus),
+        dmgNormalMax: dmgNormal === null ? null : r2(dmgNormal * ls.maxDamageBonus),
+        dmgHardMin: dmgHard === null ? null : r2(dmgHard * ls.minDamageBonus),
+        dmgHardMax: dmgHard === null ? null : r2(dmgHard * ls.maxDamageBonus),
+        toPlayerNormal: dmgNormal === null ? null : r2(vanillaFactor("normal", dmgNormal * ls.maxDamageBonus)),
+        toPlayerHard: dmgHard === null ? null : r2(vanillaFactor("hard", dmgHard * ls.maxDamageBonus)),
       };
     });
 
@@ -348,7 +366,9 @@ function main() {
       naturalSpawnJars: existsSync(modsDir) ? `${scannedMods} 个模组的 forge:add_spawns` : null,
       note: "husk/drowned 是按原版补进难度表的，没有算进这里的来源统计；未实装 = 四个来源都没有",
       spawnType: "MOB_SUMMONED（LostSouls ForgeEventHandlers）",
-      difficultyStack: `血量 = 基础 × 建筑加成 × 区域/难度倍率 × (困难 ? 事件 ${eventHpMult} : 1)`,
+      difficultyStack: "血量/护甲 = 基础 × 区域/难度倍率 × (困难 ? 事件倍率 : 1)；攻击再 ×LostSouls 的 [minDamageBonus, maxDamageBonus]",
+      lostSoulsBoost: ls,
+      healthBonusNote: "建筑 JSON 的 healthbonus 在 LostSouls 4.1.7 里没有调用点（getHealthBonus 全文无引用），实际生效的是 toml 全局值",
     },
     tiers: DISTRICT_TIER,
     eventMult: { hp: eventHpMult, dmg: eventDmgMult, armor: eventArmorMult },
@@ -387,14 +407,15 @@ function writeDoc(data: any) {
   L.push(`- 生成：\`tsx scripts/gen-horde-buildings.ts\`，生成时间 ${data.generated}`);
   L.push(`- 机读数据：\`${OUT_REL}\`（\`window.WZ_HORDE_BUILDINGS\`）`);
   L.push(`- 出怪定义：${data.source.defs}`);
-  L.push(`- 规模/血量：建筑自带的 \`mobamounts\` 与 \`healthbonus\`；血量按「基础 × 建筑加成 × 区域/难度倍率」叠`);
-  L.push(`- 护甲/攻击：\`healthbonus\` **只加血**，不加甲/攻；甲/攻只吃「区域倍率 + 困难区域批 + 事件批（困难 ×${data.eventMult.dmg} 攻 / ×${data.eventMult.armor} 甲）」`);
-  L.push(`- 「打向玩家」= 攻击属性 × 原版难度系数（困难 1.5D），不含玩家护甲`);
+  L.push(`- 规模：建筑自带的 \`mobamounts\`；血量/护甲：建筑尸潮走 \`onjoin\` 批（实测不吃 \`finalize\` 区域批），困难再叠事件倍率`);
+  L.push(`- 攻击：在上面基础上再乘 LostSouls 全局配置 \`minDamageBonus…maxDamageBonus\`（本包 ${data.source.lostSoulsBoost.minDamageBonus}–${data.source.lostSoulsBoost.maxDamageBonus}），所以是一个区间`);
+  L.push(`- 建筑 JSON 里的 \`healthbonus\` 在 LostSouls 4.1.7 里没有调用点（\`getHealthBonus\` 全文无引用），实际加了血的是 toml 全局 \`minHealthBonus…maxHealthBonus\`（本包 ${data.source.lostSoulsBoost.minHealthBonus}）`);
+  L.push(`- 「打向玩家」= 攻击上限 × 原版难度系数（困难 1.5D），不含玩家护甲`);
   L.push(`- 刷怪类型：${data.source.spawnType}，所以困难难度下事件那条 ×2 对它同样生效`);
   L.push("");
   L.push("## 1. 一览");
   L.push("");
-  L.push("| 阶级 | 建筑 | 区域 | 尸潮规模 | 血量加成 | 同屏上限 | 闹鬼概率 | 出怪 |");
+  L.push("| 阶级 | 建筑 | 区域 | 尸潮规模 | healthbonus（本版本未生效） | 同屏上限 | 闹鬼概率 | 出怪 |");
   L.push("|---|---|---|---:|---:|---:|---:|---|");
   for (const b of data.buildings) {
     const mobs = b.mobs.map((m: any) => `${m.name ?? m.id} ${m.weight}（${m.share}%≈${m.expect}只）`).join("、");
@@ -415,20 +436,20 @@ function writeDoc(data: any) {
     L.push(`#### ${b.name}${b.kind === "generic" ? "（通用尸潮）" : ""} · ${b.districtName}`);
     L.push("");
     L.push(
-      `规模 ${b.amount.min}–${b.amount.max}（均 ${b.amount.avg} 只）· 血量加成 ×${b.healthBonus.min}` +
-        `${b.healthBonus.max !== b.healthBonus.min ? `–×${b.healthBonus.max}` : ""} · 同屏 ${b.spawnMaxInBuilding ?? "—"} · 闹鬼 ${b.hauntedChance ?? "—"}`,
+      `规模 ${b.amount.min}–${b.amount.max}（均 ${b.amount.avg} 只）· 定义里 healthbonus ×${b.healthBonus.min}` +
+        `${b.healthBonus.max !== b.healthBonus.min ? `–×${b.healthBonus.max}` : ""}（4.1.7 未生效）· 同屏 ${b.spawnMaxInBuilding ?? "—"} · 闹鬼 ${b.hauntedChance ?? "—"}`,
     );
     const armored = ["helmets", "chestplates", "leggings", "boots"].filter((k) => (b.armor[k] ?? []).length);
     if (armored.length) L.push(`装备：${armored.map((k) => b.armor[k].join("/")).join("；")}`);
     L.push("");
     L.push("| 怪物 | 权重 | 占比 | 期望只数 | 普通 血/甲/攻 | 困难 血/甲/攻 | 困难打向玩家 |");
     L.push("|---|---:|---:|---:|---|---|---:|");
+    const rng = (lo: any, hi: any) => (lo === null || lo === undefined ? "—" : lo === hi ? String(lo) : `${lo}–${hi}`);
     for (const m of b.mobs) {
-      const fmt = (hp: any, ar: any, dg: any) =>
-        `${hp ?? "—"} / ${ar ?? "—"} / ${dg ?? "—"}`;
       L.push(
         `| ${m.name ?? m.id}（${m.id}） | ${m.weight} | ${m.share}% | ${m.expect} | ` +
-          `${fmt(m.hpNormal, m.armorNormal, m.dmgNormal)} | ${fmt(m.hpHard, m.armorHard, m.dmgHard)} | ${m.toPlayerHard ?? "—"} |`,
+          `${m.hpNormal ?? "—"} / ${m.armorNormal ?? "—"} / ${rng(m.dmgNormalMin, m.dmgNormalMax)} | ` +
+          `${m.hpHard ?? "—"} / ${m.armorHard ?? "—"} / ${rng(m.dmgHardMin, m.dmgHardMax)} | ${m.toPlayerHard ?? "—"} |`,
       );
     }
     L.push("");
