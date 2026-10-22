@@ -143,3 +143,9 @@
   - Context: 这四项只在部署构建里存在（`#monster-list.monster-grid`、`.compare-row`、`.back-top`、`#loot-tiers .tier-grid`），
     仓库源码 0 处；回灌时优先网格视图（正好配合生物图鉴）。素材见 `.cache/zip/`（部署包解压，gitignore）
   - Files: 待定（`src/client/app.ts`、`public/css/app.css`）
+
+- [x] T27 列表行图标 / 数值按钮暗色可读性 / 音乐按钮贴边
+  - Acceptance: 生物行最左显示图标；深色主题下「数值」按钮字看得清；音乐图标不再固定在内容栏里，贴屏幕最右边（高度不变）
+  - Result: 行首加 40px 图标（有立绘用立绘，否则按类别回退：骷髅 / 人群 / 爪印，未实装灰）；
+    修浅色主题白底覆盖漏了 `[data-theme="light"]` 前缀导致暗色白底白字；`.music-fab` 改 `right: 0`
+  - Files: `src/client/app.ts`、`public/css/app.css`、`scripts/verify-monster-guide.ts`、`docs/monster-guide-ui.md`

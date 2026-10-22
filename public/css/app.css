@@ -1005,7 +1005,7 @@ img, svg { display: block; }
 .music-host { position: relative; z-index: 66; }
 .music-fab {
   position: fixed;
-  right: max(14px, calc((100vw - 760px) / 2 + 16px));
+  right: 0;
   bottom: calc(var(--tab-h) + var(--safe-b) + 76px);
   z-index: 46;
   width: 36px; height: 36px;
@@ -1173,7 +1173,7 @@ body.music-open .music-fab { opacity: 0; pointer-events: none; transform: scale(
     bottom: calc(var(--tab-h) + var(--safe-b) + 12px);
     max-height: calc(100dvh - var(--tab-h) - var(--safe-b) - 24px);
   }
-  .music-fab { right: 14px; }
+  .music-fab { right: 0; }
 }
 
 @media (max-width: 420px) {
@@ -2508,6 +2508,9 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
 }
 
 .monster-row { flex-wrap: nowrap; align-items: center; }
+.monster-row > .avatar { width: 40px; height: 40px; border-radius: 10px; }
+.monster-row > .avatar.monster-avatar { background-size: contain; background-position: center; }
+.monster-row > .avatar svg { opacity: 0.75; }
 .monster-row .row-main { flex: 1 1 auto; }
 .monster-row .row-title { -webkit-line-clamp: 1; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .monster-row .row-sub {
@@ -2561,8 +2564,8 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
 [data-theme="light"] .tier-dot.on[data-tier="T2"],
 [data-theme="light"] .tier-dot.on[data-tier="T3"],
 [data-theme="light"] .tier-dot.on[data-tier="T4"] { color: #fff; }
-[data-theme="light"] .num-none { flex: none; align-self: center; font-size: 11.5px; color: var(--dim); }
-.num-btn { background: #fff; }
+.num-none { flex: none; align-self: center; font-size: 11.5px; color: var(--dim); }
+[data-theme="light"] .num-btn { background: #fff; }
 
 /* ============ 像素字体：缝合像素字体 Fusion Pixel 10px ============ */
 /* 授权 OFL-1.1，版权 (c) 2022 TakWolf；许可证全文见 public/fonts/OFL.txt。只用于界面元素，正文保持系统字。 */

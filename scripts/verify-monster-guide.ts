@@ -206,6 +206,13 @@ check(app.includes("renderAnimals"), "动物页存在");
 check(app.includes("#/creatures/animals"), "生物 hub 有动物入口");
 check(app.includes('m.kind !== "neutral"'), "怪物清单排除动物");
 check(app.includes("animalSpawnText"), "动物行给的是刷新规则");
+check(app.includes("monsterAvatar(m, 40)"), "列表行左侧有生物图标");
+check(app.includes('m.kind === "npc" ? "users"'), "无立绘时按类别给图标");
+const css = readFileSync(join(ROOT, "public/css/app.css"), "utf8");
+check(css.includes('[data-theme="light"] .num-btn'), "数值按钮的白底只在浅色主题生效");
+check(!/(^|\n)\.num-btn \{ background: #fff; \}/.test(css), "没有裸 .num-btn 白底（暗色下会白字白底）");
+check(/\.music-fab \{[^}]*right: 0;/s.test(css), "音乐按钮贴屏幕最右边");
+check(!/\.music-fab \{[^}]*calc\(\(100vw - 760px\)/s.test(css), "音乐按钮不再按内容栏居中（面板 .music-panel 保持原样）");
 for (const icon of [
   "stat-heart-full.png",
   "stat-heart-empty.png",

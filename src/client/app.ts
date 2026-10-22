@@ -182,7 +182,11 @@ import {
       return '<div class="avatar monster-avatar" style="width:' + size + "px;height:" + size +
         "px;background-image:url('" + esc(img) + "')\" role=\"img\" aria-label=\"" + esc(m.name) + '"></div>';
     }
-    return '<div class="avatar" style="color:var(--red)">' + icon("skull", size >= 50 ? 26 : 20) + "</div>";
+    // 没有立绘的：按类别给一个能分辨的图形，未实装用灰，避免和会刷的怪抢注意力
+    const gone = m.status === "unimplemented" || m.status === "unconfirmed";
+    const glyph = m.kind === "npc" ? "users" : m.kind === "neutral" ? "paw" : "skull";
+    const color = gone ? "var(--dim)" : m.kind === "neutral" || m.kind === "npc" ? "var(--green)" : "var(--red)";
+    return '<div class="avatar" style="color:' + color + '">' + icon(glyph, size >= 50 ? 26 : 20) + "</div>";
   }
   function monsterHeroHTML(m) {
     if (!m.image) return "";
@@ -1984,6 +1988,7 @@ import {
   }
   function monsterRowHTML(m) {
     return '<div class="row-card monster-row" data-go="#/monster/' + encodeURIComponent(m.id) + '" role="button" tabindex="0">' +
+      monsterAvatar(m, 40) +
       '<div class="row-main">' +
         '<div class="row-title">' + esc(m.name) + (m.en ? ' <span class="row-en">' + esc(m.en) + "</span>" : "") + monsterBadgesHTML(m) + "</div>" +
         '<div class="row-sub">' + tierDotsHTML(m) + (m.hasStats === false ? '<span class="stat-none">无数值</span>' : statChipsHTML(m.base)) + "</div>" +
