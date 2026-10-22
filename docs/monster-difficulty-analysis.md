@@ -713,6 +713,20 @@ T4 = 15 种的大杂烩，生化服/防化服/大吸盘/Boss 级全在这**（`g
 按 T1–T4 给出「本区专属怪物 / 通用怪物 / 每秒概率 / maxlocal」，怪物详情页反查「哪些区会刷它」，
 尸潮页与区域页共用同一套实体 id。这样"这个怪在哪刷"这类问题站内就能自答。
 
+## 8.8 生成物：可直接上站的数据表
+
+上面这些换算已经固化成脚本 + 数据，**尚未接入站点 UI**（`index.html` / SW 清单都没动）：
+
+| 产物 | 内容 |
+|---|---|
+| `scripts/gen-monster-difficulty.ts` | 从 `attribute.js` + `incontrol/spawn.json` + 尸潮表 + `hordes-common.toml` 复算，`npm run gen:monsters` |
+| `public/data/monsters-difficulty.js` | `window.WZ_MONSTER_DIFF`：133 个实体 × 野外/T1–T4 × 简单/普通/困难 × 尸潮，每格 `{hp,dmg,armor,toPlayer}`；含 17/21 张尸潮天数档与单波期望 |
+| `docs/monster-difficulty-table.md` | 人读版：口径说明 + 12 个抽样怪的场景对照表 + 尸潮全天数档名单 |
+| `scripts/verify-monster-difficulty.ts` | 13,471 项断言（`npm run verify:monsters`），含区域/难度锚点值与站点 NPC 章节的区域→阶级交叉校验 |
+
+两个已知口径（文档里也写了）：`hostile` 按「非 naturalist 动物」判定；尸潮列只算 `spawntype: event` 那一条，
+若尸潮落在城区且难度为困难，区域倍率会再叠一层（代码里两批都跑）。
+
 ## 9. 方法与可复现性
 
 本次分析用若干一次性脚本解析：`attribute.js` 的 `event.modify(...)` 块、`guides.js` 的怪物条目、`horde_data/tables/*.json` 与 `scripts/*.json`、`hordes-common.toml`；未改动任何仓库文件。校验点：130 个实体全部解析出 `max_health` 与 `attack_damage`；115 个站内怪物数值与包内逐项比对，偏差 0。

@@ -99,3 +99,9 @@
   - Result: `config/incontrol/spawner.json` 50 条规则，`biometags` + `incity` 分 6 个子区；
     T1 6 种 / T2 8 种 ×2 / T3 11 种 ×2 / T4 15 种，强度 0.35–0.65/秒；模组侧 66 条 `forge:add_spawns` 全是 `forge:any`（不分区域）
   - Files: `docs/monster-difficulty-analysis.md`（§8.7）
+
+- [x] T20 怪物难度数据表（生成物，未接站）
+  - Acceptance: 一套由整合包真源复算、可复现生成的「难度 × 区域 × 尸潮」数值表，含血量/护甲/攻击，且站点未改
+  - Result: `npm run gen:monsters` 产出 `public/data/monsters-difficulty.js`（`WZ_MONSTER_DIFF`，173 KB，133 实体 × 5 场景 × 3 难度 + 17/21 张尸潮档）
+    与 `docs/monster-difficulty-table.md`；`npm run verify:monsters` 13,471 项断言通过；`index.html` / SW 清单未动
+  - Files: `scripts/gen-monster-difficulty.ts`、`scripts/verify-monster-difficulty.ts`、`public/data/monsters-difficulty.js`、`docs/monster-difficulty-table.md`、`package.json`
