@@ -112,3 +112,9 @@
     `docs/horde-buildings.md`；130 实体分类：正常 70 / 仅尸潮 0 / 未实装 60（48 只 spore、deaceased 部件、hordes 玩家变体）；
     发现 `undead_revamp2:night_hunter` 是坏 id；`npm run verify:hordebuildings` 959 项断言
   - Files: `scripts/gen-horde-buildings.ts`、`scripts/verify-horde-buildings.ts`、`public/data/horde-buildings.js`、`docs/horde-buildings.md`、`package.json`
+
+- [x] T22 怪物强化逻辑总表
+  - Acceptance: 一页说清「为什么这个怪是这个数值」，含叠加矩阵与常见误区
+  - Result: `docs/monster-scaling-logic.md`（五层倍率 A–E + LostSouls F + 原版 G、10 种情形的数值矩阵、七个坑），
+    与分析报告、两个数据文件互相引用
+  - Files: `docs/monster-scaling-logic.md`、`docs/monster-difficulty-analysis.md`
