@@ -2474,11 +2474,8 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
 .ico-armor-empty { background-image: url("/images/ui/stat-armor-empty.png"); }
 .ico-attack { background-image: url("/images/ui/stat-attack.png"); }
 .ico-toplayer { background-image: url("/images/ui/stat-heart-half.png"); }
-/* 半心 / 半甲：游戏内满图标算 2 点，这里统一用半图标表示 1 点。
-   半图标的另一半是深色，直接放深色底上会看成一根竖条 —— 垫一层极淡的底让"半"可读 */
+/* 半心 / 半甲：游戏内满图标算 2 点，这里统一用半图标表示 1 点 */
 .ico-hp, .ico-armor, .ico-toplayer { width: 17px; height: 17px; }
-.stat-ico { background-color: rgba(255, 255, 255, 0.07); border-radius: 3px; }
-[data-theme="light"] .stat-ico { background-color: rgba(23, 34, 49, 0.07); }
 
 .stat-chips { display: inline-flex; align-items: center; gap: 10px; }
 .stat-none { font-size: 12px; color: var(--dim); }

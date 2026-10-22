@@ -1995,7 +1995,7 @@ import {
       "</div>" +
       (m.status === "unimplemented" || m.status === "unconfirmed"
         ? '<span class="num-none">无梯度</span>'
-        : '<button class="num-btn" type="button" data-action="monster-nums" data-id="' + esc(m.id) + '">数值</button>') +
+        : '<button class="num-btn" type="button" data-action="monster-nums" data-id="' + esc(m.id) + '">具体数值</button>') +
       "</div>";
   }
   function monsterFilter() {
@@ -2058,7 +2058,7 @@ import {
           (isUn ? '<span class="badge unreleased">不参与筛选</span>' : "") + "</div>" +
         '<div class="hero-desc" style="margin-top:10px">' + (isUn
           ? "这些生物当前不会生成，或找不到会生成的证据。只列它原本的属性与判定依据，不给梯度与尸潮的假设数值。"
-          : "按刷怪梯度分区：每行四个点＝T1–T4，实心即会在该梯度刷；「全图」不挑区域。点「数值」看困难难度下各场景的具体数字（取自 attribute.js、InControl spawn.json 与尸潮表）。") +
+          : "按刷怪梯度分区：每行四个点＝T1–T4，实心即会在该梯度刷；「全图」不挑区域。点「具体数值」看困难难度下各场景的数字（取自 attribute.js、InControl spawn.json 与尸潮表）。") +
         "</div></div>" +
       '<div class="section"><div class="chip-row">' +
         '<button class="chip ' + (isUn ? "" : "active") + '" data-go="' + monsterHref("all", f.tier, f.threat) + '">会刷 <span class="n">' + cat.counts.spawns + "</span></button>" +
