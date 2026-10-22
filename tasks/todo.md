@@ -1,0 +1,26 @@
+# Todo
+
+- [x] T1 共享读取工具（scripts/pack-readers.ts）
+  - Acceptance: 能读出 gun/attachment 配方、GunId 集合（jar/商店/命令池）、tags 映射
+  - Verify: tsx 直跑打印统计与 5.11.19 事实一致
+- [x] T2 配方数据生成（scripts/gen-recipes.ts → public/data/recipes.js）
+  - Acceptance: 枪 164 / 配件 191 / 未实装恰 11；材料字典可解析；两次输出一致（实测通过）
+  - Verify: `npm run gen:recipes` + md5 复跑
+- [x] T3 图集补图（scripts/gen-atlas-extra.ts）
+  - Acceptance: 3 个缺失材料有图标（1 本地 + 2 原版，失败退近似）；幂等
+  - Verify: textures.js 新条目存在 + atlas 尺寸不变 + 页面显示真实图标
+- [x] T4 数据接入（index.html / build-sw / data.d.ts）
+  - Acceptance: 构建产物含 recipes.js 且 SW 预缓存
+  - Verify: `npm run verify`
+- [x] T5 数据断言脚本（scripts/verify-recipes.ts）
+  - Acceptance: 覆盖率/名单/图标全绿
+  - Verify: `tsx scripts/verify-recipes.ts`
+- [x] T6 未实装分类（app.ts / gunsmith.ts / css）
+  - Acceptance: 四个落点生效，11 条从原分类移除，改枪台仍可用
+  - Verify: 页面 + DOM 检查
+- [x] T7 枪械掉落来源修复 + 造价块（app.ts / gunsmith.ts / css）
+  - Acceptance: 两处位置正确、合计规则正确、三种缺配方状态正确
+  - Verify: M4A1 造价、taurus943 无配方提示、11 把未实装文案、375px 布局
+- [x] T8 全量验收
+  - Acceptance: `npm run verify` 通过；页面/截图验收
+  - Verify: 上述命令 + 截图

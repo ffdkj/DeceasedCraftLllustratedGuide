@@ -49,3 +49,6 @@ DeceasedCraft5.11.19/
 # python bytecode from project skills
 __pycache__/
 *.pyc
+
+# 生成脚本的下载缓存
+.cache/
