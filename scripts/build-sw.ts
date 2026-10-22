@@ -36,6 +36,7 @@ async function main() {
     './data/textures.js',
     './data/guides.js',
     './data/gunsmith.js',
+    './data/compat.js',
     './data/recipes.js',
     './data/tiers.js',
     './data/changelog.js',

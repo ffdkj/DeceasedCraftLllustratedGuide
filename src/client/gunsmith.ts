@@ -213,8 +213,56 @@
   function guideGun(id) {
     return guideById[id] || null;
   }
+  /* ---------------- 兼容性与字段补丁（public/data/compat.js） ----------------
+     真实兼容性来自 TACZ 的 allow_attachments 标签；fixes 是站内配件数据的字段补丁
+     （旧版 recoil_modifier 百分比写法、缺失的 inaccuracy_addend）。 */
+  function compatData() {
+    const C = window.WZ_COMPAT;
+    return C && C.guns ? C : null;
+  }
+  function compatFix(id) {
+    const C = compatData();
+    return (C && C.fixes && C.fixes[id]) || null;
+  }
+  function pctLabel(v) {
+    const n = Number(v);
+    if (!isFinite(n)) return "";
+    const p = (n - 1) * 100;
+    return (p >= 0 ? "+" : "") + Math.round(p) + "%";
+  }
+  function applyFix(base) {
+    const fix = compatFix(base.id);
+    if (!fix) return base;
+    const out = Object.assign({}, base);
+    if (fix.recoilPitchMult != null) out.recoilPitchMult = fix.recoilPitchMult;
+    if (fix.recoilYawMult != null) out.recoilYawMult = fix.recoilYawMult;
+    if (fix.inaccAdd != null) out.inaccAdd = fix.inaccAdd;
+    // mods 是数据里预先算好的文案，补丁生效后要按新数值重算，否则会显示 -135% 这种错数。
+    let mods = (base.mods || []).slice();
+    const replaceMod = function (re, text) {
+      const i = mods.findIndex(function (m) { return re.test(m); });
+      if (i >= 0) mods[i] = text;
+      else if (text) mods.push(text);
+    };
+    if (fix.recoilPitchMult != null) replaceMod(/^垂直后坐力/, "垂直后坐力 " + pctLabel(fix.recoilPitchMult));
+    if (fix.recoilYawMult != null) replaceMod(/^水平后坐力/, "水平后坐力 " + pctLabel(fix.recoilYawMult));
+    if (fix.inaccAdd != null) {
+      const text = "腰射散布 " + (fix.inaccAdd > 0 ? "+" : "") + fix.inaccAdd;
+      if (mods.some(function (m) { return /^腰射散布/.test(m); })) replaceMod(/^腰射散布/, text);
+      else {
+        // 按 TACZ 面板的顺序：后坐力之后、其它修正之前
+        let at = -1;
+        mods.forEach(function (m, i) { if (/^(垂直|水平)后坐力/.test(m)) at = i; });
+        if (at >= 0) mods.splice(at + 1, 0, text);
+        else mods.push(text);
+      }
+    }
+    out.mods = mods;
+    return out;
+  }
   function attData(id) {
-    return (GS.attachments || {})[id] || null;
+    const base = (GS.attachments || {})[id] || null;
+    return base ? applyFix(base) : null;
   }
   function mergedAtt(gun, att) {
     if (!gun || !att) return att;
@@ -354,6 +402,7 @@
       recoilYaw *= +a.recoilYawMult || 1;
       inaccStand *= +a.inaccMult || 1;
       inaccAim *= +a.aimInaccMult || 1;
+      inaccStand += +a.inaccAdd || 0;
       damage *= +a.damageMult || 1;
       rpm *= +a.rpmMult || 1;
       speed *= +a.ammoSpeedMult || 1;
@@ -561,6 +610,8 @@
     const slots = SLOT_ORDER.filter(function (s) { return allow.indexOf(s) >= 0; });
     const view = UIx.q ? UIx.q("view") : document.getElementById("view");
     const modes = fireBadges(gs);
+    const compat = compatData();
+    const noCompat = !!(compat && compat.guns[gunId] && compat.guns[gunId].length === 0);
     const builds = loadBuilds();
     const recs = recordsFor(gunId);
     const hasSaved = Object.prototype.hasOwnProperty.call(builds, gunId);
@@ -584,8 +635,10 @@
         '<div class="gs-stat-table"><div class="gs-stat-header"><span>项目</span><span>基础</span><span>当前</span><span>变化</span><span></span></div>' + statRows(base, cur) + '</div>' +
         (cur.flags.length ? '<div class="gs-flags">特殊修正：' + cur.flags.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join("") + '</div>' : "") +
         '<div class="gs-note">后坐力为 TACZ 后坐力曲线的峰值；散布为对应姿态的基础值。护甲穿透按百分比显示。</div></div>' +
-      '<div class="section"><div class="section-head"><div class="section-title">配件槽位</div><div class="gs-sub">' + slots.length + ' 个可用槽位</div></div>' +
-        (slots.length ? '<div class="gs-slots">' + slots.map(function (s) { return slotCard(gs || {}, s, attData(state.attachments[s])); }).join("") + '</div>' : '<div class="guide-note">' + icon("info", 18) + '<div>这把枪在 TACZ 数据中没有开放配件槽。</div></div>') +
+      '<div class="section"><div class="section-head"><div class="section-title">配件槽位</div><div class="gs-sub">' + (noCompat ? "0 个可安装配件" : slots.length + " 个可用槽位") + '</div></div>' +
+        (noCompat
+          ? '<div class="guide-note">' + icon("info", 18) + '<div>该枪在整合包内无可用配件：整合包没有为它配置 <span class="mono">tacz_tags/attachments/allow_attachments</span> 白名单，游戏里也装不上任何配件。</div></div>'
+          : (slots.length ? '<div class="gs-slots">' + slots.map(function (s) { return slotCard(gs || {}, s, attData(state.attachments[s])); }).join("") + '</div>' : '<div class="guide-note">' + icon("info", 18) + '<div>这把枪在 TACZ 数据中没有开放配件槽。</div></div>')) +
       '</div>' +
       '<div class="section"><div class="section-head"><div class="section-title">方案记录库</div><div class="gs-sub">' + recs.length + ' 条 · 手动存档</div></div>' +
         '<div class="gs-record-actions"><button class="gs-btn" data-gs-action="save-record">' + icon("check", 16) + ' 保存当前为记录</button><span class="gs-record-hint">当前方案自动保存；记录库可保留多套并区分来源</span></div>' +
@@ -599,15 +652,17 @@
         }).join("") + '</div>' : '<div class="guide-note">' + icon("info", 18) + '<div>还没有手动存档。点「保存当前为记录」把当前配件组合存进记录库；分享码导入也会自动留档。</div></div>') +
       '</div>' +
       ((recipesUI() && recipesUI().available()) ? recipesUI().buildCostSection(gunId, state.attachments) : "") +
-      '<div class="section"><div class="section-head"><div class="section-title">推荐方案</div><div class="gs-sub">一键装配，可再手动调整</div></div><div class="gs-presets">' +
+      (noCompat ? "" : '<div class="section"><div class="section-head"><div class="section-title">推荐方案</div><div class="gs-sub">一键装配，可再手动调整</div></div><div class="gs-presets">' +
         PRESETS.map(function (p) {
           const picked = pickPreset(gs || {}, p.id);
           const names = Object.keys(picked).map(function (s) { return attData(picked[s]); }).filter(Boolean).map(function (a) { return a.name; });
           return '<div class="gs-preset" style="--gs-accent:' + p.accent + '"><div class="gs-preset-head"><b>' + esc(p.name) + '</b><span>' + names.length + ' 件</span></div>' +
             '<div class="gs-preset-desc">' + esc(p.desc) + '</div><div class="gs-preset-name">' + esc(names.join(" · ") || "当前枪械没有匹配配件") + '</div>' +
             '<button class="gs-preset-btn" data-gs-action="apply-preset" data-preset="' + p.id + '"' + (names.length ? "" : " disabled") + '>装配这套</button></div>';
-        }).join("") + '</div></div>' +
-      '<div class="section"><div class="guide-note">' + icon("info", 18) + '<div>配件兼容按枪械 <span class="mono">allow_attachment_types</span> 生成；同一配件在不同枪械上可能有专属修正。当前方案会保存在本机。</div></div></div>';
+        }).join("") + '</div></div>') +
+      '<div class="section"><div class="guide-note">' + icon("info", 18) + '<div>' + (noCompat
+        ? '整合包未给这把枪配置配件白名单，所以改枪台里没有可装配件；枪械数值仍是真实数据。'
+        : '配件兼容按 TACZ 的 <span class="mono">allow_attachments</span> 标签生成（同槽位类型还要在标签白名单里才装得上）；同一配件在不同枪械上可能有专属修正。当前方案会保存在本机。') + '</div></div></div>';
   }
 
   function attIcon(a, size) {
@@ -616,6 +671,12 @@
   }
 
   function attFitsGun(a, gun) {
+    // 有真实兼容性数据时以标签为准（TACZ allow_attachments），否则退回按槽位/类型的估算。
+    const C = compatData();
+    if (C && gun && gun.id) {
+      const list = C.guns[gun.id];
+      return !!a && !!list && list.indexOf(a.id) >= 0;
+    }
     const gc = gun.gunClass || "other";
     const tags = a.tags || [];
     if (tags.indexOf("shotgun") >= 0 && gc !== "shotgun") return false;
@@ -738,11 +799,22 @@
     if (!gs) return;
     state.attQuery = "";
     const currentId = state.attachments[slot] || "";
-    const ids = ((GS.attachmentOrder || {})[slot] || []).filter(function (id) { return !!attData(id); }).sort(function (a, b) {
-      const fa = attFitsGun(attData(a), gs) ? 0 : 1;
-      const fb = attFitsGun(attData(b), gs) ? 0 : 1;
-      return fa - fb || attData(a).name.localeCompare(attData(b).name, "zh");
-    });
+    const compat = compatData();
+    let ids;
+    if (compat) {
+      // 真实兼容性：只列 allow_attachments 标签允许的配件，不再出现“类型不匹配”项
+      const allowed = (compat.guns[gs.id] || []).filter(function (id) {
+        const a = attData(id);
+        return !!a && a.type === slot;
+      });
+      ids = allowed.sort(function (a, b) { return attData(a).name.localeCompare(attData(b).name, "zh"); });
+    } else {
+      ids = ((GS.attachmentOrder || {})[slot] || []).filter(function (id) { return !!attData(id); }).sort(function (a, b) {
+        const fa = attFitsGun(attData(a), gs) ? 0 : 1;
+        const fb = attFitsGun(attData(b), gs) ? 0 : 1;
+        return fa - fb || attData(a).name.localeCompare(attData(b).name, "zh");
+      });
+    }
     const rows = ids.map(function (id) {
       const a = mergedAtt(gs, attData(id));
       const preview = calc(gs, Object.assign({}, state.attachments, { [slot]: id }));
@@ -751,7 +823,7 @@
       const fits = attFitsGun(a, gs);
       return '<button class="gs-att-row ' + (id === currentId ? "active" : "") + (fits ? "" : " mismatch") + '" data-gs-action="attach" data-att-id="' + esc(id) + '">' +
         attIcon(a, 54) + '<div class="gs-att-body"><div class="gs-att-name">' + esc(a.name) + (id === currentId ? '<span class="gs-equipped">已装备</span>' : '') + (!fits ? '<span class="gs-mismatch">类型不匹配</span>' : '') + '</div>' +
-        '<div class="gs-att-mods">' + esc((a.mods || []).slice(0, 4).join(" · ") || "无数值修正") + '</div>' +
+        '<div class="gs-att-mods">' + esc((a.mods || []).slice(0, 5).join(" · ") || "无数值修正") + '</div>' +
         (delta.length ? '<div class="gs-att-delta">' + delta.map(function (x) { return '<span class="' + x.cls + '">' + esc(x.text) + '</span>'; }).join("") + '</div>' : '') +
         '</div><span class="gs-att-add">' + icon("chevron", 16) + '</span></button>';
     }).join("");

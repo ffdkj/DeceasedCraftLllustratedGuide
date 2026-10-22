@@ -44,4 +44,7 @@
 - **无模具弹药（mold-less ammo）**：40mm 榴弹、RPG 火箭、燃料、医疗包等特殊弹药，没有模具，也就没有子弹梯度。
 - **无弹药（no ammo）**：根本没有弹药字段的枪（如 `suffuse:knife`），子弹梯度显示「无弹药」。
 - **梯度标签（tier tag）**：把枪械梯度与子弹梯度当作这把枪的 tag，与「全自动 / 开膛待击」同排显示；透明底、有色字（T1 绿 / T2 蓝 / T3 紫 / T4 金红），点枪械标签去组装元件页、点子弹标签去子弹模具页。**不是**独立的两行区块。
+- **配件白名单（allow_attachments）**：`data/<命名空间>/tacz_tags/attachments/allow_attachments/<枪>.json`，条目是配件 id 或 `#tag`。**它才是游戏内的兼容性来源**；`allow_attachment_types` 只决定槽位开不开。
+- **无白名单枪（no-whitelist gun）**：整合包没给它配 allow_attachments 文件的枪（如 `tacz:minigun`、`tacz:m320`），游戏内装不上任何配件。
+- **配件字段补丁（attachment fix）**：站内 `gunsmith.js` 与游戏语义不一致时补的一层数据，例如旧版 `recoil_modifier` 百分比写法折算成乘数、补上缺失的 `inaccuracy_addend`。
 - **枪械描述（gun blurb）**：改枪台头部下方那段文案，分两行——**背景描述**（flavor 文案，144 把有）与**定位 / 作用**（分类作用，177 把都有）。缺背景描述的枪显示「暂无背景描述」。

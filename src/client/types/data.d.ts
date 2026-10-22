@@ -37,6 +37,7 @@ declare global {
     WZ_SEED: SeedData;
     WZ_GUIDES: any;
     WZ_GUNSMITH: any;
+    WZ_COMPAT: any;
     WZ_RECIPES: any;
     WZ_RECIPES_UI: any;
     WZ_TIERS: any;

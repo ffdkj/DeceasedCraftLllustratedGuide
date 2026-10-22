@@ -57,3 +57,21 @@
 - [x] T12 文档与门禁
   - Acceptance: spec / todo / CONTEXT 同步，`npm run verify` + `verify:tiers` 全绿
   - Files: `specs/SPEC-gun-tiers.md`、`tasks/todo.md`、`CONTEXT.md`
+
+## 第三轮（配件真实兼容性 + 枪托数值修正）
+
+- [x] T13 兼容性生成器（scripts/gen-compat.ts）
+  - Acceptance: 从 tacz_tags 推导每把枪可装配件，递归展开 #tag；jar 与目录两种来源
+  - Verify: `npm run gen:compat` 输出 178 把枪 / 10,385 组合 / 22 把无白名单
+  - Files: `scripts/gen-compat.ts`、`public/data/compat.js`、`package.json`
+- [x] T14 数据断言（scripts/verify-compat.ts）
+  - Acceptance: 专属配件归属、无白名单名单、补丁数值、负后坐力必须被补丁覆盖
+  - Verify: `npm run verify:compat`（53 项断言）
+  - Files: `scripts/verify-compat.ts`、`package.json`
+- [x] T15 客户端接入（兼容性 + 补丁 + 无配件提示）
+  - Acceptance: 选择器只列白名单、专属枪托不再出现、-135% 变 -35%、腰射散布 -0.5、无白名单枪显示提示
+  - Verify: DOM 断言 22 项（m4a1 / lss / minigun / taurus943 / ak47）
+  - Files: `src/client/gunsmith.ts`、`index.html`、`scripts/build-sw.ts`、`src/client/types/data.d.ts`
+- [ ] T16 用真实 tacz 模组 jar 重跑并复核
+  - Acceptance: `meta.source.jarTagFiles > 0`，warning 里的「未读到 jar」消失，分布复核
+  - Files: `public/data/compat.js`
