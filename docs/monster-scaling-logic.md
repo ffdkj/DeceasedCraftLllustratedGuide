@@ -74,3 +74,5 @@
 | `npm run gen:monsters` / `verify:monsters` | 生成 / 13,502 项断言 |
 | `npm run gen:hordebuildings` / `verify:hordebuildings` | 生成 / 969 项断言 |
 | `docs/monster-difficulty-analysis.md` | 推导、尸潮天数档、§8.5–§8.11 的实测校核 |
+| `docs/monster-spawn-tiers.md` | 每只怪的刷怪梯度（T1–T4 / 天数尸潮档 / 建筑 / 自然刷 / 未实装） |
+| `npm run gen:spawntiers` / `verify:spawntiers` | 生成 / 460 项断言 |

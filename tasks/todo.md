@@ -118,3 +118,9 @@
   - Result: `docs/monster-scaling-logic.md`（五层倍率 A–E + LostSouls F + 原版 G、10 种情形的数值矩阵、七个坑），
     与分析报告、两个数据文件互相引用
   - Files: `docs/monster-scaling-logic.md`、`docs/monster-difficulty-analysis.md`
+
+- [x] T23 每只怪的刷怪梯度文档
+  - Acceptance: 逐怪列出会刷新的梯度（区域 T1–T4、天数尸潮档、建筑尸潮、自然刷），并标未实装
+  - Result: `npm run gen:spawntiers` 产出 `public/data/monster-spawn-tiers.js` + `docs/monster-spawn-tiers.md`
+    （153 条目：T1 6 / T2 11 / T3 18 / T4 34 含 19 动物；天数尸潮 31；建筑尸潮 32；未实装 60）
+  - Files: `scripts/gen-monster-spawn-tiers.ts`、`scripts/verify-monster-spawn-tiers.ts`、`public/data/monster-spawn-tiers.js`、`docs/monster-spawn-tiers.md`、`package.json`
