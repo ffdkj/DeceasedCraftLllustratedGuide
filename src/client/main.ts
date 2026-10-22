@@ -1,3 +1,4 @@
+import './recipes';
 import './seed';
 import './music';
 import './gunsmith';

@@ -2307,3 +2307,84 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
 .item-name, .container-name { font-size: 15px !important; }
 .kv, .kv dt, .kv dd { font-size: 15px !important; line-height: 1.6; }
 .badge { font-size: 12px !important; padding: 3px 9px !important; }
+
+/* ============ 枪械造价（配方材料） ============ */
+.badge.unreleased {
+  background: rgba(224, 122, 95, 0.14);
+  color: #e8927a;
+  border-color: rgba(224, 122, 95, 0.38);
+}
+[data-theme="light"] .badge.unreleased { color: #c4552f; }
+
+.cost-block .cost-total {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  padding: 10px 12px 12px;
+  margin-bottom: 12px;
+}
+.cost-total-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-bottom: 8px;
+  font-size: 12.5px; font-weight: 800; color: var(--amber-2);
+}
+.cost-total-head span { font-weight: 600; font-size: 11.5px; color: var(--muted); }
+[data-theme="light"] .cost-total-head { color: #1e88e5; }
+
+.cost-mats { display: flex; flex-wrap: wrap; gap: 10px 8px; }
+.cost-mat {
+  position: relative;
+  width: 62px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.cost-mat .item-ico { border-radius: 6px; }
+.cost-count {
+  position: absolute; top: 19px; right: 0;
+  padding: 0; line-height: 1;
+  font-size: 10.5px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  background: transparent;
+  border: 0;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 1px rgba(0, 0, 0, 1);
+  pointer-events: none;
+}
+[data-theme="light"] .cost-count {
+  color: #123049;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(255, 255, 255, 0.9), 0 0 1px rgba(255, 255, 255, 1);
+}
+.cost-tag {
+  position: absolute; top: -5px; left: 2px;
+  padding: 0 3px;
+  font-size: 9px; font-weight: 800; line-height: 1.5;
+  color: #17221c;
+  background: var(--amber);
+  border-radius: 3px;
+}
+.cost-label {
+  font-size: 10.5px; line-height: 1.25;
+  color: var(--muted);
+  text-align: center;
+  max-width: 100%;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cost-groups { display: flex; flex-direction: column; gap: 12px; }
+.cost-group {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  padding: 10px 12px 12px;
+}
+.cost-group-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-bottom: 8px;
+  font-size: 12.5px;
+}
+.cost-group-head b { color: var(--text); font-weight: 800; }
+.cost-group-head span { font-size: 11.5px; color: var(--muted); }
+.cost-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+@media (max-width: 520px) {
+  .cost-mat { width: 54px; }
+  .cost-mats { gap: 9px 6px; }
+  .cost-count { top: 18px; right: -1px; }
+}

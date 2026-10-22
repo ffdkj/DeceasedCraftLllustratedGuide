@@ -431,11 +431,21 @@
     }).join("");
   }
 
+  function recipesUI() {
+    return window.WZ_RECIPES_UI || null;
+  }
+  function isUnreleased(id) {
+    const R = recipesUI();
+    return !!(R && R.isUnreleased(id));
+  }
+  function gunTypeOf(g) {
+    if (isUnreleased(g.id)) return "未实装";
+    return (gunData(g.id) || {}).type || g.type || "枪械";
+  }
   function typeOptions() {
     const present = new Set(["全部"]);
     guideGuns.forEach(function (g) {
-      const t = (gunData(g.id) || {}).type || g.type || "枪械";
-      present.add(t);
+      present.add(gunTypeOf(g));
     });
     return Array.from(present).sort(function (a, b) {
       if (a === "全部") return -1;
@@ -461,7 +471,7 @@
     const modes = gs ? (fireText(gs) || g.type || "枪械") : (g.type || "枪械");
     return '<button class="gs-gun-card" data-gs-action="open" data-gun-id="' + esc(g.id) + '">' +
       '<div class="gs-gun-thumb">' + gunImg(g, gs, 76) + '</div>' +
-      '<div class="gs-gun-body"><div class="gs-gun-name">' + esc(g.name || (gs && gs.name) || g.id) + '</div>' +
+      '<div class="gs-gun-body"><div class="gs-gun-name">' + esc(g.name || (gs && gs.name) || g.id) + (isUnreleased(g.id) ? '<span class="badge unreleased">未实装</span>' : "") + '</div>' +
       '<div class="gs-gun-sub">' + esc((gs && gs.type) || g.type || "枪械") + ' · ' + esc(modes) + '</div>' +
       '<div class="gs-gun-stats"><span>伤害 <b>' + fmt(gs ? gs.damage : g.damage, 1) + '</b></span><span>RPM <b>' + fmt(gs ? gs.rpm : g.rpm, 0) + '</b></span><span>弹容 <b>' + ((gs && gs.magLabel) ? esc(gs.magLabel) : fmt(gs ? gs.mag : g.mag, 0)) + '</b></span></div></div>' +
       '<span class="gs-gun-arrow">' + icon("chevron", 16) + '</span></button>';
@@ -484,7 +494,7 @@
     const attCount = Object.keys(GS.attachments || {}).length;
     const list = guideGuns.filter(function (g) {
       const gs = gunData(g.id) || {};
-      return state.gunType === "全部" || (gs.type || g.type) === state.gunType;
+      return state.gunType === "全部" || gunTypeOf(g) === state.gunType;
     }).filter(function (g) {
       const q = state.gunQuery.toLowerCase();
       if (!q) return true;
@@ -544,7 +554,7 @@
     view.innerHTML =
       '<div class="gs-head">' +
         '<div class="gs-head-icon">' + gunImg(item, gs, 92) + '</div>' +
-        '<div class="gs-head-body"><div class="gs-kicker">' + esc((gs && gs.type) || item.type || "枪械") + '</div><h1>' + esc(item.name || gunId) + '</h1>' +
+        '<div class="gs-head-body"><div class="gs-kicker">' + esc((gs && gs.type) || item.type || "枪械") + '</div><h1>' + esc(item.name || gunId) + (isUnreleased(gunId) ? ' <span class="badge unreleased">未实装</span>' : "") + '</h1>' +
         '<div class="gs-badges">' + modes + '</div>' +
         '<div class="gs-head-ammo">' + esc(item.ammo || (gs && gs.ammoName) || "—") + (gs && gs.bulletAmount > 1 ? " · " + gs.bulletAmount + " 弹丸" : "") + '</div></div>' +
         '<button class="gs-switch" data-gs-action="gun-picker">换枪</button>' +
@@ -572,6 +582,7 @@
             '<button class="gs-record-btn danger" data-gs-action="delete-record" data-record-id="' + esc(r.id) + '">删除</button></div>';
         }).join("") + '</div>' : '<div class="guide-note">' + icon("info", 18) + '<div>还没有手动存档。点「保存当前为记录」把当前配件组合存进记录库；分享码导入也会自动留档。</div></div>') +
       '</div>' +
+      ((recipesUI() && recipesUI().available()) ? recipesUI().buildCostSection(gunId, state.attachments) : "") +
       '<div class="section"><div class="section-head"><div class="section-title">推荐方案</div><div class="gs-sub">一键装配，可再手动调整</div></div><div class="gs-presets">' +
         PRESETS.map(function (p) {
           const picked = pickPreset(gs || {}, p.id);

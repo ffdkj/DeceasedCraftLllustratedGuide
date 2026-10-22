@@ -589,13 +589,18 @@
     const cfg = GUIDE_TYPES[type];
     const set = new Set();
     (cfg.data || []).forEach(function (x) {
-      let v = x[cfg.groupKey];
-      if (type === "armor" && !v) v = "未分类";
+      const v = guideGroupOf(type, x);
       if (v) set.add(String(v));
     });
-    return ["全部"].concat(Array.from(set));
+    const list = Array.from(set);
+    if (type === "guns") {
+      const at = list.indexOf("未实装");
+      if (at >= 0) { list.splice(at, 1); list.push("未实装"); }
+    }
+    return ["全部"].concat(list);
   }
   function guideGroupOf(type, item) {
+    if (type === "guns" && item && window.WZ_RECIPES_UI && window.WZ_RECIPES_UI.isUnreleased(item.id)) return "未实装";
     let v = item[GUIDE_TYPES[type].groupKey];
     if (type === "armor" && !v) v = "未分类";
     return v ? String(v) : "其他";
@@ -707,7 +712,10 @@
   }
   function guideRowTag(type, item) {
     if (type === "armor") return item.tier || "套装";
-    if (type === "guns") return item.type || "枪械";
+    if (type === "guns") {
+      if (window.WZ_RECIPES_UI && window.WZ_RECIPES_UI.isUnreleased(item.id)) return "未实装";
+      return item.type || "枪械";
+    }
     if (type === "ammo") return item.type || "弹药";
     if (type === "melee") return (item.tier ? item.tier + " · " : "") + (item.weaponType || item.group || "近战");
     if (type === "vehicles") return item.group || "载具";
@@ -751,7 +759,7 @@
         guideThumb(item, 52, type) +
         '<div class="row-main"><div class="row-title">' + esc(item.name || "未命名") + "</div>" +
           '<div class="row-sub">' + esc(guideRowSub(type, item)) + "</div></div>" +
-        '<div class="row-right"><span class="badge">' + esc(guideRowTag(type, item)) + "</span></div>" +
+        '<div class="row-right"><span class="badge' + (type === "guns" && window.WZ_RECIPES_UI && window.WZ_RECIPES_UI.isUnreleased(item.id) ? " unreleased" : "") + '">' + esc(guideRowTag(type, item)) + "</span></div>" +
         "</button>";
     }).join("") : '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的条目</div><div class="em-sub">换个关键词或分类试试</div></div>';
   }
@@ -773,8 +781,35 @@
     });
     return Array.from(map.values()).sort(function (a, b) { return b.best - a.best; });
   }
+  function gunLootSources(gunId) {
+    const rec = itemIndex.get("tacz:modern_kinetic_gun");
+    if (!rec) return [];
+    const names = [];
+    const guide = ((GUIDE_TYPES.guns || {}).data || []).filter(function (x) { return x.id === gunId; })[0];
+    if (guide && guide.name) names.push(String(guide.name));
+    const gs = ((window.WZ_GUNSMITH || {}).guns || {})[gunId];
+    if (gs && gs.name && names.indexOf(String(gs.name)) < 0) names.push(String(gs.name));
+    if (!names.length) return [];
+    const matches = function (note) {
+      const body = String(note || "").replace(/^枪械\s*[:：]\s*/, "").trim();
+      if (!body) return false;
+      return names.some(function (n) { return n && (body === n || body.indexOf(n) >= 0 || n.indexOf(body) >= 0); });
+    };
+    const map = new Map();
+    rec.sources.forEach(function (s) {
+      if (!matches(s.it[7])) return;
+      const key = s.r.id + "/" + s.b.id;
+      let row = map.get(key);
+      if (!row) { row = { region: s.r, building: s.b, best: 0, count: 0 }; map.set(key, row); }
+      row.best = Math.max(row.best, Number(s.it[4]) || 0);
+      row.count += 1;
+    });
+    return Array.from(map.values()).sort(function (a, b) { return b.best - a.best; });
+  }
   function lootSourcesSection(ids, limit) {
-    const list = lootSourcesFor(ids);
+    return lootRowsSection(lootSourcesFor(ids), limit);
+  }
+  function lootRowsSection(list, limit) {
     if (!list.length) {
       return '<div class="section"><div class="section-head"><div class="section-title">可搜刮建筑</div></div>' +
         '<div class="guide-note">' + icon("info", 18) + "<div>战利品表中没有找到这件装备的直接掉落记录，可能通过合成、交易或任务获取。</div></div></div>";
@@ -955,7 +990,8 @@
         "</div>" + modes +
         '<button class="gs-open-btn" data-go="#/gear/gunsmith/' + encodeURIComponent(item.id) + '">' + icon("gear", 17) + '<span>在改枪台查看配件与完整数值</span>' + icon("chevron", 16) + "</button></div>" +
         effectSection(item.effect, "定位 / 作用", item.description ? "背景：" + item.description : "") +
-        lootSourcesSection([item.id], 6);
+        ((window.WZ_RECIPES_UI && window.WZ_RECIPES_UI.available()) ? window.WZ_RECIPES_UI.gunCostSection(item.id) : "") +
+        lootRowsSection(gunLootSources(item.id), 6);
     }
     if (type === "npcs") {
       let h = '<div class="section"><div class="stat-grid">' +
@@ -1014,8 +1050,10 @@
     const hero = usePhoto
       ? '<div class="guide-hero"><img src="' + esc(item.image) + '" alt="' + esc(item.name) + '" loading="lazy"><div class="guide-hero-note">' + esc(type === "npcs" ? "NPC · " + (item.faction || "") : "剧情书 · 5.11.19") + "</div></div>"
       : '<div class="guide-icon-hero">' + guideThumb(item, 96, type) + "</div>";
+    const unreleased = type === "guns" && window.WZ_RECIPES_UI && window.WZ_RECIPES_UI.isUnreleased(item.id);
     const meta = [
-      '<span class="badge">' + esc(guideRowTag(type, item)) + "</span>",
+      unreleased ? '<span class="badge unreleased">未实装</span>' : "",
+      '<span class="badge">' + esc(type === "guns" ? (item.type || "枪械") : guideRowTag(type, item)) + "</span>",
       type === "vehicles" && item.source ? '<span class="badge">' + esc(item.source) + "</span>" : ""
     ].join("");
     q("view").innerHTML =
