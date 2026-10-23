@@ -1603,7 +1603,7 @@
     } else {
       left = '<button class="me-btn" data-action="open-me" aria-label="我的">' + icon("user", 21) + '<span class="me-btn-label">我的</span></button>';
     }
-    const brand = '<div class="brand"><div class="brand-mark"><img src="./images/brand/deceasedcraft_icon.webp" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
+    const brand = '<div class="brand"><div class="brand-mark"><img src="/guide/images/brand/deceasedcraft_icon.png" alt="DeceasedCraft" onerror="this.style.display='none';this.parentNode.classList.add('no-logo')"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
     let center = "";
     if (opts.title) {
       center = '<div style="flex:1;min-width:0;text-align:center"><div class="page-title" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(opts.title) + "</div>" + (opts.sub ? '<div class="page-sub">' + esc(opts.sub) + "</div>" : "") + "</div>";
