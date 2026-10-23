@@ -149,20 +149,24 @@
 
   /* ---------------- 紧凑版：枪械卡片副标题用 ---------------- */
   /* 「图标 + 枪械T1」「图标 + 子弹T1」。卡片本身是 <button>，所以这里只能用 span，不可点。 */
-  function miniHTML(row) {
+  function miniHTML(row, clickable) {
     if (!row || !row.tier) return "";
     const label = (row.kind === "gun" ? "枪械" : "子弹") + row.tier;
     const title = row.label + (row.inferred ? "（推断）" : "") + (row.name ? "：" + row.name : "");
-    return (
-      '<span class="gs-tier-mini tier-' + row.tier + (row.inferred ? " inferred" : "") +
-      '" title="' + esc(title) + '">' +
-      '<span class="tier-ico">' + iconHTML(row.ico, row.name, 14) + "</span>" +
-      esc(label) +
-      "</span>"
-    );
+    const inner =
+      '<span class="tier-ico">' + iconHTML(row.ico, row.name, 14) + "</span>" + esc(label);
+    const cls = "gs-tier-mini tier-" + row.tier + (row.inferred ? " inferred" : "");
+    // 卡片本身是 <button>，只能用 span；头部 .gs-badges 里可以点，跳组装元件 / 模具页
+    if (clickable && row.href) {
+      return (
+        '<button type="button" class="' + cls + ' clickable" title="' + esc(title) +
+        '" data-go="' + esc(row.href) + '">' + inner + "</button>"
+      );
+    }
+    return '<span class="' + cls + '" title="' + esc(title) + '">' + inner + "</span>";
   }
-  function mini(gunId) {
-    return rows(gunId).map(miniHTML).join("");
+  function mini(gunId, clickable) {
+    return rows(gunId).map(function (r) { return miniHTML(r, clickable); }).join("");
   }
 
   window.WZ_TIERS_UI = {

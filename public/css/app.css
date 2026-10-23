@@ -1404,8 +1404,9 @@ body.music-open .music-fab { opacity: 0; pointer-events: none; transform: scale(
 /* 窄屏枪械头部：避免标题被图标和换枪按钮挤成竖排 */
 .gs-head { position: relative; padding: 12px; gap: 10px; }
 .gs-head-icon { width: 64px; height: 58px; }
-.gs-head-body { padding-right: 40px; }
-.gs-head h1 { font-size: 17px; margin: 2px 0 4px; word-break: break-word; }
+/* 右侧 40px 只留给标题（避开换枪按钮），让梯度标签能用满整行宽度 */
+.gs-head-body { padding-right: 0; }
+.gs-head h1 { font-size: 17px; margin: 2px 0 4px; padding-right: 40px; word-break: break-word; }
 .gs-switch { position: absolute; top: 10px; right: 10px; padding: 5px 8px; font-size: 10px; }
 .gs-head-ammo { max-width: 100%; }
 
@@ -2627,6 +2628,7 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
 .gs-gun-sub { display: flex; align-items: center; gap: 6px; }
 .gs-gun-sub .gs-sub-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .gs-tier-minis { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.gs-badges { gap: 4px; }
 .gs-tier-mini {
   display: inline-flex; align-items: center; gap: 3px;
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.01em;
@@ -2634,7 +2636,17 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
   font-variant-numeric: tabular-nums;
 }
 .gs-tier-mini .tier-ico { width: 14px; height: 14px; }
-.gs-tier-mini .tier-ico .item-ico { width: 14px; height: 14px; border-radius: 3px; font-size: 8px; }
+/* 图标偏移的根因：.item-ico 有 1px 边框 + box-sizing:border-box，
+   14px 的盒子里只剩 12px，而 atlas 的 background-size/position 是按 14px 算的 → 图案被裁掉一像素并整体偏移。
+   这里去掉边框与底片，让盒子正好等于图标尺寸。 */
+.tier-ico .item-ico,
+.gs-tier-mini .tier-ico .item-ico {
+  width: 14px; height: 14px; border: 0; border-radius: 3px; background-color: transparent; font-size: 8px;
+}
+.tier-tag .tier-ico .item-ico { width: 16px; height: 16px; }
+.gs-tier-mini.clickable { cursor: pointer; }
+.gs-tier-mini.clickable:hover { text-decoration: underline; }
+.gs-tier-mini.clickable:focus-visible { outline: 2px solid var(--tier, var(--amber)); outline-offset: 2px; border-radius: 4px; }
 .gs-tier-mini.inferred { opacity: 0.62; }
 .gs-tier-mini.tier-T1 { --tier: #4ade80; }
 .gs-tier-mini.tier-T2 { --tier: #60a5fa; }

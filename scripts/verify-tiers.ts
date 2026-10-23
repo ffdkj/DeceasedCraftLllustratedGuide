@@ -282,6 +282,13 @@ check(Object.prototype.hasOwnProperty.call(textureItems, "tacz:ammo"), "无模�
   check(/mini: mini,/.test(tiersSrc), "WZ_TIERS_UI 暴露 mini()");
   check(/kind === "gun" \? "枪械" : "子弹"/.test(tiersSrc), "缩写文案是 枪械 / 子弹 + 档位");
   check(gsSrc.includes("tiersUI().mini(g.id)"), "枪械卡片副标题用 mini()");
+  check(gsSrc.includes("tiersUI().mini(gunId, true)"), "改枪台头部也用缩写（可点）");
+  check(gsSrc.includes('class="gs-tier-minis"'), "头部缩写包在 .gs-tier-minis 里，两枚不会拆成上下两行");
+  check(tiersSrc.includes("clickable && row.href"), "缩写支持可点版本");
+  check(/\.gs-tier-minis \{[^}]*display: inline-flex/s.test(css), "缩写组是 inline-flex（同排）");
+  check(/\.tier-ico \.item-ico[\s\S]{0,220}border: 0/.test(css), "梯度图标去掉 1px 边框（否则 border-box 下图案被裁偏）");
+  check(/\.gs-head-body \{ padding-right: 0; \}/.test(css), "窄屏头部不再给整块留 40px，梯度标签能用满宽度");
+  check(/\.tier-tag \.tier-ico \.item-ico \{ width: 16px; height: 16px; \}/.test(css), "详情页满标签的图标仍是 16px");
   check(gsSrc.includes('class="gs-sub-text"'), "副标题文本单独包一层，超长只截文本");
   for (const t of ["T1", "T2", "T3", "T4"]) {
     check(css.includes(`.gs-tier-mini.tier-${t}`), `卡片梯度缩写配色 ${t}`);

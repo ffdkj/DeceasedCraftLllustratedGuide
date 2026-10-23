@@ -622,7 +622,7 @@
       '<div class="gs-head">' +
         '<div class="gs-head-icon">' + gunImg(item, gs, 92) + '</div>' +
         '<div class="gs-head-body"><div class="gs-kicker">' + esc((gs && gs.type) || item.type || "枪械") + '</div><h1>' + esc(item.name || gunId) + (isUnreleased(gunId) ? ' <span class="badge unreleased">未实装</span>' : "") + '</h1>' +
-        '<div class="gs-badges">' + modes + ((tiersUI() && tiersUI().available()) ? tiersUI().badges(gunId) : "") + '</div>' +
+        '<div class="gs-badges">' + modes + ((tiersUI() && tiersUI().available()) ? '<span class="gs-tier-minis">' + tiersUI().mini(gunId, true) + '</span>' : "") + '</div>' +
         '<div class="gs-head-ammo">' + esc(item.ammo || (gs && gs.ammoName) || "—") + (gs && gs.bulletAmount > 1 ? " · " + gs.bulletAmount + " 弹丸" : "") + '</div></div>' +
         '<button class="gs-switch" data-gs-action="gun-picker">换枪</button>' +
       '</div>' +
