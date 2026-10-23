@@ -1,0 +1,1 @@
+window.WZ_BUILDING_CONTENT = {};

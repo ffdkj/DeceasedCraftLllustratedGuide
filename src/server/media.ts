@@ -5,6 +5,9 @@ import {
 } from '@aws-sdk/client-s3';
 import type { Context } from 'hono';
 import { Readable } from 'node:stream';
+import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { loadEnvFile } from 'node:process';
 
 try {
@@ -226,12 +229,25 @@ function respondBuffered(c: Context, item: Buffered, state: 'HIT' | 'MISS') {
 }
 
 export async function mediaHandler(c: Context) {
+  const key = objectKey(c.req.path);
+  if (!key) return c.json({ error: 'invalid media path' }, 400);
+
+  // 本地开发兜底：优先读取 public/media，生产环境仍走 S3
+  const localFile = path.join(process.cwd(), 'public', 'media', key.replace(/^public\//, ''));
+  if (existsSync(localFile)) {
+    try {
+      const data = await readFile(localFile);
+      const ext = localFile.split('.').pop()?.toLowerCase();
+      const type = ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'm4a' ? 'audio/mp4' : 'application/octet-stream';
+      c.header('Content-Type', type);
+      c.header('Cache-Control', 'public, max-age=3600');
+      return c.body(data);
+    } catch {}
+  }
+
   if (!s3) {
     return c.json({ error: 'media storage is not configured' }, 503);
   }
-
-  const key = objectKey(c.req.path);
-  if (!key) return c.json({ error: 'invalid media path' }, 400);
 
   const range = c.req.header('range');
   const ifNoneMatch = c.req.header('if-none-match');
