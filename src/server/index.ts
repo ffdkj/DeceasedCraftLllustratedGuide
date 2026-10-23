@@ -1,8 +1,10 @@
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { timeout } from 'hono/timeout';
 import { existsSync } from 'node:fs';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mediaHandler } from './media.js';
@@ -35,7 +37,35 @@ configureOverrides(staticRoot);
 
 app.get('/api/health', (c) => c.json({ ok: true, service: 'wzsj-atlas' }));
 
-// 管理员换图后在首屏渲染之前就把「逻辑路径 → 版本号」发下去（同步脚本，避免晚于首次渲染）
+/* 管理员换图后的「逻辑路径 → 版本号」必须在首屏渲染之前到页面，而且不能被边缘缓存拦住。
+   Cloudflare 对 .js 走「缓存一切 + 4 小时边缘 TTL」，连 origin 的 no-cache 都会被改写成
+   max-age=14400；所以不单独发一个 js 文件，而是把它内联进 index.html（HTML 是 DYNAMIC + no-cache）。 */
+const DYNAMIC_SCRIPT_TAG = '<script src="/data/image-versions.js"></script>';
+let htmlCache: { mtime: number; html: string } | null = null;
+
+async function indexHtml(): Promise<string> {
+  const file = path.join(staticRoot, 'index.html');
+  const info = await stat(file).catch(() => null);
+  if (htmlCache && info && htmlCache.mtime === info.mtimeMs) return htmlCache.html;
+  const html = await readFile(file, 'utf8');
+  htmlCache = { mtime: info ? info.mtimeMs : 0, html };
+  return html;
+}
+
+app.get('/', serveIndex);
+app.get('/index.html', serveIndex);
+
+async function serveIndex(c: Context) {
+  const html = await indexHtml();
+  const inline = '<script>' + (await imageVersionsScript()).trim() + '</script>';
+  const body = html.includes(DYNAMIC_SCRIPT_TAG) ? html.replace(DYNAMIC_SCRIPT_TAG, inline) : html;
+  c.header('Content-Type', 'text/html; charset=utf-8');
+  c.header('Cache-Control', 'no-cache');
+  c.header('X-Content-Type-Options', 'nosniff');
+  return c.body(body);
+}
+
+// 兼容：老 HTML（浏览器缓存里的）仍可能请求这个文件；正常路径不会用到它
 app.get('/data/image-versions.js', async (c) => {
   c.header('Content-Type', 'application/javascript; charset=utf-8');
   c.header('Cache-Control', 'no-cache');

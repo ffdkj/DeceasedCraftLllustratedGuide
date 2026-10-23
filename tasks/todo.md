@@ -177,7 +177,7 @@
   - Result: 单账号登录（`ADMIN_EMAIL` / `ADMIN_PASSWORD`，scrypt 之外用定长 sha256 比较，同 IP 5 次错锁 10 分钟、
     会话 30 天存 SQLite）；换图走**服务端覆盖层**——请求路径先剥掉 `/media` 前缀与 8 位内容哈希回到逻辑路径，
     命中覆盖表就从 `public/overrides/<sha16>.webp` 取新图，原图与桶里原对象不动；URL 带 `?v=<10位哈希>`，
-    服务端在首屏前用同步脚本 `/data/image-versions.js` 下发版本表，客户端把版本串写进 `WZ_*`/`seed`，
+    服务端把版本表内联进首页 HTML（`index.html` 留 `/data/image-versions.js` 标记、请求时替换；不单独发 js 是因为 CF 对 `.js` 缓存 4 小时），客户端把版本串写进 `WZ_*`/`seed`，
     所以 Cloudflare 边缘缓存过的旧地址也会换成新 URL（CSS 直接引用的 8 处拿不到版本串，已记录在文档里）；
     每图保留 3 版；SQLite 只存覆盖/会话/审计，整份状态镜像到桶 `public/admin/state.json`，容器盘被清空能回灌；
     实测：preview→commit→带/不带 `?v=` 的缓存头→304→revert→恢复原图→4 次替换后只留 3 版→

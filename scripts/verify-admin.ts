@@ -80,7 +80,11 @@ function check(cond: boolean, message: string): void {
   check(/aspectDelta/.test(over), '预览会算比例偏差给前端告警');
 
   const index = read('src/server/index.ts');
-  check(index.includes("app.get('/data/image-versions.js'"), '有 /data/image-versions.js 动态脚本路由');
+  check(index.includes("app.get('/data/image-versions.js'"), '保留 /data/image-versions.js 路由（老 HTML 兼容）');
+  check(index.includes('DYNAMIC_SCRIPT_TAG'), '版本表以标记形式写进 index.html');
+  check(index.includes('html.replace(DYNAMIC_SCRIPT_TAG, inline)'), '服务端把标记替换成内联脚本');
+  check(index.includes("app.get('/', serveIndex)"), '首页由服务端渲染（才能内联版本表）');
+  check(index.includes('缓存一切'), '注释里写明了为什么要内联（边缘 CTL 会把 .js 缓存 4 小时）');
   check(index.includes('cacheControl') || index.includes("c.header('Cache-Control', 'no-cache')"), '动态版本表不缓存');
   check(index.indexOf("app.use('/images/*'") < index.indexOf('serveStatic('), '覆盖层注册在静态文件之前');
   check(index.indexOf("app.use('/media/*'") < index.indexOf("app.all('/media/:path{.+}'"), '媒体覆盖层在 mediaHandler 之前');

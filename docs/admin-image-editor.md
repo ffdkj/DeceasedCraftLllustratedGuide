@@ -36,7 +36,9 @@
 1. 请求进来先把路径剥回**逻辑路径**：去掉 `?v=`、去掉 `/media/images` 前缀、去掉 8 位指纹哈希。
 2. 命中覆盖表 → 从 `public/overrides/<sha16>.webp` 取新图返回，**原图与桶里原对象一个字节都不动**。
 3. URL 上带 `?v=<10 位内容哈希>` 的请求发长缓存（URL 变了就等于新资源）；不带版本串的（CSS 里直接写死的那几张）发 `no-cache` + `ETag`，让浏览器每次复核。
-4. 服务端在首屏之前用同步脚本 `/data/image-versions.js` 把「逻辑路径 → 版本号」发给页面；`src/client/image-versions.ts` 在模块求值期把它写进所有 `WZ_*` 数据与 `seed`，所以页面地址天然就是带版本串的新 URL，**不需要等异步请求，也不会晚于首次渲染**。
+4. 版本表（「逻辑路径 → 版本号」）由服务端**内联进首页 HTML**：`index.html` 里留着 `<script src="/data/image-versions.js"></script>` 这个标记，请求 `/` 时被替换成 `<script>window.WZ_IMAGE_VERSIONS={…}</script>`。
+   为什么不单独发一个 js 文件：Cloudflare 对 `.js` 走「缓存一切 + 4 小时边缘 TTL」，连 origin 的 `no-cache` 都会被改写成 `max-age=14400`，版本表会滞后最长 4 小时；HTML 是 `DYNAMIC` + `no-cache`，每次回源，能保证刷新即见。
+   `src/client/image-versions.ts` 在模块求值期把这张表写进所有 `WZ_*` 数据与 `seed`，所以页面地址天然就是带版本串的新 URL，**不需要等异步请求，也不会晚于首次渲染**。
 5. 换图成功后 `setImageVersion()` 同步改写内存表、数据对象和已渲染的 DOM，当前页面立刻显示新图，不用刷新。
 
 ## 4. 数据存在哪
@@ -53,6 +55,7 @@
 
 - 只允许替换 `/images/**`（怪物、枪械、附件、建筑、载具、材料、指南插图、封面、UI 图）。`/textures/**`（728KB 精灵图集，换掉等于毁掉 2000+ 图标）、`/icons/**`（SVG 图标）、`/fonts/**` 不在可换清单里。
 - 输入限 JPG / PNG / WebP / AVIF，单张 ≤ 10MB；输出长边 ≤ 2048、WebP 质量 90、保留 alpha。
+- 边缘缓存：`.js` / 图片这类资源走 Cloudflare 的「缓存一切 + 4 小时 TTL」，origin 改头无效，所以换图一致性只能靠换 URL（版本串）。SW 对带 `?v=` 的图片请求会顺带清掉同路径的无版本缓存。
 - **CSS 里直接写死的 8 处图片地址拿不到版本串**（`page_creatures_bg.webp` 与 6 个半点制图标）。如果替换它们，已经进 Cloudflare 边缘的旧副本可能要等 TTL 或手动 purge 才会更新——这是「不换 URL 就换不掉边缘缓存」的必然结果。
 - 单副本假设：本地 SQLite + 整份镜像在单 pod 下是自洽的；如果以后把服务扩到多副本，镜像会互相覆盖，需要改成共享数据库。
 - 社区账号与管理员是两套会话：`wz_session` 是社区账号，`wz_admin` 是管理员；`/api/me` 两个身份都回。

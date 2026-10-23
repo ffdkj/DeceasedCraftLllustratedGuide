@@ -88,4 +88,4 @@
 - **图片覆盖（image override）**：管理员换掉某张图后，服务端在静态文件之前把请求接走 —— 请求路径先剥掉 `/media` 前缀与 8 位内容哈希回到**逻辑路径**，命中覆盖表就从桶里取新图。原图与桶里原对象都不动，所以「恢复原图」只是删掉覆盖指针。
 - **逻辑路径（logical path）**：`/images/guns/bf1_chauchat.webp` 这种不带指纹哈希、不带 `/media` 前缀的路径。覆盖表、版本表、可换清单都用它做键。
 - **版本串（version suffix）**：`?v=<10 位内容哈希>`。Cloudflare 边缘已经把旧地址缓存 1 年，只有换 URL 才能让换图立刻生效；不带版本串的地址（CSS 里直接写死的）走 `no-cache` + `ETag` 复核。
-- **版本表（image versions）**：服务端按覆盖表渲染的同步脚本 `/data/image-versions.js`，在应用入口之前加载，首屏渲染时就带上版本串。
+- **版本表（image versions）**：服务端按覆盖表渲染并**内联进首页 HTML** 的 `window.WZ_IMAGE_VERSIONS`（`index.html` 里留的是 `/data/image-versions.js` 标记，请求时被替换）。不单独发 js 文件，是因为 Cloudflare 对 `.js` 有「缓存一切 + 4 小时」的边缓存。
