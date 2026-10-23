@@ -25,7 +25,7 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --tab-h: 64px;
-  --wz-atlas: url("/textures/atlas.png");
+  --wz-atlas: url("../textures/atlas.webp");
   color-scheme: dark;
 }
 
@@ -586,7 +586,7 @@ img, svg { display: block; }
   flex: none;
 }
 .sheet-title { flex: 1; font-size: 17px; font-weight: 750; }
-.sheet-body { padding: 16px 18px calc(20px + var(--safe-b)); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.sheet-body { padding: 16px 18px calc(20px + var(--safe-b)); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
 .sheet-foot {
   display: flex; gap: 8px; padding: 12px 18px calc(12px + var(--safe-b));
   border-top: 1px solid var(--line); flex: none;
@@ -2699,13 +2699,13 @@ body.page-monster .threat-desc, body.page-monster .threat-block { font-size: 20p
 /* 像素字体：Fusion Pixel 10px */
 @font-face {
   font-family: 'Fusion Pixel';
-  src: url('/guide/fonts/fusion-pixel-10px-monospaced-latin.otf.woff2') format('woff2');
+  src: url('../fonts/fusion-pixel-10px-monospaced-latin.otf.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
   unicode-range: U+0000-00FF, U+2000-206F, U+20A0-20CF;
 }
 @font-face {
   font-family: 'Fusion Pixel';
-  src: url('/guide/fonts/fusion-pixel-10px-monospaced-zh_hans.otf.woff2') format('woff2');
+  src: url('../fonts/fusion-pixel-10px-monospaced-zh_hans.otf.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
 body {
@@ -3014,7 +3014,7 @@ body.page-creatures {
   background-color: #080b0a !important;
   background-image:
     linear-gradient(180deg, rgba(9,12,11,.66) 0%, rgba(9,12,11,.78) 60%, rgba(9,12,11,.93) 100%),
-    url('../images/guides/page_creatures_bg.jpg') !important;
+    url('../images/guides/page_creatures_bg.webp') !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
   background-attachment: fixed, fixed !important;
@@ -3025,7 +3025,7 @@ body.page-creatures {
   background-color: #f3f7fc !important;
   background-image:
     linear-gradient(180deg, rgba(245,249,255,.72) 0%, rgba(245,249,255,.82) 60%, rgba(245,249,255,.95) 100%),
-    url('../images/guides/page_creatures_bg.jpg') !important;
+    url('../images/guides/page_creatures_bg.webp') !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
   background-attachment: fixed, fixed !important;
@@ -3113,11 +3113,11 @@ body.page-creatures {
 .stat-chips { display:inline-flex; align-items:center; gap:10px; }
 .stat-chip { display:inline-flex; align-items:center; gap:4px; font-size:13px; font-variant-numeric:tabular-nums; color:var(--text); }
 .stat-ico { display:inline-block; width:17px; height:17px; flex:none; background-repeat:no-repeat; background-position:center; background-size:contain; image-rendering:pixelated; }
-.ico-hp { background-image:url('./images/ui/stat-heart-half.png'); }
-.ico-hp-empty { background-image:url('./images/ui/stat-heart-empty.png'); }
-.ico-armor { background-image:url('./images/ui/stat-armor-half.png'); }
-.ico-armor-empty { background-image:url('./images/ui/stat-armor-empty.png'); }
-.ico-attack { background-image:url('./images/ui/stat-attack.png'); }
+.ico-hp { background-image:url('../images/ui/stat-heart-half.webp'); }
+.ico-hp-empty { background-image:url('../images/ui/stat-heart-empty.webp'); }
+.ico-armor { background-image:url('../images/ui/stat-armor-half.webp'); }
+.ico-armor-empty { background-image:url('../images/ui/stat-armor-empty.webp'); }
+.ico-attack { background-image:url('../images/ui/stat-attack.webp'); }
 .tier-dots { display:inline-flex; align-items:center; gap:3px; margin-left:auto; }
 .tier-dot { display:inline-flex; align-items:center; justify-content:center; width:22px; height:16px; border-radius:4px; border:1px solid var(--line); font-size:9.5px; font-style:normal; font-weight:700; letter-spacing:.2px; color:var(--dim); background:transparent; }
 .tier-dot.on { border-color:transparent; color:#10130f; }
@@ -3143,8 +3143,29 @@ body.page-creatures {
   .monster-card-stats .tier-dot { width: 34px !important; height: 26px !important; font-size: 15px !important; }
 }
 
-/* 社区邮箱登录 / 注册 */
+/* 社区页作为一级 Tab：隐藏顶部返回栏，Tab 顶到最上 */
+body.community-page .topbar { display: none !important; }
+body.community-page .tabbar { top: 0 !important; }
+body.community-page .view { padding-top: 56px !important; }
+
 .community-auth-form { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
 .community-auth-form label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--muted); }
 .community-auth-form input { height:42px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; }
 .community-auth-form .btn { margin-top:6px; }
+
+/* 社区图片 */
+.community-form { display:flex; gap:8px; align-items:center; }
+.community-form .chat-upload { flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font-size:13px; cursor:pointer; }
+.community-form .chat-upload.has-file { border-color:var(--accent); color:var(--accent); }
+.chat-img { display:block; max-width:240px; max-height:200px; margin-top:8px; border:1px solid var(--line); }
+.community-photo-form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.community-photo-form .photo-caption { flex:1 1 220px; height:40px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; }
+.community-photo-form .photo-file { display:inline-flex; align-items:center; height:40px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font-size:13px; cursor:pointer; }
+
+.brand-mark {  }
+.brand-mark img { display: none !important; }
+
+.brand-mark { width: 36px !important; height: 36px !important; min-width: 36px !important; flex: 0 0 36px !important; }
+.brand-mark img { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 9px !important; }
+.brand { flex: 0 0 auto !important; min-width: 190px !important; }
+.brand-mark.no-logo::after { content: "DC"; font-size: 12px; font-weight: 700; color: var(--amber); }

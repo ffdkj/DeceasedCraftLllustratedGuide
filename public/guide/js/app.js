@@ -576,7 +576,7 @@
         hubCard({ href: "#/world/vehicles", image: (GUIDE.meta.banners||{}).vehicles, icon: "car", title: "载具", sub: "民用 / 军用 / 船只 / 飞机", count: GUIDE_TYPES.vehicles.data.length, unit: "种", accent: "#7ea8c9" }) +
         hubCard({ href: "#/world/story", image: (GUIDE.meta.banners||{}).story, icon: "book", title: "剧情故事", sub: "新闻 / 各区域笔记与录音", count: GUIDE_TYPES.story.data.length, unit: "篇", accent: "#e0a94a" }) +
         hubCard({ href: "#/world/difficulty", image: (GUIDE.meta.banners||{}).world, icon: "skull", title: "世界难度", sub: "和平 / 简单 / 普通 / 困难 / 末日", count: 5, unit: "级", accent: "#e07a5f" }) +
-        hubCard({ href: "#/world/tech", image: "./images/guides/bg_tech.jpg", icon: "gear", title: "科技板块", sub: "机械动力生产线 / 火炮系统", count: allMachines().length, unit: "条", accent: "#e8c15a" }) +
+        hubCard({ href: "#/world/tech", image: "./images/guides/bg_tech.webp", icon: "gear", title: "科技板块", sub: "机械动力生产线 / 火炮系统", count: allMachines().length, unit: "条", accent: "#e8c15a" }) +
         hubCard({ href: "#/world/defense", image: (GUIDE.meta.banners||{}).defense, icon: "shield", title: "防御工事", sub: "爆炸物 / 防御墙 / 电击 / 炮塔", count: GUIDE_TYPES.defense.data.length, unit: "条", accent: "#7fc79a" }) +
         hubCard({ href: "#/world/changelog", image: (GUIDE.meta.banners||{}).home, icon: "book", title: "更新日志", sub: "5.11.0 → 5.11.19 版本改动", count: (window.WZ_CHANGELOG || []).length, unit: "版", accent: "#b09acb" }) +
       "</div></div>" +
@@ -778,9 +778,9 @@
     return order.filter(function (g) { return present.has(g); });
   }
   const VEHICLE_CAT_IMAGES = {
-    "民用车辆": "/guide/images/vehicles/categories/civil_cars.png",
-    "民用飞机": "/guide/images/vehicles/categories/civil_aircraft.png",
-    "船只": "/guide/images/vehicles/categories/boats.png"
+    "民用车辆": "./images/vehicles/categories/civil_cars.webp",
+    "民用飞机": "./images/vehicles/categories/civil_aircraft.webp",
+    "船只": "./images/vehicles/categories/boats.webp"
   };
   function vehicleImage(v) { return (v && v.image) || ""; }
   function renderVehiclesHub() {
@@ -1405,9 +1405,9 @@
     const hearts = Number(hp) / 2;
     const heartTitle = hp != null && hp !== "" ? ' title="生命 ' + hp + (isFinite(hearts) ? '（' + (Number.isInteger(hearts) ? hearts : hearts.toFixed(1)) + ' 颗心）' : '') + '"' : "";
     return '<div class="monster-vitals">' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"' + heartTitle + '><img class="stat-ico" src="/guide/images/ui/stat-heart-half.png" alt=""></span><b>' + esc(fmtNum(hp)) + '</b></div><span class="mv-label">基础生命</span></div>' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="/guide/images/ui/stat-armor-half.png" alt=""></span><b>' + esc(fmtNum(armor)) + '</b></div><span class="mv-label">基础护甲</span></div>' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="/guide/images/ui/stat-attack.png" alt=""></span><b>' + esc(fmtNum(atk)) + '</b></div><span class="mv-label">基础攻击</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"' + heartTitle + '><img class="stat-ico" src="./images/ui/stat-heart-half.webp" alt=""></span><b>' + esc(fmtNum(hp)) + '</b></div><span class="mv-label">基础生命</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="./images/ui/stat-armor-half.webp" alt=""></span><b>' + esc(fmtNum(armor)) + '</b></div><span class="mv-label">基础护甲</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="./images/ui/stat-attack.webp" alt=""></span><b>' + esc(fmtNum(atk)) + '</b></div><span class="mv-label">基础攻击</span></div>' +
     '</div>';
   }
   function monsterHpHTML(hp) {
@@ -1493,6 +1493,7 @@
     window.addEventListener("wheel", function (e) {
       if (!isLootHome() || e.ctrlKey || Math.abs(e.deltaY) < 8) return;
       if (e.target && e.target.closest && e.target.closest("input, textarea, select, [contenteditable=true]")) return;
+      if (e.target && e.target.closest && e.target.closest(".overlay, .sheet")) return;
       e.preventDefault();
       if (wheelLock) return;
       wheelLock = true;
@@ -1514,8 +1515,8 @@
     if (root === "creatures" || root === "monsters" || root === "monster" || root === "npc") tab = "creatures";
     else if (root === "gear" || root === "armor" || root === "gun" || root === "melee" || root === "trinket") tab = "gear";
     else if (root === "world" || root === "machines" || root === "machine") tab = "world";
-    else if (root === "community") tab = "me";
-    else if (root === "me" || root === "settings") tab = "me";
+    else if (root === "community") tab = "community";
+    else if (root === "me" || root === "settings") tab = "community";
     document.body.className = document.body.className.replace(/\bpage-[a-z-]+\b/g, "").replace(/\s+/g, " ").trim();
     if (root) document.body.classList.add("page-" + root);
     document.body.classList.toggle("page-monsters", root === "creatures" && p[1] === "monsters");
@@ -1584,7 +1585,7 @@
       renderMonster(p[1]);
     } else if (root === "me") {
       if (p[1] === "favorites") renderFavorites();
-      else renderMe();
+      else renderCommunity();
     } else {
       renderLootHome("");
     }
@@ -1596,6 +1597,7 @@
   function renderTopbar(opts) {
     opts = opts || {};
     document.body.classList.toggle("has-back", !!opts.back);
+    document.body.classList.remove("community-page");
     let left;
     if (opts.back) {
       left = '<button class="back-btn" data-go="' + esc(opts.back) + '">' + icon("back", 18) + "<span>返回</span></button>";
@@ -1623,7 +1625,7 @@
       { id: "creatures", label: "生物", icon: "skull", href: "#/creatures" },
       { id: "gear", label: "装备", icon: "shield", href: "#/gear" },
       { id: "world", label: "世界", icon: "globe", href: "#/world" },
-      { id: "me", label: "我的", icon: "user", href: "#/me" }
+      { id: "community", label: "社区", icon: "user", href: "#/community" }
     ];
     q("tabbar").innerHTML = '<div class="tabbar-inner">' + tabs.map(function (t) {
       return '<button class="tab ' + (t.id === active ? "active" : "") + '" data-go="' + t.href + '" aria-label="' + t.label + '"' + (t.id === active ? ' aria-current="page"' : "") + ">" + icon(t.icon, 21) + "<span>" + t.label + "</span></button>";
@@ -1798,38 +1800,32 @@
       '<section class="section"><button class="btn ghost block" data-go="#/loot">返回 T1–T4 总览</button></section>';
   }
   const SITE_CHANGELOG = {
-    version: "0.1.0beta",
-    date: "2026-10-23",
-    title: "网站 0.1.0beta 更新日志",
-    items: [
-      "全站改用像素字体，UI 与正文分别设置，并优化字号和清晰度。",
-      "新增加载渐显浮动动画、每页返回顶部按钮，桌面版音乐播放器固定右上角。",
-      "顶部导航调整为「区域战利品 / 生物 / 装备 / 世界 / 我的」，社区归入「我的」。",
-      "区域建筑列表改为大图卡片并支持翻页；建筑海报保持原样。",
-      "怪物图鉴按蓝 / 紫 / 橙 / 红 / 绿分类，每页 8 个，支持等级筛选和分页。",
-      "更新怪物实拍图片，补充无面者、撞击者，删除无评级和不存在的怪物。",
-      "近战武器按类型与 T1–T4 重排，数值改为读取 KubeJS 实际属性，并按新公式计算单持 / 双持推荐。",
-      "新增单手 / 双手对比与双持搭配推荐页，补全护甲值、韧性和御寒信息。",
-      "载具按类型分成六大类；新增科技板块，机械动力机器与火炮迁入。",
-      "补全末日难度说明；荒地新增「极热」气候标签；赌场标记为超大型建筑。",
-      "更新区域、怪物、世界背景图；网站图片统一转为 WebP，部署包体积从约 34 MB 降至 23 MB。",
-      "补充剧情、图片来源及 B站 UP 主署名，品牌处注明非官方攻略、仅供参考。",
-      "新增「怪物数值手册」：解析 132 个实体基础属性，85 只现有怪物同步生命、攻击、护甲、移速与跟随范围。",
-      "怪物详情改为原版心形生命、护甲、攻击图标 + 大数字，并加深配色。",
-      "「资料待补充」提示移动到掉落与资料来源之间。",
-      "修复科技板块机器卡片跳回区域战利品的问题；优化返回动画与切换区域时的音频加载。",
-      "补充怪物数值来源、协作整理署名及 0.1.0beta 版本说明。",
-      "接入 132 实体场景数值、刷怪梯度与 33 座建筑尸潮数据：怪物详情新增场景数值/刷怪说明，建筑详情新增尸潮生成表。",
-      "新增小僵尸：描述、刷新区域与词条与僵尸一致，评级为特殊二级；僵尸评级调整为普通一级。"
+    "version": "0.1.0-beta",
+    "date": "2026-10-23",
+    "title": "网站 0.1.0-beta 更新日志",
+    "items": [
+        "全站改用像素字体，UI 与正文分别设置，并优化字号和清晰度。",
+        "新增加载渐显浮动动画、每页返回顶部按钮、桌面版音乐播放器固定右上角。",
+        "顶部导航最后一项改为「社区」，「我的」收藏、设置、导出并入社区页。",
+        "新增邮箱注册、邮箱登录、退出登录，账号状态保存在服务端。",
+        "社区聊天支持文字消息与图片消息，图片随消息显示。",
+        "新增照片墙上传，可填写图片说明。",
+        "图片上传审核：限制 JPG/PNG/WebP、5MB、尺寸范围，使用 sharp 重编码并去除元数据。",
+        "聊天文字与图片说明接入敏感词审核，命中后拦截并提示。",
+        "完整接入本地静态内容：105 种怪物、全部图片、音频、字体、纹理和数据。",
+        "修复属性图标、物品图标、品牌 Logo 与 /guide/ 子目录下的相对路径问题。",
+        "修复更新日志弹窗无法使用鼠标滚轮滚动的问题。",
+        "仓库构建修复：清理重复图标 key，补齐 server 构建依赖。",
+        "版本号更新为 0.1.0-beta。"
     ]
-  };
+};
   function openSiteChangelog() {
     const c = SITE_CHANGELOG;
     openSheet({
       title: "网站更新日志",
       body: '<div class="text-block"><b>' + esc(c.title) + '</b>\n版本：' + esc(c.version) + ' · ' + esc(c.date) + '\n\n' +
         '<ul class="site-log-list">' + c.items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' +
-        '<div class="dim" style="margin-top:10px">本版本为 0.1.0beta，后续内容会继续补充与校正。</div></div>',
+        '<div class="dim" style="margin-top:10px">本版本为 0.1.0-beta，后续内容会继续补充与校正。</div></div>',
       foot: '<button class="btn primary block" data-action="close-sheet">知道了</button>'
     });
   }
@@ -1877,9 +1873,9 @@
           '<div class="hero-stat"><div class="v">' + m.entries.toLocaleString() + '</div><div class="k">掉落条目</div></div>' +
           '<div class="hero-stat"><div class="v">' + m.items.toLocaleString() + '</div><div class="k">物品</div></div>' +
         "</div>" +
-      '<div class="loot-update-entry in-hero"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
+      '<div class="loot-update-entry in-hero"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
       "</section>" +
-      '<div class="loot-update-entry outside"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
+      '<div class="loot-update-entry outside"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
       '<div class="quick-search"><div class="searchbar">' + icon("search") +
         '<input id="loot-search" type="search" placeholder="搜物品名或 ID，例如：铁锭 / minecraft:iron_ingot" value="' + esc(initialQuery || ui.lootQuery) + '" autocomplete="off" autocapitalize="off" spellcheck="false">' +
         '<button class="search-clear" data-action="clear-loot-search" aria-label="清空" hidden>' + icon("close", 15) + "</button>" +
@@ -2546,9 +2542,9 @@
     if (tiers.has("建筑")) extras.push("建筑");
     if (tiers.has("尸潮")) extras.push("尸潮");
     return '<div class="monster-card-stats"><span class="stat-chips">' +
-      '<span class="stat-chip" title="生命"><img class="stat-ico" src="/guide/images/ui/stat-heart-half.png" alt="">' + esc(fmtNum(m.hp)) + '</span>' +
-      '<span class="stat-chip" title="护甲"><img class="stat-ico" src="/guide/images/ui/stat-armor-half.png" alt="">' + esc(fmtNum(m.armor)) + '</span>' +
-      '<span class="stat-chip" title="攻击"><img class="stat-ico" src="/guide/images/ui/stat-attack.png" alt="">' + esc(fmtNum(m.attack)) + '</span>' +
+      '<span class="stat-chip" title="生命"><img class="stat-ico" src="./images/ui/stat-heart-half.webp" alt="">' + esc(fmtNum(m.hp)) + '</span>' +
+      '<span class="stat-chip" title="护甲"><img class="stat-ico" src="./images/ui/stat-armor-half.webp" alt="">' + esc(fmtNum(m.armor)) + '</span>' +
+      '<span class="stat-chip" title="攻击"><img class="stat-ico" src="./images/ui/stat-attack.webp" alt="">' + esc(fmtNum(m.attack)) + '</span>' +
       '</span><span class="tier-dots" role="img" aria-label="刷新区域">' + tierHTML + '</span>' +
       (extras.length ? '<i class="tier-any">' + extras.join("·") + '</i>' : "") +
     '</div>';
@@ -2857,7 +2853,8 @@
   }
 
   function renderCommunity() {
-    renderTopbar({ back: "#/me", title: "社区", sub: "我的 · 在线功能" });
+    renderTopbar({ title: "社区", sub: "我的 · 在线功能" });
+    document.body.classList.add("community-page");
     document.title = "社区 · 亡者世界图鉴";
     q("view").innerHTML = '<div id="community-root"><div class="empty">' + icon("globe", 28) + '<div class="em-title">正在连接社区服务器…</div><div class="em-sub">离线单文件不会联网；社区版需要先启动服务器。</div></div></div>';
     loadCommunity();
@@ -2910,11 +2907,16 @@
       const user = me.user || null;
       let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(user ? user.name : "未登录") + '</div><div class="profile-sub">' + (user ? "邮箱账号已登录" : "邮箱登录 / 注册后参与聊天") + '</div></div>' +
         (user ? '<button class="btn ghost" data-action="community-logout">退出</button>' : '<button class="btn primary" data-action="community-login">邮箱登录</button><button class="btn ghost" data-action="community-register">注册</button>') + "</div></div>";
+      h += '<div class="section"><div class="section-head"><div class="section-title">我的</div><div class="section-note">账号与收藏</div></div><div class="menu-list">' +
+        '<button class="menu-item" data-go="#/me/favorites"><span class="menu-ico">' + icon("star", 17) + '</span><span class="menu-main"><span class="menu-title">我的收藏</span><span class="menu-sub">物品与怪物</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-go="#/settings"><span class="menu-ico">' + icon("settings", 17) + '</span><span class="menu-main"><span class="menu-title">设置</span><span class="menu-sub">主题、导出、安装</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-action="export"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">导出备份</span><span class="menu-sub">收藏与自制内容</span></span>' + icon("chevron", 17) + "</button>" +
+        "</div></div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">聊天</div><div class="section-note">' + posts.length + ' 条</div></div><div class="community-chat" id="community-chat">' +
-        (posts.length ? posts.slice(-50).map(function (p) { return '<div class="chat-row"><b>' + esc(p.user) + '</b><span>' + esc(p.text) + '</span></div>'; }).join("") : '<div class="guide-note">' + icon("info", 18) + "<div>还没有人说话。登录后发第一条。</div></div>") +
+        (posts.length ? posts.slice(-50).map(function (p) { return '<div class="chat-row"><b>' + esc(p.user) + '</b><span>' + esc(p.text) + '</span>' + (p.image ? '<img class="chat-img" src="' + esc(p.image) + '" alt="">' : '') + '</div>'; }).join("") : '<div class="guide-note">' + icon("info", 18) + "<div>还没有人说话。登录后发第一条。</div></div>") +
         '</div>' + (user ? '<form id="community-form" class="community-form"><input id="community-input" maxlength="500" placeholder="说点什么…" autocomplete="off"><button class="btn primary" type="submit">发送</button></form>' : "") + "</div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">照片墙</div><div class="section-note">' + photos.length + ' 张</div></div>' +
-        (photos.length ? '<div class="community-photos">' + photos.slice(-30).map(function (p) { return p.dataUrl ? '<figure class="community-photo"><img src="' + esc(p.dataUrl) + '" alt="' + esc(p.caption || "") + '"><figcaption>' + esc(p.caption || "") + '</figcaption></figure>' : ""; }).join("") + "</div>" : '<div class="guide-note">' + icon("info", 18) + "<div>还没有照片。Exposure 照片上传接口已预留。</div></div>") + "</div>";
+        (photos.length ? '<div class="community-photos">' + photos.slice(-30).map(function (p) { return (p.image || p.dataUrl) ? '<figure class="community-photo"><img src="' + esc(p.image || p.dataUrl) + '" alt="' + esc(p.caption || "") + '"><figcaption>' + esc(p.caption || "") + '</figcaption></figure>' : ""; }).join("") + "</div>" : '<div class="guide-note">' + icon("info", 18) + "<div>还没有照片。Exposure 照片上传接口已预留。</div></div>") + "</div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">已探索建筑</div><div class="section-note">' + explored.length + ' 条</div></div>' +
         (explored.length ? '<div class="list">' + explored.slice(-50).map(function (e) { return '<div class="row-card" style="cursor:default"><div class="row-main"><div class="row-title">' + esc(e.building || "未命名") + '</div><div class="row-sub">' + esc(e.region || "") + " · " + esc(e.user || "") + "</div></div></div>"; }).join("") + "</div>" : '<div class="guide-note">' + icon("info", 18) + "<div>还没有同步记录。后续由游戏内电脑 Mod 上传。</div></div>") + "</div>";
       root.innerHTML = h;
@@ -2924,15 +2926,14 @@
         const input = q("community-input");
         if (!input || !input.value.trim()) return;
         fetch("/api/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: input.value.trim() }) })
-          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "发送失败"); input.value = ""; loadCommunity(); })
-          .catch(function (err) { toast(err.message || "发送失败"); });
+          .then(function () { input.value = ""; loadCommunity(); })
+          .catch(function () { toast("发送失败"); });
       });
     }).catch(function () { root.innerHTML = communityOfflineHTML(); });
   }
 
   function renderSettings() {
-    renderTopbar({ back: "#/me", title: "设置" });
+    renderTopbar({ back: "#/community", title: "设置" });
     document.title = "设置 · 亡者世界图鉴";
     const isPc = viewMode() === "pc";
     q("view").innerHTML =
@@ -2959,7 +2960,7 @@
   }
 
   function renderFavorites() {
-    renderTopbar({ back: "#/me", title: "我的收藏" });
+    renderTopbar({ back: "#/community", title: "我的收藏" });
     document.title = "我的收藏 · 亡者世界图鉴";
     if (ui.favTab === "machines") ui.favTab = "items";
     const tabs = [
