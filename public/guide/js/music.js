@@ -4,13 +4,13 @@
 
   const KEY = "wz_music_v1";
   const TRACKS = [
-    { id: "search", title: "搜寻", src: "/media/audio/search.m4a" },
-    { id: "hope", title: "一线生机", src: "/media/audio/hope.m4a" },
-    { id: "forgotten", title: "遗忘", src: "/media/audio/forgotten.m4a" },
-    { id: "silhouettes", title: "曾经的身影", src: "/media/audio/silhouettes.m4a" },
-    { id: "transformation", title: "我们的蜕变", src: "/media/audio/transformation.m4a" },
-    { id: "we", title: "曾经的我们", src: "/media/audio/we.m4a" },
-    { id: "broken", title: "残破", src: "/media/audio/broken.m4a" }
+    { id: "search", title: "搜寻", src: "./audio/search.m4a" },
+    { id: "hope", title: "一线生机", src: "./audio/hope.m4a" },
+    { id: "forgotten", title: "遗忘", src: "./audio/forgotten.m4a" },
+    { id: "silhouettes", title: "曾经的身影", src: "./audio/silhouettes.m4a" },
+    { id: "transformation", title: "我们的蜕变", src: "./audio/transformation.m4a" },
+    { id: "we", title: "曾经的我们", src: "./audio/we.m4a" },
+    { id: "broken", title: "残破", src: "./audio/broken.m4a" }
   ];
   const ARTIST = "TqLxQuanZ";
   const SOURCE_URL = "https://space.bilibili.com/373594976";
@@ -149,7 +149,7 @@
         title: TRACKS[index].title,
         artist: ARTIST,
         album: "亡者世界 DeceasedCraft",
-        artwork: [{ src: "./icons/icon-192.png", sizes: "192x192", type: "image/png" }]
+        artwork: [{ src: "./icons/icon-192.webp", sizes: "192x192", type: "image/png" }]
       });
     } catch (e) {}
   }

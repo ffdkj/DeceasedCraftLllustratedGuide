@@ -576,7 +576,7 @@
         hubCard({ href: "#/world/vehicles", image: (GUIDE.meta.banners||{}).vehicles, icon: "car", title: "载具", sub: "民用 / 军用 / 船只 / 飞机", count: GUIDE_TYPES.vehicles.data.length, unit: "种", accent: "#7ea8c9" }) +
         hubCard({ href: "#/world/story", image: (GUIDE.meta.banners||{}).story, icon: "book", title: "剧情故事", sub: "新闻 / 各区域笔记与录音", count: GUIDE_TYPES.story.data.length, unit: "篇", accent: "#e0a94a" }) +
         hubCard({ href: "#/world/difficulty", image: (GUIDE.meta.banners||{}).world, icon: "skull", title: "世界难度", sub: "和平 / 简单 / 普通 / 困难 / 末日", count: 5, unit: "级", accent: "#e07a5f" }) +
-        hubCard({ href: "#/world/tech", image: "./images/guides/bg_tech.jpg", icon: "gear", title: "科技板块", sub: "机械动力生产线 / 火炮系统", count: allMachines().length, unit: "条", accent: "#e8c15a" }) +
+        hubCard({ href: "#/world/tech", image: "./images/guides/bg_tech.webp", icon: "gear", title: "科技板块", sub: "机械动力生产线 / 火炮系统", count: allMachines().length, unit: "条", accent: "#e8c15a" }) +
         hubCard({ href: "#/world/defense", image: (GUIDE.meta.banners||{}).defense, icon: "shield", title: "防御工事", sub: "爆炸物 / 防御墙 / 电击 / 炮塔", count: GUIDE_TYPES.defense.data.length, unit: "条", accent: "#7fc79a" }) +
         hubCard({ href: "#/world/changelog", image: (GUIDE.meta.banners||{}).home, icon: "book", title: "更新日志", sub: "5.11.0 → 5.11.19 版本改动", count: (window.WZ_CHANGELOG || []).length, unit: "版", accent: "#b09acb" }) +
       "</div></div>" +
@@ -778,9 +778,9 @@
     return order.filter(function (g) { return present.has(g); });
   }
   const VEHICLE_CAT_IMAGES = {
-    "民用车辆": "/guide/images/vehicles/categories/civil_cars.png",
-    "民用飞机": "/guide/images/vehicles/categories/civil_aircraft.png",
-    "船只": "/guide/images/vehicles/categories/boats.png"
+    "民用车辆": "./images/vehicles/categories/civil_cars.webp",
+    "民用飞机": "./images/vehicles/categories/civil_aircraft.webp",
+    "船只": "./images/vehicles/categories/boats.webp"
   };
   function vehicleImage(v) { return (v && v.image) || ""; }
   function renderVehiclesHub() {
@@ -1405,9 +1405,9 @@
     const hearts = Number(hp) / 2;
     const heartTitle = hp != null && hp !== "" ? ' title="生命 ' + hp + (isFinite(hearts) ? '（' + (Number.isInteger(hearts) ? hearts : hearts.toFixed(1)) + ' 颗心）' : '') + '"' : "";
     return '<div class="monster-vitals">' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"' + heartTitle + '><img class="stat-ico" src="/guide/images/ui/stat-heart-half.png" alt=""></span><b>' + esc(fmtNum(hp)) + '</b></div><span class="mv-label">基础生命</span></div>' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="/guide/images/ui/stat-armor-half.png" alt=""></span><b>' + esc(fmtNum(armor)) + '</b></div><span class="mv-label">基础护甲</span></div>' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="/guide/images/ui/stat-attack.png" alt=""></span><b>' + esc(fmtNum(atk)) + '</b></div><span class="mv-label">基础攻击</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"' + heartTitle + '><img class="stat-ico" src="./images/ui/stat-heart-half.webp" alt=""></span><b>' + esc(fmtNum(hp)) + '</b></div><span class="mv-label">基础生命</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="./images/ui/stat-armor-half.webp" alt=""></span><b>' + esc(fmtNum(armor)) + '</b></div><span class="mv-label">基础护甲</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="./images/ui/stat-attack.webp" alt=""></span><b>' + esc(fmtNum(atk)) + '</b></div><span class="mv-label">基础攻击</span></div>' +
     '</div>';
   }
   function monsterHpHTML(hp) {
@@ -1602,7 +1602,7 @@
     } else {
       left = '<button class="me-btn" data-action="open-me" aria-label="我的">' + icon("user", 21) + '<span class="me-btn-label">我的</span></button>';
     }
-    const brand = '<div class="brand"><div class="brand-mark"><img src="/guide/images/brand/deceasedcraft_icon.png" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
+    const brand = '<div class="brand"><div class="brand-mark"><img src="./images/brand/deceasedcraft_icon.webp" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
     let center = "";
     if (opts.title) {
       center = '<div style="flex:1;min-width:0;text-align:center"><div class="page-title" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(opts.title) + "</div>" + (opts.sub ? '<div class="page-sub">' + esc(opts.sub) + "</div>" : "") + "</div>";
@@ -2546,9 +2546,9 @@
     if (tiers.has("建筑")) extras.push("建筑");
     if (tiers.has("尸潮")) extras.push("尸潮");
     return '<div class="monster-card-stats"><span class="stat-chips">' +
-      '<span class="stat-chip" title="生命"><img class="stat-ico" src="/guide/images/ui/stat-heart-half.png" alt="">' + esc(fmtNum(m.hp)) + '</span>' +
-      '<span class="stat-chip" title="护甲"><img class="stat-ico" src="/guide/images/ui/stat-armor-half.png" alt="">' + esc(fmtNum(m.armor)) + '</span>' +
-      '<span class="stat-chip" title="攻击"><img class="stat-ico" src="/guide/images/ui/stat-attack.png" alt="">' + esc(fmtNum(m.attack)) + '</span>' +
+      '<span class="stat-chip" title="生命"><img class="stat-ico" src="./images/ui/stat-heart-half.webp" alt="">' + esc(fmtNum(m.hp)) + '</span>' +
+      '<span class="stat-chip" title="护甲"><img class="stat-ico" src="./images/ui/stat-armor-half.webp" alt="">' + esc(fmtNum(m.armor)) + '</span>' +
+      '<span class="stat-chip" title="攻击"><img class="stat-ico" src="./images/ui/stat-attack.webp" alt="">' + esc(fmtNum(m.attack)) + '</span>' +
       '</span><span class="tier-dots" role="img" aria-label="刷新区域">' + tierHTML + '</span>' +
       (extras.length ? '<i class="tier-any">' + extras.join("·") + '</i>' : "") +
     '</div>';
@@ -2869,32 +2869,6 @@
         '<button class="menu-item" data-go="#/settings"><span class="menu-ico">' + icon("settings", 17) + '</span><span class="menu-main"><span class="menu-title">返回设置</span><span class="menu-sub">查看本机功能</span></span>' + icon("chevron", 17) + "</button>" +
       "</div></div>";
   }
-  function openCommunityAuth(mode) {
-    const isReg = mode === "register";
-    openSheet({
-      title: isReg ? "注册邮箱账号" : "邮箱登录",
-      body: '<div class="text-block"><form id="community-auth-form" class="community-auth-form">' +
-        '<label>邮箱<input id="auth-email" type="email" required autocomplete="email" placeholder="you@example.com"></label>' +
-        '<label>密码<input id="auth-password" type="password" required minlength="8" autocomplete="' + (isReg ? "new-password" : "current-password") + '" placeholder="至少 8 位"></label>' +
-        (isReg ? '<label>昵称<input id="auth-name" maxlength="24" placeholder="聊天显示名（可选）"></label>' : "") +
-        '<button class="btn primary block" type="submit">' + (isReg ? "注册并登录" : "登录") + '</button></form>' +
-        '<div class="tiny dim" style="margin-top:10px">账号只用于本站聊天；不会上传游戏数据。</div></div>',
-      foot: '<button class="btn ghost block" data-action="close-sheet">取消</button>'
-    });
-    setTimeout(function () {
-      const f = q("community-auth-form");
-      if (!f) return;
-      f.addEventListener("submit", function (e) {
-        e.preventDefault();
-        const body = { email: q("auth-email").value, password: q("auth-password").value };
-        if (isReg) body.name = q("auth-name").value;
-        fetch(isReg ? "/api/auth/register" : "/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "失败"); closeSheet(); loadCommunity(); })
-          .catch(function (err) { toast(err.message || "登录失败"); });
-      });
-    }, 0);
-  }
   function loadCommunity() {
     const root = q("community-root");
     if (!root) return;
@@ -2908,8 +2882,8 @@
     ]).then(function (arr) {
       const me = arr[0] || {}, cfg = arr[1] || {}, posts = (arr[2] || {}).posts || [], photos = (arr[3] || {}).photos || [], explored = (arr[4] || {}).explored || [];
       const user = me.user || null;
-      let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(user ? user.name : "未登录") + '</div><div class="profile-sub">' + (user ? "邮箱账号已登录" : "邮箱登录 / 注册后参与聊天") + '</div></div>' +
-        (user ? '<button class="btn ghost" data-action="community-logout">退出</button>' : '<button class="btn primary" data-action="community-login">邮箱登录</button><button class="btn ghost" data-action="community-register">注册</button>') + "</div></div>";
+      let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(user ? user.name : "未登录") + '</div><div class="profile-sub">' + (cfg.ready ? "微软正版登录已配置" : "服务器未配置微软登录") + '</div></div>' +
+        (user ? '<button class="btn ghost" data-action="community-logout">退出</button>' : (cfg.ready ? '<a class="btn primary" href="/auth/login">正版登录</a>' : '<span class="badge">未配置</span>')) + "</div></div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">聊天</div><div class="section-note">' + posts.length + ' 条</div></div><div class="community-chat" id="community-chat">' +
         (posts.length ? posts.slice(-50).map(function (p) { return '<div class="chat-row"><b>' + esc(p.user) + '</b><span>' + esc(p.text) + '</span></div>'; }).join("") : '<div class="guide-note">' + icon("info", 18) + "<div>还没有人说话。登录后发第一条。</div></div>") +
         '</div>' + (user ? '<form id="community-form" class="community-form"><input id="community-input" maxlength="500" placeholder="说点什么…" autocomplete="off"><button class="btn primary" type="submit">发送</button></form>' : "") + "</div>";
@@ -2924,9 +2898,8 @@
         const input = q("community-input");
         if (!input || !input.value.trim()) return;
         fetch("/api/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: input.value.trim() }) })
-          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "发送失败"); input.value = ""; loadCommunity(); })
-          .catch(function (err) { toast(err.message || "发送失败"); });
+          .then(function () { input.value = ""; loadCommunity(); })
+          .catch(function () { toast("发送失败"); });
       });
     }).catch(function () { root.innerHTML = communityOfflineHTML(); });
   }
@@ -3291,9 +3264,6 @@
 
   function handleAction(action, el, e) {
     switch (action) {
-      case "community-login": openCommunityAuth("login"); break;
-      case "community-register": openCommunityAuth("register"); break;
-      case "community-logout": fetch("/api/auth/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "toggle-theme": {
         const next = (document.documentElement.dataset.theme === "light") ? "dark" : "light";
         applyTheme(next);
