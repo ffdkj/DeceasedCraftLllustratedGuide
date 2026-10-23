@@ -2924,8 +2924,9 @@
         const input = q("community-input");
         if (!input || !input.value.trim()) return;
         fetch("/api/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: input.value.trim() }) })
-          .then(function () { input.value = ""; loadCommunity(); })
-          .catch(function () { toast("发送失败"); });
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "发送失败"); input.value = ""; loadCommunity(); })
+          .catch(function (err) { toast(err.message || "发送失败"); });
       });
     }).catch(function () { root.innerHTML = communityOfflineHTML(); });
   }
