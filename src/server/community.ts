@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import path from 'node:path';
 import { checkText } from './moderation.js';
+import { adminName } from './admin-auth.js';
 
 /* 对象存储（RustFS）：上传图与社区状态都放这里，容器重新部署不会丢。
    没配凭证时自动退回容器本地盘，方便本地开发。 */
@@ -134,7 +135,8 @@ community.use('*', async (_c, next) => {
 
 community.get('/health', (c) => c.json({ ok: true, service: 'wzsj-community' }));
 community.get('/config', (c) => c.json({ ready: true, provider: 'email' }));
-community.get('/me', (c) => c.json({ user: publicUser(currentUser(c)) }));
+// 管理员会话是独立 cookie（wz_admin），与社区账号会话互不影响
+community.get('/me', (c) => c.json({ user: publicUser(currentUser(c)), admin: adminName(c) }));
 
 community.post('/auth/register', async (c) => {
   const body = await c.req.json().catch(() => null) as any;

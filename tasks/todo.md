@@ -170,3 +170,20 @@
     颜色与「变化」列的数字同源（都走 `statClass` 的 `cls`），所以后坐力 / 散布 / 瞄准时间 / 重量
     被压下去时是绿条；条高 3px → 4px 才看得清；图例改成「绿条=配件改善 / 红条=配件变差」
   - Files: `src/client/gunsmith.ts`、`public/css/app.css`、`scripts/verify-gunsmith.ts`、`package.json`、`CONTEXT.md`
+
+- [x] T31 管理员登录 + 在线换图
+  - Acceptance: 复用现有登录入口，站长用唯一环境变量账号登录；登录后可在页面上把任意站内图片换成新图
+    （上传→转 WebP→写进对象存储→立刻全站生效），可回退上一版/恢复原图；数据目录可在 Zeabur 挂卷，用 SQLite 存
+  - Result: 单账号登录（`ADMIN_EMAIL` / `ADMIN_PASSWORD`，scrypt 之外用定长 sha256 比较，同 IP 5 次错锁 10 分钟、
+    会话 30 天存 SQLite）；换图走**服务端覆盖层**——请求路径先剥掉 `/media` 前缀与 8 位内容哈希回到逻辑路径，
+    命中覆盖表就从 `public/overrides/<sha16>.webp` 取新图，原图与桶里原对象不动；URL 带 `?v=<10位哈希>`，
+    服务端在首屏前用同步脚本 `/data/image-versions.js` 下发版本表，客户端把版本串写进 `WZ_*`/`seed`，
+    所以 Cloudflare 边缘缓存过的旧地址也会换成新 URL（CSS 直接引用的 8 处拿不到版本串，已记录在文档里）；
+    每图保留 3 版；SQLite 只存覆盖/会话/审计，整份状态镜像到桶 `public/admin/state.json`，容器盘被清空能回灌；
+    实测：preview→commit→带/不带 `?v=` 的缓存头→304→revert→恢复原图→4 次替换后只留 3 版→
+    删库重启后覆盖与登录态从镜像恢复；上传限 10MB、长边 ≤2048、质量 90、保留 alpha
+  - Files: `src/server/db.ts`、`src/server/objects.ts`、`src/server/admin-auth.ts`、`src/server/overrides.ts`、
+    `src/server/index.ts`、`src/server/community.ts`、`src/client/image-versions.ts`、`src/client/admin.ts`、
+    `src/client/main.ts`、`src/client/app.ts`、`src/client/tiers.ts`、`index.html`、`public/css/app.css`、
+    `scripts/verify-admin.ts`、`scripts/build-sw.ts`、`scripts/check-assets.ts`、`scripts/verify-fingerprint.ts`、
+    `docs/admin-image-editor.md`、`.env.example`、`package.json`

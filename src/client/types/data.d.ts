@@ -47,6 +47,16 @@ declare global {
     WZ_BUILDING_THUMBS: Record<string, string>;
     WZ_BUILDING_THUMBS_SMALL: Record<string, string>;
     WZ_APP_UI: any;
+    WZ_IMAGE_VERSIONS?: Record<string, string>;
+    WZ_IMAGE_VERSION_COUNT?: number;
+    WZ_ADMIN?: string | null;
+    WZ_ADMIN_UI?: {
+      openLogin: () => void;
+      logout: () => void;
+      openReplace: (logical: string, el?: HTMLElement) => void;
+      isAdmin: () => boolean;
+      name: () => string | null;
+    };
     WZ_GUNSMITH_UI: any;
     WZMusic: any;
   }

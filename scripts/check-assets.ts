@@ -47,8 +47,13 @@ async function main() {
   }
 
   // The built index references hashed assets too.
+  // /data/image-versions.js 由服务端动态生成（内容是覆盖表，磁盘上不存在），不算缺失。
+  const SERVER_GENERATED = new Set(['/data/image-versions.js']);
   const html = await fs.readFile(path.join(DIST, 'index.html'), 'utf8');
-  for (const m of html.matchAll(/(?:src|href)="(\/[^"]+)"/g)) refs.add(stripQuery(m[1]));
+  for (const m of html.matchAll(/(?:src|href)="(\/[^"]+)"/g)) {
+    const ref = stripQuery(m[1]);
+    if (!SERVER_GENERATED.has(ref)) refs.add(ref);
+  }
 
   const missing: string[] = [];
   for (const ref of refs) {

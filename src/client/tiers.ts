@@ -1,5 +1,6 @@
 // @ts-nocheck
 // TODO(types): 与 app.ts / gunsmith.ts / recipes.ts 同为渲染层，后续统一后再收敛类型。
+import { versionedImage } from './image-versions';
 /* 梯度：读取 window.WZ_TIERS，渲染「枪械梯度 / 子弹梯度」两行（改枪台头部与枪械详情页头部共用） */
 (function () {
   "use strict";
@@ -55,7 +56,7 @@
   }
   function ammoIcon(ammoId) {
     const name = String(ammoId || "").split(":")[1];
-    return name ? assetUrl("/images/ammo/" + name + ".webp") : null;
+    return name ? versionedImage(assetUrl("/images/ammo/" + name + ".webp") as string) : null;
   }
   function iconHTML(row, size) {
     const box = "width:" + size + "px;height:" + size + "px;";

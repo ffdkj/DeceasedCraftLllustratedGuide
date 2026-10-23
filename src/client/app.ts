@@ -2568,8 +2568,15 @@ import {
     ]).then(function (arr) {
       const me = arr[0] || {}, cfg = arr[1] || {}, posts = (arr[2] || {}).posts || [], photos = (arr[3] || {}).photos || [], explored = (arr[4] || {}).explored || [];
       const user = me.user || null;
-      let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(user ? user.name : "未登录") + '</div><div class="profile-sub">' + (cfg.ready ? "微软正版登录已配置" : "服务器未配置微软登录") + '</div></div>' +
-        (user ? '<button class="btn ghost" data-action="community-logout">退出</button>' : (cfg.ready ? '<a class="btn primary" href="/auth/login">正版登录</a>' : '<span class="badge">未配置</span>')) + "</div></div>";
+      const admin = me.admin || null;
+      const who = user ? user.name : admin ? "管理员 · " + admin : "未登录";
+      const whoSub = user ? "已登录社区账号" : admin ? "站长账号 · 站内图片可替换" : "当前仅开放站长登录";
+      let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(who) + '</div><div class="profile-sub">' + esc(whoSub) + '</div></div>' +
+        (user
+          ? '<button class="btn ghost" data-action="community-logout">退出</button>'
+          : admin
+            ? '<button class="btn ghost" data-action="admin-login">退出</button>'
+            : '<button class="btn primary" data-action="admin-login">登录</button>') + "</div></div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">聊天</div><div class="section-note">' + posts.length + ' 条</div></div><div class="community-chat" id="community-chat">' +
         (posts.length ? posts.slice(-50).map(function (p) { return '<div class="chat-row"><b>' + esc(p.user) + '</b><span>' + esc(p.text) + '</span>' + (p.image ? '<img class="chat-img" src="' + esc(p.image) + '" alt="附图" loading="lazy">' : "") + '</div>'; }).join("") : '<div class="guide-note">' + icon("info", 18) + "<div>还没有人说话。登录后发第一条。</div></div>") +
         '</div>' + (user ? '<form id="community-form" class="community-form"><input id="community-input" maxlength="500" placeholder="说点什么…" autocomplete="off"><label class="chat-upload" title="附图（先登录，单张 ≤ 5MB）"><input id="chat-file" type="file" accept="image/jpeg,image/png,image/webp" hidden><span>图片</span></label><button class="btn primary" type="submit">发送</button></form>' : "") + "</div>";
@@ -2651,7 +2658,7 @@ import {
       '<div class="section"><div class="section-head"><div class="section-title">界面与账号</div></div><div class="menu-list">' +
         '<button class="menu-item" data-action="toggle-theme"><span class="menu-ico">' + icon("moon", 17) + '</span><span class="menu-main"><span class="menu-title">深色 / 浅色</span><span class="menu-sub">切换页面配色</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-action="toggle-view"><span class="menu-ico">' + icon("monitor", 17) + '</span><span class="menu-main"><span class="menu-title">电脑 / 手机版</span><span class="menu-sub">' + (isPc ? "当前：电脑版（更宽的布局）" : "当前：手机版") + "</span></span>" + icon("chevron", 17) + "</button>" +
-        '<button class="menu-item" data-action="ms-login"><span class="menu-ico">' + icon("user", 17) + '</span><span class="menu-main"><span class="menu-title">我的世界正版登录</span><span class="menu-sub">社区在线版 · 用微软账号登录</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-action="admin-login"><span class="menu-ico">' + icon("user", 17) + '</span><span class="menu-main"><span class="menu-title">' + (window.WZ_ADMIN ? "管理员：" + esc(window.WZ_ADMIN) : "管理员登录") + '</span><span class="menu-sub">' + (window.WZ_ADMIN ? "已登录 · 点此退出" : "仅站长可用 · 登录后可替换站内图片") + '</span></span>' + icon("chevron", 17) + "</button>" +
       "</div></div>" +
       '<div class="section"><div class="section-head"><div class="section-title">数据与安装</div></div><div class="menu-list">' +
         '<button class="menu-item" data-action="export"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">导出备份</span><span class="menu-sub">收藏与自制内容导出为 JSON</span></span>' + icon("chevron", 17) + "</button>" +
@@ -2665,14 +2672,6 @@ import {
         '<button class="menu-item" data-action="about"><span class="menu-ico">' + icon("info", 17) + '</span><span class="menu-main"><span class="menu-title">数据来源与说明</span><span class="menu-sub">战利品、剧情、作者与版权</span></span>' + icon("chevron", 17) + "</button>" +
       "</div></div>" +
       '<div class="section tiny dim" style="text-align:center;line-height:1.9">亡者世界图鉴 · 玩家自制<br>所有资料仅供参考，以官方整合包数据为准</div>';
-  }
-
-  function openMsLogin() {
-    openSheet({
-      title: "我的世界正版登录",
-      body: '<div class="text-block"><b>占位登录（待接入微软 OAuth）</b><br><br>当前离线单文件/静态站无法直接完成微软账号登录，需要部署社区服务器并配置微软 OAuth 的 client id 与回调地址。<br><br>社区在线版会内置完整登录流程；离线版这里先保留入口。</div>',
-      foot: '<button class="btn primary block" data-action="close-sheet">知道了</button>'
-    });
   }
 
   function renderFavorites() {
@@ -3108,9 +3107,17 @@ import {
       case "toggle-view": applyViewMode(viewMode() === "pc" ? "mobile" : "pc", true); route(); break;
       case "open-me": openMeDrawer(); break;
       case "close-me": closeMeDrawer(); break;
-      case "ms-login": openMsLogin(); break;
+      case "admin-login":
+        if (window.WZ_ADMIN_UI) {
+          if (window.WZ_ADMIN_UI.isAdmin()) {
+            if (confirm("退出管理员账号？退出后不再显示换图按钮。")) window.WZ_ADMIN_UI.logout();
+          } else {
+            window.WZ_ADMIN_UI.openLogin();
+          }
+        }
+        break;
       case "community-logout":
-        fetch("/api/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); });
+        fetch("/api/auth/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); });
         break;
       case "about": aboutSheet(); break;
       default: break;
@@ -3187,7 +3194,7 @@ import {
   window.WZ_APP_UI = {
     q: q, esc: esc, icon: icon, renderTopbar: renderTopbar,
     heroClass: heroClass, heroStyle: heroStyle, toast: toast,
-    go: go, closeSheet: closeSheet, openSheet: openSheet
+    go: go, route: route, closeSheet: closeSheet, openSheet: openSheet
   };
   function installWatermark() {
     if (document.querySelector(".site-watermark")) return;

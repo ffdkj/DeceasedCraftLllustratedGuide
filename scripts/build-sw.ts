@@ -27,6 +27,8 @@ async function main() {
   const refs = new Set<string>();
   for (const m of html.matchAll(/(?:src|href)="(\/[^"]+)"/g)) {
     const url = m[1];
+    // 图片版本表由服务端动态生成（内容随覆盖表变），不能进 shell 预缓存
+    if (url === '/data/image-versions.js') continue;
     if (/\.(?:js|css|webp|png|svg|json|webmanifest)$/.test(url)) refs.add(url);
   }
 
@@ -253,6 +255,12 @@ self.addEventListener("fetch", function (event) {
   if (isAudio(url)) return;
 
   if (isMediaImage(url) || isLocalImage(url)) {
+    // 管理员换过的图带 ?v=<内容哈希>：顺手清掉同路径的无版本缓存，
+    // 否则 CSS 里直接写死的地址会一直命中安装时预取的那份旧图。
+    if (url.search) {
+      const bare = new Request(url.origin + url.pathname, { method: "GET" });
+      caches.open(IMAGE_CACHE).then(function (cache) { cache.delete(bare); }).catch(function () {});
+    }
     event.respondWith(
       cacheFirst(event, req, IMAGE_CACHE).catch(function () {
         // 单张图失败（超时 / 源站错误）只影响它自己，其余图片照常加载。

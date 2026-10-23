@@ -56,7 +56,12 @@ async function main(): Promise<void> {
   /* 3. html / css / bundle 里没有旧名字 */
   const index = await fs.readFile(path.join(DIST, 'index.html'), 'utf8');
   check(index.includes('/data/asset-map.') || index.includes('/data/asset-map.js'), 'index.html 加载 asset-map');
-  const dataRefs = [...index.matchAll(/\/data\/([^"']+)\.js/g)].map((m) => m[0]);
+  // /data/image-versions.js 由服务端按覆盖表动态生成（磁盘上没有文件、也不该带指纹），单独断言
+  const DYNAMIC_DATA = '/data/image-versions.js';
+  check(index.includes(DYNAMIC_DATA), 'index.html 在数据脚本之后加载图片版本表（' + DYNAMIC_DATA + '）');
+  const dataRefs = [...index.matchAll(/\/data\/([^"']+)\.js/g)]
+    .map((m) => m[0])
+    .filter((ref) => ref !== DYNAMIC_DATA);
   check(dataRefs.length > 5, `index.html 有 ${dataRefs.length} 个 data 脚本`);
   check(
     dataRefs.every((ref) => HASHED.test(ref)),
