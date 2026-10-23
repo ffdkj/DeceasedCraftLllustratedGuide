@@ -148,10 +148,10 @@
   }
 
   /* ---------------- 紧凑版：枪械卡片副标题用 ---------------- */
-  /* 「图标 + 枪械T1」「图标 + 子弹T1」。卡片本身是 <button>，所以这里只能用 span，不可点。 */
+  /* 「图标 + T1枪械」「图标 + T1子弹」。卡片本身是 <button>，只能用 span；头部可点。 */
   function miniHTML(row, clickable) {
     if (!row || !row.tier) return "";
-    const label = (row.kind === "gun" ? "枪械" : "子弹") + row.tier;
+    const label = row.tier + (row.kind === "gun" ? "枪械" : "子弹");
     const title = row.label + (row.inferred ? "（推断）" : "") + (row.name ? "：" + row.name : "");
     const inner =
       '<span class="tier-ico">' + iconHTML(row.ico, row.name, 14) + "</span>" + esc(label);
