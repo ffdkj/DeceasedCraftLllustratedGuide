@@ -3142,3 +3142,8 @@ body.page-creatures {
   .monster-card-stats .stat-ico { width: 19px !important; height: 19px !important; }
   .monster-card-stats .tier-dot { width: 34px !important; height: 26px !important; font-size: 15px !important; }
 }
+
+/* 社区页作为一级 Tab：隐藏顶部返回栏，Tab 顶到最上 */
+body.community-page .topbar { display: none !important; }
+body.community-page .tabbar { top: 0 !important; }
+body.community-page .view { padding-top: 56px !important; }

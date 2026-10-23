@@ -1514,8 +1514,8 @@
     if (root === "creatures" || root === "monsters" || root === "monster" || root === "npc") tab = "creatures";
     else if (root === "gear" || root === "armor" || root === "gun" || root === "melee" || root === "trinket") tab = "gear";
     else if (root === "world" || root === "machines" || root === "machine") tab = "world";
-    else if (root === "community") tab = "me";
-    else if (root === "me" || root === "settings") tab = "me";
+    else if (root === "community") tab = "community";
+    else if (root === "me" || root === "settings") tab = "community";
     document.body.className = document.body.className.replace(/\bpage-[a-z-]+\b/g, "").replace(/\s+/g, " ").trim();
     if (root) document.body.classList.add("page-" + root);
     document.body.classList.toggle("page-monsters", root === "creatures" && p[1] === "monsters");
@@ -1584,7 +1584,7 @@
       renderMonster(p[1]);
     } else if (root === "me") {
       if (p[1] === "favorites") renderFavorites();
-      else renderMe();
+      else renderCommunity();
     } else {
       renderLootHome("");
     }
@@ -1596,6 +1596,7 @@
   function renderTopbar(opts) {
     opts = opts || {};
     document.body.classList.toggle("has-back", !!opts.back);
+    document.body.classList.remove("community-page");
     let left;
     if (opts.back) {
       left = '<button class="back-btn" data-go="' + esc(opts.back) + '">' + icon("back", 18) + "<span>返回</span></button>";
@@ -1623,7 +1624,7 @@
       { id: "creatures", label: "生物", icon: "skull", href: "#/creatures" },
       { id: "gear", label: "装备", icon: "shield", href: "#/gear" },
       { id: "world", label: "世界", icon: "globe", href: "#/world" },
-      { id: "me", label: "我的", icon: "user", href: "#/me" }
+      { id: "community", label: "社区", icon: "user", href: "#/community" }
     ];
     q("tabbar").innerHTML = '<div class="tabbar-inner">' + tabs.map(function (t) {
       return '<button class="tab ' + (t.id === active ? "active" : "") + '" data-go="' + t.href + '" aria-label="' + t.label + '"' + (t.id === active ? ' aria-current="page"' : "") + ">" + icon(t.icon, 21) + "<span>" + t.label + "</span></button>";
@@ -2857,7 +2858,8 @@
   }
 
   function renderCommunity() {
-    renderTopbar({ back: "#/me", title: "社区", sub: "我的 · 在线功能" });
+    renderTopbar({ title: "社区", sub: "我的 · 在线功能" });
+    document.body.classList.add("community-page");
     document.title = "社区 · 亡者世界图鉴";
     q("view").innerHTML = '<div id="community-root"><div class="empty">' + icon("globe", 28) + '<div class="em-title">正在连接社区服务器…</div><div class="em-sub">离线单文件不会联网；社区版需要先启动服务器。</div></div></div>';
     loadCommunity();
@@ -2884,6 +2886,11 @@
       const user = me.user || null;
       let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(user ? user.name : "未登录") + '</div><div class="profile-sub">' + (cfg.ready ? "微软正版登录已配置" : "服务器未配置微软登录") + '</div></div>' +
         (user ? '<button class="btn ghost" data-action="community-logout">退出</button>' : (cfg.ready ? '<a class="btn primary" href="/auth/login">正版登录</a>' : '<span class="badge">未配置</span>')) + "</div></div>";
+      h += '<div class="section"><div class="section-head"><div class="section-title">我的</div><div class="section-note">账号与收藏</div></div><div class="menu-list">' +
+        '<button class="menu-item" data-go="#/me/favorites"><span class="menu-ico">' + icon("star", 17) + '</span><span class="menu-main"><span class="menu-title">我的收藏</span><span class="menu-sub">物品与怪物</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-go="#/settings"><span class="menu-ico">' + icon("settings", 17) + '</span><span class="menu-main"><span class="menu-title">设置</span><span class="menu-sub">主题、导出、安装</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-action="export"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">导出备份</span><span class="menu-sub">收藏与自制内容</span></span>' + icon("chevron", 17) + "</button>" +
+        "</div></div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">聊天</div><div class="section-note">' + posts.length + ' 条</div></div><div class="community-chat" id="community-chat">' +
         (posts.length ? posts.slice(-50).map(function (p) { return '<div class="chat-row"><b>' + esc(p.user) + '</b><span>' + esc(p.text) + '</span></div>'; }).join("") : '<div class="guide-note">' + icon("info", 18) + "<div>还没有人说话。登录后发第一条。</div></div>") +
         '</div>' + (user ? '<form id="community-form" class="community-form"><input id="community-input" maxlength="500" placeholder="说点什么…" autocomplete="off"><button class="btn primary" type="submit">发送</button></form>' : "") + "</div>";
@@ -2905,7 +2912,7 @@
   }
 
   function renderSettings() {
-    renderTopbar({ back: "#/me", title: "设置" });
+    renderTopbar({ back: "#/community", title: "设置" });
     document.title = "设置 · 亡者世界图鉴";
     const isPc = viewMode() === "pc";
     q("view").innerHTML =
@@ -2932,7 +2939,7 @@
   }
 
   function renderFavorites() {
-    renderTopbar({ back: "#/me", title: "我的收藏" });
+    renderTopbar({ back: "#/community", title: "我的收藏" });
     document.title = "我的收藏 · 亡者世界图鉴";
     if (ui.favTab === "machines") ui.favTab = "items";
     const tabs = [
