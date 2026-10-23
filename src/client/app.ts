@@ -2622,6 +2622,27 @@ import {
     }).catch(function () { root.innerHTML = communityOfflineHTML(); });
   }
 
+  /* 站点版本日志（PR 的 SITE_CHANGELOG 已并进 data/changelog.js 的 WZ_SITE_CHANGELOG）。 */
+  function siteChangelog() {
+    const log = window.WZ_SITE_CHANGELOG;
+    return log && Array.isArray(log.items) ? log : null;
+  }
+  function siteLogVersionLabel() {
+    const log = siteChangelog();
+    return log ? log.version + " · " + log.items.length + " 条" : "暂无记录";
+  }
+  function openSiteChangelog() {
+    const log = siteChangelog();
+    if (!log) { toast("暂无站点更新日志"); return; }
+    openSheet({
+      title: "网站更新日志",
+      body: '<div class="text-block"><b>' + esc(log.title || "网站更新日志") + "</b>\n版本：" + esc(log.version) + (log.date ? " · " + esc(log.date) : "") + "\n\n" +
+        '<ul class="site-log-list">' + log.items.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
+        '<div class="dim" style="margin-top:10px">本版本为 ' + esc(log.version) + '，后续内容会继续补充与校正。</div></div>',
+      foot: '<button class="btn primary block" data-action="close-sheet">知道了</button>'
+    });
+  }
+
   function renderSettings() {
     renderTopbar({ back: "#/me", title: "设置" });
     document.title = "设置 · 亡者世界图鉴";
@@ -2639,6 +2660,7 @@ import {
         '<button class="menu-item" data-action="offline-images"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">下载离线图片包</span><span class="menu-sub">缩略图 + 详情大图 · 不含音频</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-action="offline-audio"><span class="menu-ico">' + icon("download", 17) + '</span><span class="menu-main"><span class="menu-title">下载离线音频</span><span class="menu-sub">7 首原声 · 约 10.8MB</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-action="clear-offline"><span class="menu-ico" style="color:var(--red)">' + icon("trash", 17) + '</span><span class="menu-main"><span class="menu-title" style="color:var(--red)">清除离线图片/音频</span><span class="menu-sub">保留应用壳层缓存</span></span>' + icon("chevron", 17) + "</button>" +
+        '<button class="menu-item" data-action="site-changelog"><span class="menu-ico">' + icon("info", 17) + '</span><span class="menu-main"><span class="menu-title">网站更新日志</span><span class="menu-sub">' + esc(siteLogVersionLabel()) + '</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-action="about"><span class="menu-ico">' + icon("info", 17) + '</span><span class="menu-main"><span class="menu-title">数据来源与说明</span><span class="menu-sub">战利品、剧情、作者与版权</span></span>' + icon("chevron", 17) + "</button>" +
       "</div></div>" +
       '<div class="section tiny dim" style="text-align:center;line-height:1.9">亡者世界图鉴 · 玩家自制<br>所有资料仅供参考，以官方整合包数据为准</div>';
@@ -3020,6 +3042,9 @@ import {
       case "fav-monster": toggleFav("monsters", el.dataset.id); break;
       case "fav-machine": toggleFav("machines", el.dataset.id); break;
       case "show-all-sources": ui.showAllSources = true; renderItem(parseHash().parts[1]); break;
+      case "site-changelog":
+        openSiteChangelog();
+        break;
       case "monster-view":
         ui.monsterView = ui.monsterView === "grid" ? "list" : "grid";
         try { localStorage.setItem("wz_monster_view", ui.monsterView); } catch (e) {}

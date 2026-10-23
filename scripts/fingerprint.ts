@@ -50,6 +50,8 @@ async function main(): Promise<void> {
   for (const root of ROOTS) files.push(...(await walk(path.join(DIST, root))));
   for (const file of files) {
     if (file.endsWith('asset-map.js') || file.endsWith('manifest.json')) continue;
+    // 审核词库是服务端按固定文件名读的（dist/client/data/blocked-words.txt），不能改名
+    if (/^blocked-words\./.test(path.basename(file))) continue;
     const rel = path.relative(DIST, file).split(path.sep).join('/');
     const buf = await fs.readFile(file);
     const ext = path.extname(file);

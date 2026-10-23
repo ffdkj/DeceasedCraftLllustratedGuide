@@ -46,6 +46,27 @@ for (const cls of ['.community-form .chat-upload', '.community-photo-form', '.ch
   check(css.includes(cls), `样式存在 ${cls}`);
 }
 
+/* ---------------- ③c：站点日志 / 审核词库 / 建筑文案 ---------------- */
+{
+  const changelog = readFileSync(join(ROOT, "public/data/changelog.js"), "utf8");
+  check(changelog.includes("window.WZ_SITE_CHANGELOG"), "站点更新日志已并进 data/changelog.js");
+  check(/WZ_SITE_CHANGELOG = \{[^}]*"version":"0\.1\.0-beta"/s.test(changelog), "站点日志版本是 0.1.0-beta");
+  check(changelog.includes('"items":['), "站点日志带条目");
+
+  const moderation = readFileSync(join(ROOT, "src/server/moderation.ts"), "utf8");
+  check(moderation.includes("public/data/blocked-words.txt"), "审核词库改从 public/data 读");
+  check(!moderation.includes("public/guide/data/blocked-words.txt"), "不再依赖 public/guide 的词库路径");
+
+  const words = readFileSync(join(ROOT, "public/data/blocked-words.txt"), "utf8").split(/\r?\n/).filter(Boolean);
+  check(words.length >= 800, `审核词库条目充足（${words.length} 条）`);
+
+  const building = readFileSync(join(ROOT, "public/data/building-content.js"), "utf8");
+  check(building.includes("window.WZ_BUILDING_CONTENT"), "建筑文案已迁成 public/data/building-content.js");
+
+  check(app.includes('data-action="site-changelog"'), "设置页有网站更新日志入口");
+  check(app.includes("function openSiteChangelog("), "日志弹窗已接上");
+}
+
 if (errors.length) {
   console.error(errors.join('\n'));
   console.error(`\n${errors.length} 项失败 / ${notes} 项通过`);

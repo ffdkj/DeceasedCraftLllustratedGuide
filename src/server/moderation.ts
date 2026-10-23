@@ -18,9 +18,10 @@ function load() {
   loaded = true;
   const here = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path.resolve(process.cwd(), 'public/guide/data/blocked-words.txt'),
-    path.resolve(here, '../../public/guide/data/blocked-words.txt'),
-    path.resolve(here, '../public/guide/data/blocked-words.txt')
+    path.resolve(process.cwd(), 'public/data/blocked-words.txt'),
+    path.resolve(here, '../../public/data/blocked-words.txt'),
+    path.resolve(here, '../public/data/blocked-words.txt'),
+    path.resolve(process.cwd(), 'dist/client/data/blocked-words.txt')
   ];
   const file = candidates.find((p) => existsSync(p));
   let words: string[] = [];
