@@ -3152,3 +3152,12 @@ body.community-page .view { padding-top: 56px !important; }
 .community-auth-form label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--muted); }
 .community-auth-form input { height:42px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; }
 .community-auth-form .btn { margin-top:6px; }
+
+/* 社区图片 */
+.community-form { display:flex; gap:8px; align-items:center; }
+.community-form .chat-upload { flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font-size:13px; cursor:pointer; }
+.community-form .chat-upload.has-file { border-color:var(--accent); color:var(--accent); }
+.chat-img { display:block; max-width:240px; max-height:200px; margin-top:8px; border:1px solid var(--line); }
+.community-photo-form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.community-photo-form .photo-caption { flex:1 1 220px; height:40px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; }
+.community-photo-form .photo-file { display:inline-flex; align-items:center; height:40px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font-size:13px; cursor:pointer; }
