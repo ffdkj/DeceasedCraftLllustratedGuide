@@ -52,3 +52,5 @@ __pycache__/
 
 # 生成脚本的下载缓存
 .cache/
+
+.data/
