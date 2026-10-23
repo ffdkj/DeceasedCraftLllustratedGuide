@@ -2644,6 +2644,11 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
   width: 14px; height: 14px; border: 0; border-radius: 3px; background-color: transparent; font-size: 8px;
 }
 .tier-tag .tier-ico .item-ico { width: 16px; height: 16px; }
+/* 子弹本体图标：单独的无损 webp（32x32 原图），填满盒子并保持像素边缘 */
+.tier-ico .item-ico.ammo-ico {
+  background-size: 100% 100%; background-position: 0 0; background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
 .gs-tier-mini.clickable { cursor: pointer; }
 .gs-tier-mini.clickable:hover { text-decoration: underline; }
 .gs-tier-mini.clickable:focus-visible { outline: 2px solid var(--tier, var(--amber)); outline-offset: 2px; border-radius: 4px; }

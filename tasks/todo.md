@@ -149,3 +149,11 @@
   - Result: 行首加 40px 图标（有立绘用立绘，否则按类别回退：骷髅 / 人群 / 爪印，未实装灰）；
     修浅色主题白底覆盖漏了 `[data-theme="light"]` 前缀导致暗色白底白字；`.music-fab` 改 `right: 0`
   - Files: `src/client/app.ts`、`public/css/app.css`、`scripts/verify-monster-guide.ts`、`docs/monster-guide-ui.md`
+
+- [x] T28 子弹梯度图标改用子弹本体
+  - Acceptance: 枪械卡片 / 改枪台头部的「T4子弹」缩写不再用冲压模具的图标，改显示该模具产出子弹的本体图标；点击仍跳模具页
+  - Result: `public/images/ammo/<口径名>.webp` 15 张（TACZ 弹药槽贴图 `textures/ammo/slot/*.png`，无损 webp，单张约 0.3 KB），
+    由 `npm run gen:ammo-icons` 生成并进 `images/manifest.json` 预取；子弹行走 `img`、`href` 仍是 `#/item/<模具>`；
+    图集保持原样（补格子会整图重编码，把已有 2000+ 枚图标一起再压一遍）
+  - Files: `scripts/gen-ammo-icons.ts`、`src/client/tiers.ts`、`public/css/app.css`、`public/images/ammo/`、
+    `public/images/manifest.json`、`scripts/verify-tiers.ts`、`package.json`、`CONTEXT.md`

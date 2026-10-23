@@ -263,11 +263,18 @@ check(bulletDist["无弹药"] === 1, `无弹药 1 把（实际 ${bulletDist["无
 check(gunsmith.guns["suffuse:knife"]?.ammo === "", "无弹药样本：suffuse:knife");
 
 /* ---------------- 图标 ---------------- */
+const { existsSync, statSync } = await import("node:fs");
+const { join: pathJoin } = await import("node:path");
 const textureItems: Record<string, number> = (textures && textures.items) || {};
 for (const id of Object.keys(parts)) check(Object.prototype.hasOwnProperty.call(textureItems, id), `元件图标可解析：${id}`);
 for (const ammoId of moldIds) {
   const mold = bullets[ammoId].mold;
   check(Object.prototype.hasOwnProperty.call(textureItems, mold), `模具图标可解析：${mold}`);
+  // 梯度缩写显示子弹本体（单独出图），不是冲压模具；模具图仍留在图集里给模具页用。
+  const name = ammoId.split(":")[1];
+  const file = pathJoin(process.cwd(), "public/images/ammo", `${name}.webp`);
+  check(existsSync(file), `子弹本体图标存在：public/images/ammo/${name}.webp`);
+  if (existsSync(file)) check(statSync(file).size > 64, `子弹本体图标非空：${name}.webp`);
 }
 check(Object.prototype.hasOwnProperty.call(textureItems, "tacz:ammo"), "无模具弹药退用 tacz:ammo 图标（可解析）");
 
@@ -294,6 +301,15 @@ check(Object.prototype.hasOwnProperty.call(textureItems, "tacz:ammo"), "无模�
     check(css.includes(`.gs-tier-mini.tier-${t}`), `卡片梯度缩写配色 ${t}`);
   }
   check(/\[data-theme="light"\] \.gs-tier-mini\.tier-T1/.test(css), "缩写配色有浅色主题覆盖");
+  /* 子弹图标 = 子弹本体（public/images/ammo 单独出图），不是冲压模具；点击仍落模具页 */
+  check(tiersSrc.includes("function ammoIcon("), "子弹图标单独解析：ammoIcon()");
+  check(tiersSrc.includes('"/images/ammo/" + name + ".webp"'), "子弹图标走 /images/ammo/<口径名>.webp");
+  check(/img: ammoIcon\(ammo\)/.test(tiersSrc), "子弹行带上 img（子弹本体图标）");
+  check(/ico: "",\s*\n\s*img: ammoIcon\(ammo\)/.test(tiersSrc), "子弹行不再用模具图标（ico 为空，走 img）");
+  check(!/ico: b\.mold/.test(tiersSrc), "没有残留「子弹行用模具图标」的写法");
+  check(/href: b\.mold \? "#\/item\/" \+ encodeURIComponent\(b\.mold\)/.test(tiersSrc), "点击落地页仍是模具页");
+  check(/\.tier-ico \.item-ico\.ammo-ico \{/.test(css), "子弹图标有独立样式（缩放到 14/16px）");
+  check(/image-rendering: pixelated/.test(css.slice(css.indexOf(".item-ico.ammo-ico"), css.indexOf(".item-ico.ammo-ico") + 300)), "子弹图标保持像素边缘");
 }
 
 /* ---------------- 生成器自检干净 ---------------- */

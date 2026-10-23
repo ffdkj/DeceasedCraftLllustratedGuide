@@ -23,6 +23,7 @@
     "gen:tiers": "tsx scripts/gen-tiers.ts",
     "gen:compat": "tsx scripts/gen-compat.ts",
     "gen:atlas": "tsx scripts/gen-atlas-extra.ts",
+    "gen:ammo-icons": "tsx scripts/gen-ammo-icons.ts",
     "verify:recipes": "tsx scripts/verify-recipes.ts",
     "verify:tiers": "tsx scripts/verify-tiers.ts",
     "verify:compat": "tsx scripts/verify-compat.ts",

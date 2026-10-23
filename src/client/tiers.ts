@@ -44,12 +44,23 @@
       "background-position:-" + x + "px -" + y + "px;image-rendering:pixelated;"
     );
   }
-  function iconHTML(iconId, label, size) {
-    const index = texIndex(iconId);
-    if (index >= 0) {
-      return '<span class="item-ico tex" style="width:' + size + "px;height:" + size + "px;" + texStyle(index, size) + '" aria-hidden="true"></span>';
+  /* 子弹本体图标：图集里只有「金属冲压模具」，梯度缩写要显示子弹本身，
+     所以弹药走单独出图的 public/images/ammo/<口径名>.webp（scripts/gen-ammo-icons.ts）。
+     点击落地页仍然是模具页。 */
+  function ammoIcon(ammoId) {
+    const name = String(ammoId || "").split(":")[1];
+    return name ? "/images/ammo/" + name + ".webp" : null;
+  }
+  function iconHTML(row, size) {
+    const box = "width:" + size + "px;height:" + size + "px;";
+    if (row.img) {
+      return '<span class="item-ico ammo-ico" style="' + box + "background-image:url('" + esc(row.img) + "')\" aria-hidden=\"true\"></span>";
     }
-    return '<span class="item-ico" aria-hidden="true">' + esc(initial(label)) + "</span>";
+    const index = texIndex(row.ico);
+    if (index >= 0) {
+      return '<span class="item-ico tex" style="' + box + texStyle(index, size) + '" aria-hidden="true"></span>';
+    }
+    return '<span class="item-ico" aria-hidden="true">' + esc(initial(row.name)) + "</span>";
   }
 
   /* ---------------- 行的数据模型 ---------------- */
@@ -111,7 +122,10 @@
       tier: b.tier,
       label: "子弹梯度",
       name: b.caliber || ammo,
-      ico: b.mold || "tacz:ammo",
+      // 图标用「子弹本体」的图标（弹药槽贴图单独出图），不是冲压模具那张图；
+      // 点击落地页仍然是模具（梯度由模具的最低可搜刮区域决定）。
+      ico: "",
+      img: ammoIcon(ammo),
       href: b.mold ? "#/item/" + encodeURIComponent(b.mold) : null,
       inferred: false,
       note: null,
@@ -132,7 +146,7 @@
       (row.href ? " clickable" : "");
     const title = row.name ? row.label + "：" + row.name : row.label;
     const inner =
-      (row.ico ? '<span class="tier-ico">' + iconHTML(row.ico, row.name, 16) + "</span>" : "") +
+      ((row.ico || row.img) ? '<span class="tier-ico">' + iconHTML(row, 16) + "</span>" : "") +
       '<span class="tier-text">' + esc(row.label) + "</span>" +
       (muted ? '<span class="tier-none">' + esc(row.note || "") + "</span>" : '<b class="tier-hl">' + esc(row.tier) + "</b>") +
       (row.inferred ? '<span class="tier-infer">· 推断</span>' : "");
@@ -154,7 +168,7 @@
     const label = row.tier + (row.kind === "gun" ? "枪械" : "子弹");
     const title = row.label + (row.inferred ? "（推断）" : "") + (row.name ? "：" + row.name : "");
     const inner =
-      '<span class="tier-ico">' + iconHTML(row.ico, row.name, 14) + "</span>" + esc(label);
+      '<span class="tier-ico">' + iconHTML(row, 14) + "</span>" + esc(label);
     const cls = "gs-tier-mini tier-" + row.tier + (row.inferred ? " inferred" : "");
     // 卡片本身是 <button>，只能用 span；头部 .gs-badges 里可以点，跳组装元件 / 模具页
     if (clickable && row.href) {
