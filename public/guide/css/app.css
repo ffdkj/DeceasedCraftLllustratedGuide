@@ -3142,3 +3142,9 @@ body.page-creatures {
   .monster-card-stats .stat-ico { width: 19px !important; height: 19px !important; }
   .monster-card-stats .tier-dot { width: 34px !important; height: 26px !important; font-size: 15px !important; }
 }
+
+/* 社区邮箱登录 / 注册 */
+.community-auth-form { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+.community-auth-form label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--muted); }
+.community-auth-form input { height:42px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; }
+.community-auth-form .btn { margin-top:6px; }
