@@ -2537,6 +2537,17 @@ import {
     q("view").innerHTML = '<div id="community-root"><div class="empty">' + icon("globe", 28) + '<div class="em-title">正在连接社区服务器…</div><div class="em-sub">离线单文件不会联网；社区版需要先启动服务器。</div></div></div>';
     loadCommunity();
   }
+  /* 社区图片上传：先 POST /api/upload 拿地址，再带地址发帖 / 传照片墙（与 guide 的 community-media.js 同一流程）。 */
+  function uploadCommunityImage(file) {
+    const fd = new FormData();
+    fd.append("file", file);
+    return fetch("/api/upload", { method: "POST", body: fd }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        if (!r.ok) throw new Error(d.error || "上传失败");
+        return d.url;
+      });
+    });
+  }
   function communityOfflineHTML() {
     return '<div class="section"><div class="guide-note">' + icon("info", 18) + "<div><b>当前是离线版</b><br>社区功能需要先在本机启动「社区在线版服务器」，并通过 http://localhost:8080 打开。单文件 / 静态站点不会自动连服务器。</div></div></div>" +
       '<div class="section"><div class="menu-list">' +
@@ -2560,21 +2571,53 @@ import {
       let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(user ? user.name : "未登录") + '</div><div class="profile-sub">' + (cfg.ready ? "微软正版登录已配置" : "服务器未配置微软登录") + '</div></div>' +
         (user ? '<button class="btn ghost" data-action="community-logout">退出</button>' : (cfg.ready ? '<a class="btn primary" href="/auth/login">正版登录</a>' : '<span class="badge">未配置</span>')) + "</div></div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">聊天</div><div class="section-note">' + posts.length + ' 条</div></div><div class="community-chat" id="community-chat">' +
-        (posts.length ? posts.slice(-50).map(function (p) { return '<div class="chat-row"><b>' + esc(p.user) + '</b><span>' + esc(p.text) + '</span></div>'; }).join("") : '<div class="guide-note">' + icon("info", 18) + "<div>还没有人说话。登录后发第一条。</div></div>") +
-        '</div>' + (user ? '<form id="community-form" class="community-form"><input id="community-input" maxlength="500" placeholder="说点什么…" autocomplete="off"><button class="btn primary" type="submit">发送</button></form>' : "") + "</div>";
+        (posts.length ? posts.slice(-50).map(function (p) { return '<div class="chat-row"><b>' + esc(p.user) + '</b><span>' + esc(p.text) + '</span>' + (p.image ? '<img class="chat-img" src="' + esc(p.image) + '" alt="附图" loading="lazy">' : "") + '</div>'; }).join("") : '<div class="guide-note">' + icon("info", 18) + "<div>还没有人说话。登录后发第一条。</div></div>") +
+        '</div>' + (user ? '<form id="community-form" class="community-form"><input id="community-input" maxlength="500" placeholder="说点什么…" autocomplete="off"><label class="chat-upload" title="附图（先登录，单张 ≤ 5MB）"><input id="chat-file" type="file" accept="image/jpeg,image/png,image/webp" hidden><span>图片</span></label><button class="btn primary" type="submit">发送</button></form>' : "") + "</div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">照片墙</div><div class="section-note">' + photos.length + ' 张</div></div>' +
-        (photos.length ? '<div class="community-photos">' + photos.slice(-30).map(function (p) { return p.dataUrl ? '<figure class="community-photo"><img src="' + esc(p.dataUrl) + '" alt="' + esc(p.caption || "") + '"><figcaption>' + esc(p.caption || "") + '</figcaption></figure>' : ""; }).join("") + "</div>" : '<div class="guide-note">' + icon("info", 18) + "<div>还没有照片。Exposure 照片上传接口已预留。</div></div>") + "</div>";
+        (photos.length ? '<div class="community-photos">' + photos.slice(-30).map(function (p) { const src = p.image || p.dataUrl; return src ? '<figure class="community-photo"><img src="' + esc(src) + '" alt="' + esc(p.caption || "") + '" loading="lazy"><figcaption>' + esc(p.caption || "") + '</figcaption></figure>' : ""; }).join("") + "</div>" : '<div class="guide-note">' + icon("info", 18) + "<div>还没有照片。登录后可以从下面上传一张。</div></div>") +
+        (user ? '<form id="community-photo-form" class="community-photo-form"><input id="photo-caption" class="photo-caption" maxlength="120" placeholder="图片说明（可选）"><label class="photo-file">选择图片<input id="photo-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><button class="btn primary" type="submit">上传到照片墙</button></form>' : "") + "</div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">已探索建筑</div><div class="section-note">' + explored.length + ' 条</div></div>' +
         (explored.length ? '<div class="list">' + explored.slice(-50).map(function (e) { return '<div class="row-card" style="cursor:default"><div class="row-main"><div class="row-title">' + esc(e.building || "未命名") + '</div><div class="row-sub">' + esc(e.region || "") + " · " + esc(e.user || "") + "</div></div></div>"; }).join("") + "</div>" : '<div class="guide-note">' + icon("info", 18) + "<div>还没有同步记录。后续由游戏内电脑 Mod 上传。</div></div>") + "</div>";
       root.innerHTML = h;
       const form = q("community-form");
+      const chatFile = q("chat-file");
+      const chatLabel = q(".chat-upload");
+      if (chatFile && chatLabel) chatFile.addEventListener("change", function () {
+        const picked = chatFile.files && chatFile.files[0];
+        chatLabel.classList.toggle("has-file", !!picked);
+        const input = q("community-input");
+        if (input) input.placeholder = picked ? "图片已选择，可加说明…" : "说点什么…";
+      });
       if (form) form.addEventListener("submit", function (e) {
         e.preventDefault();
         const input = q("community-input");
-        if (!input || !input.value.trim()) return;
-        fetch("/api/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: input.value.trim() }) })
-          .then(function () { input.value = ""; loadCommunity(); })
-          .catch(function () { toast("发送失败"); });
+        const text = input ? input.value.trim() : "";
+        const picked = chatFile && chatFile.files && chatFile.files[0];
+        if (!text && !picked) return;
+        const send = function (image) {
+          return fetch("/api/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, image: image || "" }) })
+            .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || "发送失败"); return d; }); })
+            .then(function () { if (input) input.value = ""; loadCommunity(); });
+        };
+        (picked ? uploadCommunityImage(picked) : Promise.resolve(""))
+          .then(send)
+          .catch(function (err) { toast(err && err.message ? err.message : "发送失败"); });
+      });
+
+      const photoForm = q("community-photo-form");
+      const photoFile = q("photo-file");
+      if (photoForm) photoForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const picked = photoFile && photoFile.files && photoFile.files[0];
+        if (!picked) return toast("请选择图片");
+        uploadCommunityImage(picked)
+          .then(function (url) {
+            const caption = q("photo-caption");
+            return fetch("/api/photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: url, caption: caption ? caption.value.trim() : "" }) })
+              .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || "上传失败"); return d; }); });
+          })
+          .then(function () { loadCommunity(); })
+          .catch(function (err) { toast(err && err.message ? err.message : "上传失败"); });
       });
     }).catch(function () { root.innerHTML = communityOfflineHTML(); });
   }
