@@ -20,3 +20,18 @@ pnpm start
 - POST /api/posts 发消息（需登录）
 
 本地数据默认写入 .data/community.json，生产环境请改用 SQLite/Postgres，并设置 NODE_ENV=production 以启用 Secure Cookie。
+
+## 聊天内容审核
+
+审核模块：src/server/moderation.ts
+词库：public/guide/data/blocked-words.txt
+
+- POST /api/moderate 测试文本
+- POST /api/posts 会自动审核，命中后返回 422
+
+参考项目：
+
+- ToolGood.Words：https://github.com/toolgood/ToolGood.Words
+- Sensitive-lexicon：https://github.com/Konsheng/Sensitive-lexicon
+
+当前使用 Sensitive-lexicon 的色情/暴恐/广告词库，MIT 许可。ToolGood.Words 的 JS 版可替换当前匹配器，Apache-2.0。
