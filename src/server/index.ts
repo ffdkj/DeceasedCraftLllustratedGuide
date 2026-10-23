@@ -6,11 +6,13 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mediaHandler } from './media.js';
+import { community } from './community.js';
 
 // /media 请求上限：media.ts 自己的 S3 abort 通常先返回 504，这一层是最后一道网。
 const MEDIA_TIMEOUT_MS = 5000;
 
 const app = new Hono();
+app.route('/api', community);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
