@@ -3488,3 +3488,15 @@ body.view-pc .detail-stats b { font-size: 20px; }
   text-rendering: geometricPrecision; }
 .tier-dot { font-size: 10px; letter-spacing: 0; }
 .stat-chip { font-size: 12px; }
+
+/* ---- 生物图鉴：两列网格视图（移植 guide 的 #monster-list.monster-grid；默认仍是列表） ---- */
+.list.monster-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.list.monster-cards .monster-row { flex-wrap: wrap; align-items: flex-start; padding: 10px; }
+.list.monster-cards .monster-row .row-main { flex: 1 1 calc(100% - 54px); min-width: 0; }
+.list.monster-cards .monster-row .row-title { font-size: 13px; }
+.list.monster-cards .monster-row .row-sub { flex-wrap: wrap; gap: 4px; }
+.list.monster-cards .monster-row .num-btn { margin: 8px 0 0 auto; width: 100%; }
+.list.monster-cards .monster-row .num-none { margin: 8px 0 0 auto; }
+.list.monster-cards .row-en { display: none; }
+.view-chip { margin-left: auto; }
+@media (max-width: 560px) { .list.monster-cards { grid-template-columns: 1fr; } }

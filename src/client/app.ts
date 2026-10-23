@@ -282,8 +282,13 @@ import {
     favTab: "items",
     itemBack: "#/loot",
     showAllSources: false,
-    installPrompt: null
+    installPrompt: null,
+    monsterView: "list"
   };
+  try {
+    const savedView = localStorage.getItem("wz_monster_view");
+    if (savedView === "grid") ui.monsterView = "grid";
+  } catch (e) {}
 
   /* ---------------- 数据索引 ---------------- */
   // 荒野与街道是战利品表中的分散/子区域，补齐气候与阶级，便于统一配色
@@ -2063,6 +2068,7 @@ import {
       '<div class="section"><div class="chip-row">' +
         '<button class="chip ' + (isUn ? "" : "active") + '" data-go="' + monsterHref("all", f.tier, f.threat) + '">会刷 <span class="n">' + cat.counts.spawns + "</span></button>" +
         '<button class="chip ' + (isUn ? "active" : "") + '" data-go="' + monsterHref("unimplemented", f.tier, f.threat) + '">未实装 <span class="n">' + (cat.counts.unimplemented + cat.counts.unconfirmed) + "</span></button>" +
+        '<button class="chip view-chip" data-action="monster-view" title="在列表与两列网格之间切换">' + (ui.monsterView === "grid" ? "列表" : "网格") + "</button>" +
       "</div></div>" +
       (isUn ? '<div class="section"><div class="guide-note">' + icon("info", 18) + "<div>不参与其他筛选：上排是四个刷怪来源全空的 " + cat.counts.unimplemented + " 只；下排是包内有注册名、但四个来源都扫不到刷怪规则的 " + cat.counts.unconfirmed + " 只。它们不会出现在梯度列表与数值查询里。</div></div></div>" : "") +
       '<div class="section"><div class="searchbar">' + icon("search") + '<input id="monster-search" type="search" placeholder="搜名称、英文名、模组或建筑" value="' + esc(ui.monsterQuery) + '" autocomplete="off"></div></div>' +
@@ -2126,6 +2132,14 @@ import {
         esc(c.key) + ' <span class="n">' + c.n + "</span></button>";
     }).join("");
   }
+  /* 列表 / 两列网格（移植 guide 的 #monster-list.monster-grid）；默认列表，选择记在本地。 */
+  function monsterListClass() {
+    return ui.monsterView === "grid" ? "list monster-cards" : "list";
+  }
+  function renderMonsterViewChip() {
+    const btn = document.querySelector('[data-action="monster-view"]');
+    if (btn) btn.textContent = ui.monsterView === "grid" ? "列表" : "网格";
+  }
   function renderMonsterList() {
     const f = monsterFilter();
     const query = ui.monsterQuery.trim().toLowerCase();
@@ -2145,11 +2159,11 @@ import {
       ];
       box.innerHTML = groups.filter(function (g) { return g.list.length; }).map(function (g) {
         return '<div class="section-head"><div class="section-title">' + g.title + " · " + g.list.length + ' 条</div><div class="section-note">' + g.sub + "</div></div>" +
-          '<div class="list">' + g.list.map(monsterRowHTML).join("") + "</div>";
+          '<div class="' + monsterListClass() + '">' + g.list.map(monsterRowHTML).join("") + "</div>";
       }).join("");
       return;
     }
-    box.innerHTML = '<div class="list">' + list.map(monsterRowHTML).join("") + "</div>";
+    box.innerHTML = '<div class="' + monsterListClass() + '">' + list.map(monsterRowHTML).join("") + "</div>";
   }
 
   /* ---------------- 动物（中立生物） ---------------- */
@@ -2963,6 +2977,12 @@ import {
       case "fav-monster": toggleFav("monsters", el.dataset.id); break;
       case "fav-machine": toggleFav("machines", el.dataset.id); break;
       case "show-all-sources": ui.showAllSources = true; renderItem(parseHash().parts[1]); break;
+      case "monster-view":
+        ui.monsterView = ui.monsterView === "grid" ? "list" : "grid";
+        try { localStorage.setItem("wz_monster_view", ui.monsterView); } catch (e) {}
+        renderMonsterList();
+        renderMonsterViewChip();
+        break;
       case "monster-nums": openMonsterNumbers(el.dataset.id); break;
       case "guide-group": ui.guideGroup[el.dataset.type] = el.dataset.group; renderGuideGroups(el.dataset.type); renderGuideRows(el.dataset.type); break;
       case "building-region": ui.buildingRegion = el.dataset.region; renderBuildingRegions(); renderBuildingRows(); break;

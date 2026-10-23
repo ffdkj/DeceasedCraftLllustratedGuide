@@ -243,6 +243,17 @@ check(entryMatrix(unimplemented, input).length > 0, "它本身仍有可算的矩
 check(app.includes('m.status === "unimplemented"'), "详情页对未实装做了分支");
 check(app.includes("const sections = spawns ? entryMatrix"), "未实装不渲染数值矩阵");
 
+/* ---------------- 列表 / 网格视图（guide monster-grid 的移植） ---------------- */
+{
+  const css = readFileSync(join(ROOT, "public/css/app.css"), "utf8");
+  check(app.includes('monsterView: "list"'), "网格视图默认关闭（默认仍是列表）");
+  check(app.includes('data-action="monster-view"'), "有列表 / 网格切换按钮");
+  check(app.includes('"list monster-cards"'), "网格模式给列表容器加 monster-cards");
+  check(app.includes('localStorage.setItem("wz_monster_view"'), "视图选择记在本地");
+  check(/\.list\.monster-cards \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s.test(css), "网格视图两列");
+  check(/@media \(max-width: 560px\) \{ \.list\.monster-cards \{ grid-template-columns: 1fr; \} \}/.test(css), "窄屏网格退化为单列");
+}
+
 console.log(`✓ 生物图鉴目录：${checks} 项断言通过`);
 console.log(
   `  共 ${cat.counts.total} 条 · 会刷 ${cat.counts.spawns}（T1 ${cat.tierIds.T1.length} / T2 ${cat.tierIds.T2.length} / T3 ${cat.tierIds.T3.length} / T4 ${cat.tierIds.T4.length} / 全图 ${cat.anywhereIds.length} / 深渊 ${cat.abyssIds.length}）· 未实装 ${cat.counts.unimplemented} + 来源未确认 ${cat.counts.unconfirmed}`,
