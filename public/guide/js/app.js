@@ -1493,6 +1493,7 @@
     window.addEventListener("wheel", function (e) {
       if (!isLootHome() || e.ctrlKey || Math.abs(e.deltaY) < 8) return;
       if (e.target && e.target.closest && e.target.closest("input, textarea, select, [contenteditable=true]")) return;
+      if (e.target && e.target.closest && e.target.closest(".overlay, .sheet")) return;
       e.preventDefault();
       if (wheelLock) return;
       wheelLock = true;
@@ -1603,7 +1604,7 @@
     } else {
       left = '<button class="me-btn" data-action="open-me" aria-label="我的">' + icon("user", 21) + '<span class="me-btn-label">我的</span></button>';
     }
-    const brand = '<div class="brand"><div class="brand-mark"><img src="/guide/images/brand/deceasedcraft_icon.png" alt="DeceasedCraft" onerror="this.style.display='none';this.parentNode.classList.add('no-logo')"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
+    const brand = '<div class="brand"><div class="brand-mark"><img src="/guide/images/brand/deceasedcraft_icon.png" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
     let center = "";
     if (opts.title) {
       center = '<div style="flex:1;min-width:0;text-align:center"><div class="page-title" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(opts.title) + "</div>" + (opts.sub ? '<div class="page-sub">' + esc(opts.sub) + "</div>" : "") + "</div>";
@@ -1799,38 +1800,32 @@
       '<section class="section"><button class="btn ghost block" data-go="#/loot">返回 T1–T4 总览</button></section>';
   }
   const SITE_CHANGELOG = {
-    version: "0.1.0beta",
-    date: "2026-10-23",
-    title: "网站 0.1.0beta 更新日志",
-    items: [
-      "全站改用像素字体，UI 与正文分别设置，并优化字号和清晰度。",
-      "新增加载渐显浮动动画、每页返回顶部按钮，桌面版音乐播放器固定右上角。",
-      "顶部导航调整为「区域战利品 / 生物 / 装备 / 世界 / 我的」，社区归入「我的」。",
-      "区域建筑列表改为大图卡片并支持翻页；建筑海报保持原样。",
-      "怪物图鉴按蓝 / 紫 / 橙 / 红 / 绿分类，每页 8 个，支持等级筛选和分页。",
-      "更新怪物实拍图片，补充无面者、撞击者，删除无评级和不存在的怪物。",
-      "近战武器按类型与 T1–T4 重排，数值改为读取 KubeJS 实际属性，并按新公式计算单持 / 双持推荐。",
-      "新增单手 / 双手对比与双持搭配推荐页，补全护甲值、韧性和御寒信息。",
-      "载具按类型分成六大类；新增科技板块，机械动力机器与火炮迁入。",
-      "补全末日难度说明；荒地新增「极热」气候标签；赌场标记为超大型建筑。",
-      "更新区域、怪物、世界背景图；网站图片统一转为 WebP，部署包体积从约 34 MB 降至 23 MB。",
-      "补充剧情、图片来源及 B站 UP 主署名，品牌处注明非官方攻略、仅供参考。",
-      "新增「怪物数值手册」：解析 132 个实体基础属性，85 只现有怪物同步生命、攻击、护甲、移速与跟随范围。",
-      "怪物详情改为原版心形生命、护甲、攻击图标 + 大数字，并加深配色。",
-      "「资料待补充」提示移动到掉落与资料来源之间。",
-      "修复科技板块机器卡片跳回区域战利品的问题；优化返回动画与切换区域时的音频加载。",
-      "补充怪物数值来源、协作整理署名及 0.1.0beta 版本说明。",
-      "接入 132 实体场景数值、刷怪梯度与 33 座建筑尸潮数据：怪物详情新增场景数值/刷怪说明，建筑详情新增尸潮生成表。",
-      "新增小僵尸：描述、刷新区域与词条与僵尸一致，评级为特殊二级；僵尸评级调整为普通一级。"
+    "version": "0.1.0-beta",
+    "date": "2026-10-23",
+    "title": "网站 0.1.0-beta 更新日志",
+    "items": [
+        "全站改用像素字体，UI 与正文分别设置，并优化字号和清晰度。",
+        "新增加载渐显浮动动画、每页返回顶部按钮、桌面版音乐播放器固定右上角。",
+        "顶部导航最后一项改为「社区」，「我的」收藏、设置、导出并入社区页。",
+        "新增邮箱注册、邮箱登录、退出登录，账号状态保存在服务端。",
+        "社区聊天支持文字消息与图片消息，图片随消息显示。",
+        "新增照片墙上传，可填写图片说明。",
+        "图片上传审核：限制 JPG/PNG/WebP、5MB、尺寸范围，使用 sharp 重编码并去除元数据。",
+        "聊天文字与图片说明接入敏感词审核，命中后拦截并提示。",
+        "完整接入本地静态内容：105 种怪物、全部图片、音频、字体、纹理和数据。",
+        "修复属性图标、物品图标、品牌 Logo 与 /guide/ 子目录下的相对路径问题。",
+        "修复更新日志弹窗无法使用鼠标滚轮滚动的问题。",
+        "仓库构建修复：清理重复图标 key，补齐 server 构建依赖。",
+        "版本号更新为 0.1.0-beta。"
     ]
-  };
+};
   function openSiteChangelog() {
     const c = SITE_CHANGELOG;
     openSheet({
       title: "网站更新日志",
       body: '<div class="text-block"><b>' + esc(c.title) + '</b>\n版本：' + esc(c.version) + ' · ' + esc(c.date) + '\n\n' +
         '<ul class="site-log-list">' + c.items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' +
-        '<div class="dim" style="margin-top:10px">本版本为 0.1.0beta，后续内容会继续补充与校正。</div></div>',
+        '<div class="dim" style="margin-top:10px">本版本为 0.1.0-beta，后续内容会继续补充与校正。</div></div>',
       foot: '<button class="btn primary block" data-action="close-sheet">知道了</button>'
     });
   }
@@ -1878,9 +1873,9 @@
           '<div class="hero-stat"><div class="v">' + m.entries.toLocaleString() + '</div><div class="k">掉落条目</div></div>' +
           '<div class="hero-stat"><div class="v">' + m.items.toLocaleString() + '</div><div class="k">物品</div></div>' +
         "</div>" +
-      '<div class="loot-update-entry in-hero"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
+      '<div class="loot-update-entry in-hero"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
       "</section>" +
-      '<div class="loot-update-entry outside"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
+      '<div class="loot-update-entry outside"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
       '<div class="quick-search"><div class="searchbar">' + icon("search") +
         '<input id="loot-search" type="search" placeholder="搜物品名或 ID，例如：铁锭 / minecraft:iron_ingot" value="' + esc(initialQuery || ui.lootQuery) + '" autocomplete="off" autocapitalize="off" spellcheck="false">' +
         '<button class="search-clear" data-action="clear-loot-search" aria-label="清空" hidden>' + icon("close", 15) + "</button>" +
