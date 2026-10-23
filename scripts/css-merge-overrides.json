@@ -1,0 +1,19 @@
+{
+  ".music-fab": "根站修复：音乐按钮贴屏幕最右边（right: 0），verify 门禁依赖这条",
+  ".gs-stat-bar": "根站新增：数值条 4px、两段式布局的底座",
+  ".stat-chip": "根站新增：生物图鉴数值小标签",
+  ".ico-hp": "根站重做：半心图标（1 图标 = 1 点）",
+  ".ico-hp-empty": "根站重做：空心图标只用于 0 值",
+  ".ico-armor": "根站重做：半甲图标",
+  ".ico-armor-empty": "根站重做：空甲图标",
+  ".ico-attack": "根站重做：攻击图标口径",
+  ".tier-dot": "根站重做：梯度点阵（T1→T4 红度递增）",
+  ".tier-dot.on": "根站重做：选中态配色",
+  ".tier-dot.on[data-tier=\"T1\"]": "根站修复：浅色主题白字不可见，按档位给色",
+  ".tier-dot.on[data-tier=\"T2\"]": "根站修复：同上",
+  ".tier-dot.on[data-tier=\"T3\"]": "根站修复：同上",
+  ".tier-dot.on[data-tier=\"T4\"]": "根站修复：同上",
+  ".tier-any": "根站新增：全图/深渊筛选标签",
+  ".gs-head-body": "根站修复：窄屏头部不再给整块留 40px，梯度标签能用满宽度",
+  ".gs-stat-bar i": "根站新增：数值条各段绝对定位并排（底座 + 绿/红变化段）"
+}

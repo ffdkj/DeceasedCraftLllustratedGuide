@@ -43,7 +43,10 @@
      html/css/打包产物/data 引用；运行时拼路径的（弹药图标）走 `data/asset-map.js`；
      SW 的图片缓存版本改为内容哈希、不再预取 `/media` 大图；`scripts/verify-fingerprint.ts`（18 项断言）进门禁。
      去重结果：删 217 张已在对象存储的全尺寸副本（4.11MB），296 张冲突图以 guide 版覆盖。
-2. **CSS 合并**：guide `app.css` 为基座 + 根站新增块，逐页验收（含浅色/深色）。
+2. **CSS 合并**（已完成）：`scripts/merge-css.ts` 以 guide `app.css` 原文为基座，追加「只在根站」的 165 条规则
+   （梯度点阵 / 数值条 / 像素字 / 弹药图标 / 动物页等），再把根站带修复的 17 个选择器列为覆盖
+   （见 `scripts/css-merge-overrides.json`：music-fab 贴边、数值条两段、半心/半甲图标、tier-dot 显色、gs-head-body 等），
+   覆盖时同时从基座里删掉 guide 的旧正文。结果 3491 行；三个含 CSS 断言的验证脚本全绿。
 3. **guide 逻辑回灌**：monster-grid（切换按钮、默认列表）、照片墙上传/聊天附图、0.1.0-beta 日志、
    `building-content.js`、审核词库、`/downloads/`。
 4. **对象存储收尾**：上传与 `community.json` 进 RustFS、S3 对象清理、删 `public/guide/` 与旧快照与 `wrangler.jsonc`、
