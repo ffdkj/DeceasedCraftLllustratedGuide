@@ -2,12 +2,14 @@ import { Hono } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import sharp from 'sharp';
 import path from 'node:path';
 import { checkText } from './moderation.js';
 
 type User = { id: string; email: string; name: string; salt: string; hash: string; createdAt: number };
-type Post = { id: string; userId: string; user: string; text: string; ts: number };
-type Store = { users: User[]; posts: Post[] };
+type Post = { id: string; userId: string; user: string; text: string; image?: string; ts: number };
+type Photo = { id: string; userId: string; user: string; image: string; caption: string; ts: number };
+type Store = { users: User[]; posts: Post[]; photos: Photo[] };
 
 const dataPath = process.env.COMMUNITY_DATA || path.resolve(process.cwd(), '.data/community.json');
 const SESSION_COOKIE = 'wz_session';
@@ -15,9 +17,9 @@ const sessions = new Map<string, { userId: string; exp: number }>();
 
 function load(): Store {
   try {
-    if (existsSync(dataPath)) return JSON.parse(readFileSync(dataPath, 'utf8')) as Store;
+    if (existsSync(dataPath)) { const d = JSON.parse(readFileSync(dataPath, 'utf8')) as Store; d.users ||= []; d.posts ||= []; d.photos ||= []; return d; }
   } catch {}
-  return { users: [], posts: [] };
+  return { users: [], posts: [], photos: [] };
 }
 let store = load();
 
@@ -88,6 +90,45 @@ community.post('/auth/login', async (c) => {
 
 community.post('/auth/logout', (c) => { clearSession(c); return c.json({ ok: true }); });
 
+const UPLOAD_DIR = path.resolve(process.cwd(), '.data/uploads');
+const UPLOAD_PREFIX = '/api/uploads/';
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+community.post('/upload', async (c) => {
+  const user = currentUser(c);
+  if (!user) return c.json({ error: '请先登录' }, 401);
+  const form = await c.req.parseBody().catch(() => null) as any;
+  const file = form?.file;
+  if (!file || typeof file === 'string') return c.json({ error: '请选择图片' }, 400);
+  if (file.size > MAX_IMAGE_BYTES) return c.json({ error: '图片不能超过 5MB' }, 413);
+  const type = String(file.type || '');
+  if (type && type !== 'application/octet-stream' && !['image/jpeg', 'image/png', 'image/webp'].includes(type)) return c.json({ error: '只支持 JPG / PNG / WebP' }, 415);
+  const input = Buffer.from(await file.arrayBuffer());
+  try {
+    const probe = sharp(input, { failOn: 'error' });
+    const meta = await probe.metadata();
+    if (!meta.width || !meta.height || meta.width < 16 || meta.height < 16) return c.json({ error: '图片尺寸过小' }, 422);
+    if (meta.width * meta.height > 40_000_000) return c.json({ error: '图片尺寸过大' }, 422);
+    const output = await sharp(input).rotate().resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+    mkdirSync(UPLOAD_DIR, { recursive: true });
+    const name = randomBytes(16).toString('hex') + '.webp';
+    writeFileSync(path.join(UPLOAD_DIR, name), output);
+    return c.json({ url: UPLOAD_PREFIX + name, width: meta.width, height: meta.height });
+  } catch {
+    return c.json({ error: '图片解析失败' }, 422);
+  }
+});
+
+community.get('/uploads/:name', (c) => {
+  const name = c.req.param('name');
+  if (!/^[a-f0-9]{32}\.webp$/.test(name)) return c.json({ error: 'not found' }, 404);
+  const file = path.join(UPLOAD_DIR, name);
+  if (!existsSync(file)) return c.json({ error: 'not found' }, 404);
+  c.header('Content-Type', 'image/webp');
+  c.header('Cache-Control', 'public, max-age=31536000, immutable');
+  return c.body(readFileSync(file));
+});
+
 community.post('/moderate', async (c) => {
   const body = await c.req.json().catch(() => null) as any;
   const text = String(body?.text || '').slice(0, 2000);
@@ -101,17 +142,34 @@ community.post('/posts', async (c) => {
   if (!user) return c.json({ error: '请先登录' }, 401);
   const body = await c.req.json().catch(() => null) as any;
   const text = String(body?.text || '').trim().slice(0, 500);
-  if (!text) return c.json({ error: '内容不能为空' }, 400);
+  const image = String(body?.image || '');
+  if (!text && !image) return c.json({ error: '内容不能为空' }, 400);
+  if (image && !image.startsWith(UPLOAD_PREFIX)) return c.json({ error: '图片地址无效' }, 400);
   const audit = checkText(text);
   if (!audit.ok) return c.json({ error: '内容包含不当词汇，请修改后重试', hits: audit.hits }, 422);
   const last = store.posts.filter((p) => p.userId === user.id).slice(-1)[0];
   if (last && Date.now() - last.ts < 1500) return c.json({ error: '发送太快，稍后再试' }, 429);
-  const post: Post = { id: randomBytes(8).toString('hex'), userId: user.id, user: user.name, text, ts: Date.now() };
+  const post: Post = { id: randomBytes(8).toString('hex'), userId: user.id, user: user.name, text, image: image || undefined, ts: Date.now() };
   store.posts.push(post);
   if (store.posts.length > 2000) store.posts = store.posts.slice(-2000);
   save();
   return c.json({ post });
 });
 
-community.get('/photos', (c) => c.json({ photos: [] }));
+community.get('/photos', (c) => c.json({ photos: store.photos.slice(-100) }));
+community.post('/photos', async (c) => {
+  const user = currentUser(c);
+  if (!user) return c.json({ error: '请先登录' }, 401);
+  const body = await c.req.json().catch(() => null) as any;
+  const image = String(body?.image || '');
+  const caption = String(body?.caption || '').trim().slice(0, 120);
+  if (!image.startsWith(UPLOAD_PREFIX)) return c.json({ error: '请先上传图片' }, 400);
+  const audit = checkText(caption);
+  if (!audit.ok) return c.json({ error: '图片说明包含不当词汇', hits: audit.hits }, 422);
+  const photo: Photo = { id: randomBytes(8).toString('hex'), userId: user.id, user: user.name, image, caption, ts: Date.now() };
+  store.photos.push(photo);
+  if (store.photos.length > 500) store.photos = store.photos.slice(-500);
+  save();
+  return c.json({ photo });
+});
 community.get('/explored', (c) => c.json({ explored: [] }));
