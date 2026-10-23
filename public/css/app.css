@@ -1294,13 +1294,16 @@ body.music-open .music-fab { opacity: 0; pointer-events: none; transform: scale(
 .gs-stat-value.bad, .gs-stat-delta.bad { color: var(--red); }
 .gs-stat-delta.same { color: var(--dim); font-weight: 500; }
 .gs-stat-bar {
-  position: absolute; left: 10px; right: 10px; bottom: 6px;
-  height: 3px; border-radius: 3px; background: var(--panel-3); overflow: hidden;
+  position: absolute; left: 10px; right: 10px; bottom: 5px;
+  height: 4px; border-radius: 4px; background: var(--panel-3); overflow: hidden;
 }
+/* 底条是「基础值 → 0」这一段（琥珀）；右边的绿 / 红段就是配件加减的那一截 */
 .gs-stat-bar i {
-  display: block; height: 100%; border-radius: 3px;
+  position: absolute; top: 0; bottom: 0; left: 0;
   background: linear-gradient(90deg, var(--amber), var(--amber-2));
 }
+.gs-stat-bar i.good { background: var(--green); }
+.gs-stat-bar i.bad { background: var(--red); }
 .gs-stat-bar b {
   position: absolute; top: 0; bottom: 0; width: 1px; background: var(--dim); opacity: .8;
 }

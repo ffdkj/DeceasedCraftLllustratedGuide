@@ -26,6 +26,7 @@
     "gen:ammo-icons": "tsx scripts/gen-ammo-icons.ts",
     "verify:recipes": "tsx scripts/verify-recipes.ts",
     "verify:tiers": "tsx scripts/verify-tiers.ts",
+    "verify:gunsmith": "tsx scripts/verify-gunsmith.ts",
     "verify:compat": "tsx scripts/verify-compat.ts",
     "gen:monsters": "tsx scripts/gen-monster-difficulty.ts",
     "verify:monsters": "tsx scripts/verify-monster-difficulty.ts",

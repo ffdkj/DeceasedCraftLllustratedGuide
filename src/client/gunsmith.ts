@@ -470,12 +470,20 @@
       const cls = statClass(b, c, def.better);
       const width = Math.max(0, Math.min(100, (c / (def.max || 1)) * 100));
       const baseWidth = Math.max(0, Math.min(100, (b / (def.max || 1)) * 100));
+      // 配件带来的那一段单独画：改善绿、变差红（方向看 def.better，跟「变化」列同一套判定）。
+      // 所以后坐力 / 散布 / 瞄速 / 重量这些越低越好的指标，被配件压下去时是绿条。
+      const lo = Math.min(width, baseWidth);
+      const hi = Math.max(width, baseWidth);
+      const deltaWidth = hi - lo;
+      const deltaBar = cls === "same" || deltaWidth < 0.4 ? "" :
+        '<i class="' + cls + '" style="left:' + lo + '%;width:' + deltaWidth + '%"></i>';
       return '<div class="gs-stat-row">' +
         '<div class="gs-stat-label">' + esc(def.label) + '</div>' +
         '<div class="gs-stat-base">' + fmt(b, def.digits) + '</div>' +
         '<div class="gs-stat-value ' + cls + '">' + fmt(c, def.digits) + '<span>' + esc(def.unit) + '</span></div>' +
         '<div class="gs-stat-delta ' + cls + '">' + deltaText(b, c, def) + '</div>' +
-        '<div class="gs-stat-bar"><i style="width:' + width + '%"></i><b style="left:' + baseWidth + '%"></b></div>' +
+        '<div class="gs-stat-bar"><i class="base" style="width:' + lo + '%"></i>' + deltaBar +
+          '<b style="left:' + baseWidth + '%"></b></div>' +
         '</div>';
     }).join("");
   }
@@ -632,7 +640,7 @@
         '<button class="gs-btn" data-gs-action="preset" data-preset="recommended">推荐方案</button>' +
         '<button class="gs-btn" data-gs-action="share-code">' + icon("share", 16) + ' 分享码</button>' +
         '<button class="gs-btn" data-gs-action="import-code">' + icon("download", 16) + ' 导入码</button></div>' +
-      '<div class="section"><div class="section-head"><div class="section-title">枪械数值</div><div class="gs-legend"><span class="good">绿=改善</span><span class="bad">红=变差</span></div></div>' +
+      '<div class="section"><div class="section-head"><div class="section-title">枪械数值</div><div class="gs-legend"><span class="good">绿条=配件改善</span><span class="bad">红条=配件变差</span></div></div>' +
         '<div class="gs-stat-table"><div class="gs-stat-header"><span>项目</span><span>基础</span><span>当前</span><span>变化</span><span></span></div>' + statRows(base, cur) + '</div>' +
         (cur.flags.length ? '<div class="gs-flags">特殊修正：' + cur.flags.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join("") + '</div>' : "") +
         '<div class="gs-note">后坐力为 TACZ 后坐力曲线的峰值；散布为对应姿态的基础值。护甲穿透按百分比显示。</div></div>' +

@@ -163,3 +163,10 @@
   - Result: `hot` 数组改为 蓝图、模具、铁锭、钢锭、金苹果、弹药、绷带、罐头、汽油、钻石；
     点击直接把词灌进搜索框（命中 蓝图 37 条 / 模具 26 条物品）
   - Files: `src/client/app.ts`
+
+- [x] T30 改枪台数值条显示配件加减
+  - Acceptance: 「枪械数值」表每行底部那条要能看出配件带来的变化——改善绿、变差红
+  - Result: 条拆成两段：底座段（当前值，主题主色）+ 变化段（`|当前−基础|`，绿 / 红）；
+    颜色与「变化」列的数字同源（都走 `statClass` 的 `cls`），所以后坐力 / 散布 / 瞄准时间 / 重量
+    被压下去时是绿条；条高 3px → 4px 才看得清；图例改成「绿条=配件改善 / 红条=配件变差」
+  - Files: `src/client/gunsmith.ts`、`public/css/app.css`、`scripts/verify-gunsmith.ts`、`package.json`、`CONTEXT.md`
