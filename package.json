@@ -26,6 +26,7 @@
     "gen:ammo-icons": "tsx scripts/gen-ammo-icons.ts",
     "media:upload": "tsx scripts/upload-media.ts",
     "media:verify": "tsx scripts/upload-media.ts --verify",
+    "media:dedupe": "tsx scripts/dedupe-local-art.ts",
     "verify:recipes": "tsx scripts/verify-recipes.ts",
     "verify:tiers": "tsx scripts/verify-tiers.ts",
     "verify:gunsmith": "tsx scripts/verify-gunsmith.ts",
