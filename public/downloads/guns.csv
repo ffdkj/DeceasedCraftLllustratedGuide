@@ -1,0 +1,178 @@
+﻿名称,ID,类型,弹药,弹容,射速 RPM,伤害,护甲穿透 %,爆头倍率,来源
+绍沙 轻机枪,bf1:chauchat,机枪,tacz:30_06,20,300,35,60,1,TACZ · bf1
+德利尔 微声卡宾枪,bf1:de_lisle,步枪,tacz:45acp,7,450,12,20,1.75,TACZ · bf1
+46型冲锋火焰喷射器,bf1:ef46,重型武器,bf1:fuel,100,666,48,70,1,TACZ · bf1
+刺拳防空火箭筒B型,bf1:f_faust,重型武器,tacz:40mm,2,200,10,0,1,TACZ · bf1
+“手”枪,bf1:handgun,手枪,tacz:9mm,10,165,6,20,1.5,TACZ · bf1
+蜂鸟 手枪,bf1:kolibri,手枪,tacz:9mm,7,449,1,0,5,TACZ · bf1
+刘易斯 轻机枪,bf1:lewis,机枪,tacz:308,47,480,18,65,1.33,TACZ · bf1
+刘将军步枪,bf1:liu,步枪,tacz:762x54,5,59,21,55,3,TACZ · bf1
+四式反坦克刺雷,bf1:lunge_mine,重型武器,tacz:40mm,1,350,15,0,1,TACZ · bf1
+M1916 自动装填步枪,bf1:m1916,步枪,tacz:308,25,224,15,50,2.4,TACZ · bf1
+M2 火焰喷射器,bf1:m2_2,重型武器,bf1:fuel,400,666,36,80,1,TACZ · bf1
+曼利夏 M1895 步枪,bf1:man_m95,狙击枪,tacz:30_06,4,328,40,60,3.5,TACZ · bf1
+马提尼-亨利 步枪,bf1:martini,狙击枪,tacz:338,1,150,80,85,4,TACZ · bf1
+MG08/15 机枪,bf1:mg0815,机枪,tacz:762x54,200,526,18,60,1.25,TACZ · bf1
+MG42 通用机枪,bf1:mg42,机枪,tacz:762x54,75,1091,15,55,1.25,TACZ · bf1
+马提尼-亨利 步枪榴弹发射器,bf1:mhgl,重型武器,tacz:40mm,1,350,15,0,1,TACZ · bf1
+Model 10-A 霰弹枪,bf1:model10,霰弹枪,tacz:12g,5,310,42,33,1.5,TACZ · bf1
+莫辛-纳甘截短手枪,bf1:obrez,手枪,tacz:50ae,4,275,18,25,3,TACZ · bf1
+罗氏 Mk-4 轨道炮,bf1:rorsch_mk4,狙击枪,tacz:30_06,15,1200,25,65,2,TACZ · bf1
+RSC 1917 半自动步枪,bf1:rsc1917,步枪,tacz:30_06,5,179,20,55,2,TACZ · bf1
+舍格伦 惯性霰弹枪,bf1:sjogren,霰弹枪,tacz:12g,4,163,33,25,1.66,TACZ · bf1
+SMG08/18 冲锋枪,bf1:smg0818,冲锋枪,tacz:9mm,80,770,7,5,2,TACZ · bf1
+3号左轮手枪,bf1:sw_model3,手枪,tacz:357mag,6,163,18,30,2.5,TACZ · bf1
+医疗用针筒,bf1:syringe,手枪,bf1:medkit,1,50,0,0,1,TACZ · bf1
+M1918 反坦克步枪,bf1:tg1918,狙击枪,tacz:50bmg,1,90,100,100,4,TACZ · bf1
+VG1-5 人民突击步枪,bf1:vg15,步枪,tacz:762x39,10,670,9,40,1.5,TACZ · bf1
+维拉·佩罗萨 冲锋枪,bf1:vp1915,冲锋枪,tacz:9mm,50,1800,12,5,1.25,TACZ · bf1
+威尔洛德 微声手枪,bf1:welrod,手枪,tacz:9mm,6,450,6,25,2,TACZ · bf1
+Wex 火焰喷射器,bf1:wex,重型武器,bf1:fuel,200,666,48,65,1,TACZ · bf1
+ZK-383 冲锋枪,bf1:zk383,冲锋枪,tacz:9mm,30,514,8,25,1.33,TACZ · bf1
+第一波Vector45 ACP,gz:1st_vector45acp,冲锋枪,tacz:45acp,25,1200,6,10,2.75,TACZ · gz
+陨铁之鞴「原初之火{Aestus estus)」,gz:arx200_nero,步枪,tacz:308,50,690,13,55,1.5,TACZ · gz
+AUG A3-CQC,gz:auga3cqc,步枪,tacz:556x45,30,680,8,35,1.5,TACZ · gz
+AUG 9mm,gz:aug_9mm,冲锋枪,tacz:9mm,25,720,4,20,4,TACZ · gz
+黑市AKM,gz:black_market_akm,步枪,tacz:762x39,30,600,9,40,1.75,TACZ · gz
+黑市RPK74,gz:black_market_rpk74,机枪,tacz:762x39,45,650,12.5,40,1.5,TACZ · gz
+恶名昭彰,gz:cargo_terminal,霰弹枪,tacz:12g,32,350,40,35,1.65,TACZ · gz
+经典M1A,gz:classic_m1a,狙击枪,tacz:308,10,180,22.5,65,2.5,TACZ · gz
+经典RPK74,gz:classic_rpk74,机枪,tacz:762x39,45,650,6.7,40,2.5,TACZ · gz
+定制P416 G3,gz:custom_p416_g3,步枪,tacz:556x45,30,750,8,35,1.75,TACZ · gz
+增强型PP-19,gz:enhanced_pp19,冲锋枪,tacz:9mm,53,700,8.9,20,1.7,TACZ · gz
+轻型M4,gz:lightweight_m4,步枪,tacz:556x45,30,900,7,35,1.75,TACZ · gz
+LVOA_C,gz:lvoa_c,步枪,tacz:556x45,30,850,6.9,35,1.75,TACZ · gz
+M16A2,gz:m16a2,步枪,tacz:556x45,30,300,9.5,35,1.8,TACZ · gz
+驯鹰人,gz:m4_exotic_t1,步枪,tacz:556x45,60,750,9,35,1.75,TACZ · gz
+圣艾尔摩引擎,gz:m4_exotic_t2,步枪,tacz:556x45,70,850,7.5,35,2,TACZ · gz
+M700 碳纤维,gz:m700_carbon,狙击枪,tacz:30_06,8,100,50,60,3,TACZ · gz
+军规AK74,gz:military_ak74,步枪,tacz:762x39,30,600,10,40,1.75,TACZ · gz
+军规P416,gz:military_p416,步枪,tacz:556x45,30,750,8,35,1.75,TACZ · gz
+三连发MP5A4,gz:mp5a2,冲锋枪,tacz:9mm,30,800,7,15,1.7,TACZ · gz
+MP5ST,gz:mp5st,冲锋枪,tacz:9mm,30,800,7.2,17,1.77,TACZ · gz
+海军MP5-N,gz:navy_mp5n,冲锋枪,tacz:9mm,30,800,7.1,15,1.7,TACZ · gz
+爱国者,gz:patriots,手枪,tacz:556x45,100,1000,5.5,30,1.2,TACZ · gz
+警用M4,gz:police_m4,步枪,tacz:556x45,30,850,8,35,1.75,TACZ · gz
+PP-19,gz:pp19,冲锋枪,tacz:9mm,53,700,7.9,25,2,TACZ · gz
+KP9,gz:pp19_01,冲锋枪,tacz:9mm,30,750,7.5,25,1.5,TACZ · gz
+Saiga-12,gz:sasg_12,霰弹枪,tacz:12g,7,300,36,25,1.66,TACZ · gz
+T5-SMG,gz:t5smg,冲锋枪,tacz:9mm,30,950,7,20,1.25,TACZ · gz
+老兵,gz:t81lmg,机枪,tacz:762x39,105,650,7,45,3.5,TACZ · gz
+T81S,gz:t81s,步枪,tacz:556x45,30,700,7.5,40,1.75,TACZ · gz
+T97NSR G3,gz:t97nsrg3,步枪,tacz:556x45,30,680,11,30,1.5,TACZ · gz
+战术KP9,gz:tactical_pp19_01,冲锋枪,tacz:9mm,30,750,7.7,30,1.5,TACZ · gz
+战术Saiga-12K,gz:tactical_sasg_12k,霰弹枪,tacz:12g,7,300,40,35,1.99,TACZ · gz
+战术T81S,gz:tactical_t81s,步枪,tacz:762x39,30,700,10,45,1.75,TACZ · gz
+QSZ92G式 9mm 手枪,rebel:92g,手枪,tacz:9mm,15,400,6,15,1.5,TACZ · rebel
+ASR 半自动步枪,rebel:asr,步枪,tacz:762x39,10,400,6,50,1.75,TACZ · rebel
+BQ1对讲机（105mm HE 火炮支援）,rebel:bq01,重型武器,rebel:105ac,1,130,250,100,2,TACZ · rebel
+C23 “粉碎机”,rebel:c23,步枪,rebel:20ap,5,350,60.5,30,1.75,TACZ · rebel
+CSG-19B 冲锋枪,rebel:csg19b,冲锋枪,tacz:9mm,32,900,5.5,30,1.66,TACZ · rebel
+FMC 火焰喷射器,rebel:fmc,重型武器,bf1:fuel,100,1200,16,0,0.5,TACZ · rebel
+Hsp 生存手枪,rebel:hsp,手枪,tacz:500mag,8,350,30,45,2.5,TACZ · rebel
+Lpm Mod.2020 手枪,rebel:lpm2020,手枪,tacz:9mm,15,480,5,30,1.5,TACZ · rebel
+Lss 冲锋手枪,rebel:lss,手枪,tacz:45acp,18,700,10,30,1.75,TACZ · rebel
+MTA 35mm掷弹筒,rebel:mta,重型武器,tacz:40mm,1,150,15,0,1,TACZ · rebel
+Rs1轻型改 霰弹枪,rebel:rs1,霰弹枪,tacz:12g,4,130,54,33,1.66,TACZ · rebel
+Rs1-MA 霰弹枪 (高爆霰弹),rebel:rs1mahe,霰弹枪,tacz:40mm,6,130,42,5,1.1,TACZ · rebel
+坦克头,rebel:t70th,重型武器,rebel:37aphe,1,150,290,100,2,TACZ · rebel
+RPG-7 亚辛 105毫米 火箭发射器,suffuse:aiyasinrpg,重型武器,tacz:rpg_rocket,1,150,60,30,1,TACZ · suffuse
+AKs74u 突击步枪,suffuse:aks74u,步枪,tacz:762x39,30,735,6.8,40,1.5,TACZ · suffuse
+AN94 突击步枪,suffuse:an94,步枪,tacz:556x45,30,625,10,35,1.75,TACZ · suffuse
+AR57 ULT 卡宾步枪,suffuse:ar57,冲锋枪,tacz:57x28,50,850,8,75,2.5,TACZ · suffuse
+ASH12 突击步枪,suffuse:ash12,步枪,tacz:50bmg,10,630,35,65,1.25,TACZ · suffuse
+精密国际 AW-50 反器材狙击步枪,suffuse:aw50,狙击枪,tacz:50bmg,5,171,90,85,3.5,TACZ · suffuse
+精密国际 AXMC 狙击步枪,suffuse:axmc,狙击枪,tacz:338,10,171,70,80,3,TACZ · suffuse
+精密国际 AXSR 狙击步枪,suffuse:axsr,狙击枪,tacz:338,10,178,50,75,3.5,TACZ · suffuse
+DVL-10 狙击步枪,suffuse:dvl10,狙击枪,tacz:308,10,171,26,55,2,TACZ · suffuse
+Gepard “猎豹” PDW 个人防卫武器,suffuse:gepardpdw,冲锋枪,tacz:9mm,40,735,5.7,30,1.5,TACZ · suffuse
+GM6 Lynx “山猫” 反器材狙击步枪,suffuse:gm6,狙击枪,tacz:50bmg,6,90,80,90,2.5,TACZ · suffuse
+KAC PDW 个人防卫武器,suffuse:kacpdw,步枪,tacz:57x28,30,720,8,60,2.5,TACZ · suffuse
+KS-23M 霰弹枪,suffuse:ks23m,霰弹枪,tacz:12g,3,150,54,35,1.33,TACZ · suffuse
+LifeCard 单发折叠手枪,suffuse:lifecard,手枪,suffuse:.22wmr,1,100,6,10,2.5,TACZ · suffuse
+马林 M1895 杠杆步枪,suffuse:m1895,步枪,tacz:30_06,5,300,35,75,2.5,TACZ · suffuse
+CheyTac M200 “干预” 狙击步枪,suffuse:m200,狙击枪,tacz:50bmg,7,171,90,95,3,TACZ · suffuse
+M203 榴弹发射器,suffuse:m203,重型武器,tacz:40mm,1,150,30,0,1,TACZ · suffuse
+M79 40毫米 榴弹发射器,suffuse:m79,重型武器,tacz:40mm,1,150,10,0,1,TACZ · suffuse
+MAS-38型 冲锋枪,suffuse:mas38,冲锋枪,tacz:45acp,32,650,14,0,1.33,TACZ · suffuse
+马盖普 PDR 个人防卫武器,suffuse:mpdr,步枪,tacz:556x45,20,780,10,35,1.5,TACZ · suffuse
+Noveske N4 突击步枪,suffuse:n4,步枪,tacz:556x45,30,760,8.5,35,1.75,TACZ · suffuse
+北方工业 NP762型 自动手枪,suffuse:np762,手枪,tacz:45acp,10,500,9,20,1.5,TACZ · suffuse
+PF-98A 120毫米 火箭发射器,suffuse:pf98a,重型武器,tacz:rpg_rocket,1,150,100,30,1,TACZ · suffuse
+PKP “佩切涅格” 轻机枪,suffuse:pkp,机枪,tacz:762x54,120,623,8,50,2.25,TACZ · suffuse
+PP19 “野牛” 冲锋枪,suffuse:pp19,冲锋枪,tacz:9mm,64,690,7,20,1.75,TACZ · suffuse
+Python Colt “蟒蛇” 左轮手枪,suffuse:python,手枪,tacz:357mag,6,100,20,45,1.75,TACZ · suffuse
+QBU-191 精确射手步枪,suffuse:qbu191,步枪,tacz:58x42,30,690,9,40,1.75,TACZ · suffuse
+QBZ-191 突击步枪,suffuse:qbz191,步枪,tacz:58x42,20,699,9,35,1.75,TACZ · suffuse
+QBZ-192 短突击步枪,suffuse:qbz192,步枪,tacz:58x42,30,699,8,40,2,TACZ · suffuse
+QBZ-95-1 突击步枪,suffuse:qbz951,步枪,tacz:58x42,30,645,10,35,1.5,TACZ · suffuse
+QBZ951S,suffuse:qbz951s,步枪,tacz:58x42,30,645,7.6,45,1.5,TACZ · suffuse
+QLU-11 狙击榴弹发射器,suffuse:qlu11,重型武器,tacz:40mm,4,150,40,60,2.5,TACZ · suffuse
+RM277 突击步枪,suffuse:rm277,步枪,tacz:762x54,20,700,13,50,2,TACZ · suffuse
+萨达姆的黄金AK,suffuse:saddam_golden_ak,步枪,tacz:762x39,30,650,9,40,1.5,TACZ · suffuse
+弗兰基 SPAS-12 多用途霰弹枪,suffuse:spas12,霰弹枪,tacz:12g,5,180,36,35,2,TACZ · suffuse
+德拉贡诺夫 SVD 狙击步枪,suffuse:svd,狙击枪,tacz:762x54,10,160,18,55,3,TACZ · suffuse
+Tec9 冲锋手枪,suffuse:tec9,手枪,tacz:9mm,15,1000,5,25,1.66,TACZ · suffuse
+Traditions Trapper 50口径 火帽枪,suffuse:trapper50cal,手枪,suffuse:boomstickshot,1,95,18.8,0,1.5,TACZ · suffuse
+TT-33 手枪,suffuse:tt33,手枪,tacz:9mm,7,500,7,30,1,TACZ · suffuse
+TTI Pit Viper “蝮蛇” 手枪,suffuse:tti2011,手枪,tacz:9mm,12,500,7,20,2.5,TACZ · suffuse
+UMP45 冲锋枪,suffuse:ump45,冲锋枪,tacz:45acp,20,800,11,15,1.5,TACZ · suffuse
+HK USP45 手枪 沙色款,suffuse:usp45,手枪,tacz:45acp,12,500,8,20,2.25,TACZ · suffuse
+HK USP45 手枪 黑色款,suffuse:usp45_black,手枪,tacz:45acp,12,500,8,20,2.25,TACZ · suffuse
+Viper 2011 “蝰蛇” 手枪,suffuse:viper2011,手枪,tacz:9mm,12,500,7,15,3.5,TACZ · suffuse
+Webley Mk. 1 自动装填手枪,suffuse:webley1913,手枪,tacz:45acp,7,500,7,0,1.5,TACZ · suffuse
+SIG XM7 突击步枪,suffuse:xm7,步枪,tacz:762x54,20,677,12,55,2.5,TACZ · suffuse
+AA12 霰弹枪,tacz:aa12,霰弹枪,tacz:12g,8,350,39,25,1.66,TACZ · tacz
+精密国际 AWM 狙击步枪,tacz:ai_awp,狙击枪,tacz:338,5,171,60,80,3.5,TACZ · tacz
+AKM 突击步枪,tacz:ak47,步枪,tacz:762x39,30,600,8,40,2,TACZ · tacz
+AUG 突击步枪,tacz:aug,步枪,tacz:556x45,30,710,7,40,2,TACZ · tacz
+B93R 冲锋手枪,tacz:b93r,手枪,tacz:9mm,20,900,7.5,20,1.25,TACZ · tacz
+CZ 75 自动手枪,tacz:cz75,手枪,tacz:9mm,16,900,5,25,1.33,TACZ · tacz
+DB-4 乌萨斯,tacz:db_long,霰弹枪,tacz:12g,2,100,40,40,2.2,TACZ · tacz
+DB-2 杜林人,tacz:db_short,霰弹枪,tacz:12g,2,150,50,40,1.8,TACZ · tacz
+.50 沙漠之鹰,tacz:deagle,手枪,tacz:50ae,7,300,28,25,1.5,TACZ · tacz
+.357 黄金沙漠之鹰,tacz:deagle_golden,手枪,tacz:357mag,9,350,12,35,1.66,TACZ · tacz
+FN EVOLYS 机枪,tacz:fn_evolys,机枪,tacz:308,75,750,16,55,1.5,TACZ · tacz
+FN FAL 战斗步枪,tacz:fn_fal,步枪,tacz:308,20,350,12,65,2.5,TACZ · tacz
+G36K 突击步枪,tacz:g36k,步枪,tacz:556x45,30,780,8,35,1.75,TACZ · tacz
+格洛克 17 手枪,tacz:glock_17,手枪,tacz:9mm,17,400,12,25,1.25,TACZ · tacz
+HK-416A5 突击步枪,tacz:hk416d,步枪,tacz:556x45,30,943,9,35,1.5,TACZ · tacz
+G3 战斗步枪,tacz:hk_g3,步枪,tacz:308,20,350,14,50,2,TACZ · tacz
+MK23 进攻手枪,tacz:hk_mk23,手枪,tacz:45acp,12,50,12,25,2.5,TACZ · tacz
+MP5A5 冲锋枪,tacz:hk_mp5a5,冲锋枪,tacz:9mm,30,820,9,0,1.44,TACZ · tacz
+毛瑟 KAR98K 制式步枪,tacz:kar98,狙击枪,tacz:30_06,4,250,45,70,3,TACZ · tacz
+.30-06 孤星 手炮,tacz:lonetrail,手枪,tacz:30_06,1,90,36,70,3,TACZ · tacz
+M1014 战斗霰弹枪,tacz:m1014,霰弹枪,tacz:12g,6,200,40,25,1.33,TACZ · tacz
+M107 .50口径反器材步枪,tacz:m107,狙击枪,tacz:50bmg,10,400,70,80,3,TACZ · tacz
+M16A1 制式步枪,tacz:m16a1,步枪,tacz:556x45,20,750,11,35,1.75,TACZ · tacz
+M16A4 制式步枪,tacz:m16a4,步枪,tacz:556x45,30,400,9,35,1.75,TACZ · tacz
+M1911 手枪,tacz:m1911,手枪,tacz:45acp,7,350,12,10,2,TACZ · tacz
+M249 机枪,tacz:m249,机枪,tacz:556x45,75,750,8.5,40,1.5,TACZ · tacz
+M320 榴弹发射器,tacz:m320,重型武器,tacz:40mm,1,150,10,0,1,TACZ · tacz
+M4A1 卡宾枪,tacz:m4a1,步枪,tacz:556x45,30,810,8,40,1.5,TACZ · tacz
+M700 狙击步枪,tacz:m700,狙击枪,tacz:30_06,5,180,45,60,3.5,TACZ · tacz
+M870 霰弹枪,tacz:m870,霰弹枪,tacz:12g,5,180,42,33,1.99,TACZ · tacz
+M95 .50口径反器材步枪,tacz:m95,狙击枪,tacz:50bmg,5,151,100,90,3,TACZ · tacz
+伯莱塔 M9A4 手枪,tacz:m9a4,手枪,tacz:9mm,17,400,16,25,1.25,TACZ · tacz
+M134 转管机枪,tacz:minigun,机枪,tacz:308,0,1200,16,55,1,TACZ · tacz
+MK14 EBR 精确射手步枪,tacz:mk14,步枪,tacz:308,10,300,18,55,1.75,TACZ · tacz
+P320 手枪,tacz:p320,手枪,tacz:45acp,12,450,10,15,2.25,TACZ · tacz
+P90 冲锋枪,tacz:p90,冲锋枪,tacz:57x28,50,810,10,75,2,TACZ · tacz
+191式 突击步枪,tacz:qbz_191,步枪,tacz:58x42,30,750,8.5,40,1.75,TACZ · tacz
+"95式 ""长弓"" 突击步枪",tacz:qbz_95,步枪,tacz:58x42,30,660,7.5,30,2,TACZ · tacz
+.357 犀牛 左轮手枪,tacz:rhino357,手枪,tacz:357mag,6,200,26,40,2.75,TACZ · tacz
+RPG-7 火箭筒,tacz:rpg7,重型武器,tacz:rpg_rocket,1,150,20,0,1,TACZ · tacz
+RPK 轻机枪,tacz:rpk,机枪,tacz:762x39,40,630,10,40,1.4,TACZ · tacz
+SCAR-H 战斗步枪,tacz:scar_h,步枪,tacz:308,20,570,16,45,2,TACZ · tacz
+SCAR-L 突击步枪,tacz:scar_l,步枪,tacz:556x45,30,650,7.5,40,1.75,TACZ · tacz
+SKS 战术步枪,tacz:sks_tactical,步枪,tacz:762x39,10,510,15,45,2,TACZ · tacz
+SPAS-12 多功能霰弹枪,tacz:spas_12,霰弹枪,tacz:12g,5,200,64,25,1.33,TACZ · tacz
+SPR-15 HB “射手座” 反狙击步枪,tacz:spr15hb,步枪,tacz:556x45,15,700,10,40,1.75,TACZ · tacz
+春田 1873 活门步枪,tacz:springfield1873,狙击枪,tacz:30_06,1,90,70,70,4,TACZ · tacz
+"金牛座 ""狂暴猎手"" 手炮",tacz:taurus500,手枪,tacz:500mag,5,120,40,50,3,TACZ · tacz
+.22 943型 左轮手枪,tacz:taurus943,手枪,tacz:45acp,8,180,8,25,3,TACZ · tacz
+永恒 .50 Z型,tacz:timeless50,手枪,tacz:50ae,8,300,22,25,1.75,TACZ · tacz
+81-1式 制式步枪,tacz:type_81,步枪,tacz:762x39,30,630,9,40,2,TACZ · tacz
+UMP45 冲锋枪,tacz:ump45,冲锋枪,tacz:45acp,25,660,11,15,1.5,TACZ · tacz
+乌兹冲锋枪,tacz:uzi,冲锋枪,tacz:9mm,20,600,6.5,0,2.25,TACZ · tacz
+维克托 冲锋枪,tacz:vector45,冲锋枪,tacz:45acp,20,1200,6,10,2.75,TACZ · tacz

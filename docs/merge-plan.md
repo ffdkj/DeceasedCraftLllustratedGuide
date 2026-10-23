@@ -47,8 +47,10 @@
    （梯度点阵 / 数值条 / 像素字 / 弹药图标 / 动物页等），再把根站带修复的 17 个选择器列为覆盖
    （见 `scripts/css-merge-overrides.json`：music-fab 贴边、数值条两段、半心/半甲图标、tier-dot 显色、gs-head-body 等），
    覆盖时同时从基座里删掉 guide 的旧正文。结果 3491 行；三个含 CSS 断言的验证脚本全绿。
-3. **guide 逻辑回灌**：monster-grid（切换按钮、默认列表）、照片墙上传/聊天附图、0.1.0-beta 日志、
-   `building-content.js`、审核词库、`/downloads/`。
+3. **guide 逻辑回灌**（已完成）：monster-grid（切换按钮、默认列表、本地记忆）、
+   照片墙上传/聊天附图（并修掉根站读 `p.dataUrl` 的失效渲染）、站点 0.1.0-beta 日志进设置页、
+   审核词库迁到 `public/data/`、`building-content.js` 占位迁移、`/downloads/` 三张表（枪械 / 弹药 / 载具）。
+   验证脚本：`verify:monsterguide` 395 · `verify:community` 29 · `verify:downloads` 17。
 4. **对象存储收尾**：上传与 `community.json` 进 RustFS、S3 对象清理、删 `public/guide/` 与旧快照与 `wrangler.jsonc`、
    `/guide/*` 404。
 
