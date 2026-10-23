@@ -6,7 +6,7 @@
  *
  * 用法：tsx scripts/verify-community.ts
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync , existsSync} from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
@@ -38,7 +38,7 @@ for (const route of ["community.post('/upload'", "community.get('/uploads/:name'
 check(server.includes('if (!user) return c.json({ error: \'请先登录\' }, 401);'), '上传/发帖要求登录');
 check(server.includes("['image/jpeg', 'image/png', 'image/webp']"), '只接受 JPG / PNG / WebP');
 check(server.includes('MAX_IMAGE_BYTES'), '有单张体积上限');
-check(server.includes("image.startsWith(UPLOAD_PREFIX)") && server.includes("!image.startsWith(UPLOAD_PREFIX)"), '照片地址必须是本站上传产物');
+check(/function isUploadUrl\([^)]*\)[\s\S]{0,160}startsWith\('\/media\/uploads\/'\)/.test(server) && server.includes('!isUploadUrl(image)'), '照片地址必须是本站上传产物（对象存储或旧本地路径）');
 check(server.includes('checkText(caption)'), '图片说明走词库审核');
 
 /* ---------------- 样式 ---------------- */
@@ -65,6 +65,24 @@ for (const cls of ['.community-form .chat-upload', '.community-photo-form', '.ch
 
   check(app.includes('data-action="site-changelog"'), "设置页有网站更新日志入口");
   check(app.includes("function openSiteChangelog("), "日志弹窗已接上");
+}
+
+/* ---------------- ④：上传与状态进对象存储 + /guide 下线 ---------------- */
+{
+  check(server.includes("PutObjectCommand({") && server.includes("Key: 'public/uploads/' + name"), '上传写对象存储 public/uploads/');
+  check(server.includes("url: '/media/uploads/' + name"), '上传返回 /media/uploads/ 地址');
+  check(server.includes('isUploadUrl(image)'), '照片/发帖接受点存储地址（兼容旧本地地址）');
+  check(server.includes("STORE_KEY = 'public/community/community.json'"), '社区状态存对象存储');
+  check(server.includes('async function loadStore()') && server.includes('GetObjectCommand'), '启动时从对象存储拉回状态');
+  check(server.includes('async function save()') && server.includes('PutObjectCommand({ Bucket: bucket, Key: STORE_KEY'), '状态改动推回对象存储');
+  check(server.includes('dropObjects(') && server.includes('DeleteObjectCommand'), '裁剪超限时删除对应对象');
+  check(server.includes("community.use('*'"), '所有端点先确保状态已加载');
+
+  const index = readFileSync(join(ROOT, "src/server/index.ts"), "utf8");
+  check(index.includes("app.all('/guide/*'"), '/guide/* 显式 404');
+  check(!existsSync(join(ROOT, "public/guide")), 'public/guide 静态副本已删除');
+  check(!existsSync(join(ROOT, "wzsj-20261021")), 'wzsj-20261021 旧快照已删除');
+  check(!existsSync(join(ROOT, "wrangler.jsonc")), 'wrangler.jsonc 已删除');
 }
 
 if (errors.length) {

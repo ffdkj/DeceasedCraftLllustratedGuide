@@ -9,7 +9,7 @@
  *   3. config/hordes/data/hordes/horde_data/{tables,scripts}/<难度>/    尸潮名单与选表天数
  *   4. config/hordes-common.toml                                      尸潮规模参数
  *
- * 倍率怎么来的见 docs/monster-difficulty-analysis.md §8.5（区域）与 §5（尸潮）。
+ * 倍率怎么来的见 docs/monster-handbook.md §3（区域/难度/事件/深渊各层）与 §6（尸潮）。
  */
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

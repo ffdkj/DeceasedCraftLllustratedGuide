@@ -51,8 +51,10 @@
    照片墙上传/聊天附图（并修掉根站读 `p.dataUrl` 的失效渲染）、站点 0.1.0-beta 日志进设置页、
    审核词库迁到 `public/data/`、`building-content.js` 占位迁移、`/downloads/` 三张表（枪械 / 弹药 / 载具）。
    验证脚本：`verify:monsterguide` 395 · `verify:community` 29 · `verify:downloads` 17。
-4. **对象存储收尾**：上传与 `community.json` 进 RustFS、S3 对象清理、删 `public/guide/` 与旧快照与 `wrangler.jsonc`、
-   `/guide/*` 404。
+4. **对象存储收尾**（已完成）：`/api/upload` 改存 RustFS（对象键 `public/uploads/<hex>.webp`，返回 `/media/uploads/...`，
+   没配凭证时回落本地盘）；`community.json` 存 `public/community/community.json`，启动时拉回、每次改动推回；
+   裁剪超限时删对应 S3 对象；删 `public/guide/`（1598 文件 / 32MB）、`wzsj-20261021/`、`wrangler.jsonc`；
+   `/guide/*` 一律 404。E2E：注册 → 上传 → 发照片 → 取图 200；删掉本地 `.data` 重启后照片列表与图片仍能从对象存储恢复。
 
 ## 凭据与风险
 

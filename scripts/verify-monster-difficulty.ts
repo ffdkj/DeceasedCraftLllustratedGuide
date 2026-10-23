@@ -2,7 +2,7 @@
  * 怪物难度数据表断言：生成结果必须满足的硬约束。
  * 用法：tsx scripts/verify-monster-difficulty.ts
  *
- * 数值来源与判据见 docs/monster-difficulty-analysis.md §8.5 / §5，
+ * 数值来源与判据见 docs/monster-handbook.md §3 / §6，
  * 生成器见 scripts/gen-monster-difficulty.ts。
  */
 import { existsSync, readFileSync } from "node:fs";

@@ -35,6 +35,9 @@ app.use('/media/*', timeout(MEDIA_TIMEOUT_MS));
 
 app.all('/media/:path{.+}', mediaHandler);
 
+// PR 的 /guide/ 静态副本已并入根站：旧入口一律 404（不做兼容重定向，见 docs/merge-plan.md）
+app.all('/guide/*', (c) => c.json({ error: 'not found' }, 404));
+
 app.use(
   '*',
   serveStatic({

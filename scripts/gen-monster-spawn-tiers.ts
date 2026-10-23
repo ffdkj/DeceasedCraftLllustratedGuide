@@ -6,7 +6,7 @@
  * 依赖已有的两个生成物（先跑 gen:monsters / gen:hordebuildings）：
  *   - public/data/monsters-difficulty.js  基础属性 + 尸潮天数档
  *   - public/data/horde-buildings.js      刷怪来源分类 + 建筑尸潮归属
- * 真源仍是 config/incontrol/spawner.json（区域刷怪器）等，见 docs/monster-scaling-logic.md。
+ * 真源仍是 config/incontrol/spawner.json（区域刷怪器）等，见 docs/monster-handbook.md。
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -262,7 +262,7 @@ function writeDoc(data: any, entities: Record<string, any>, byTier: Record<strin
       `天数尸潮 ${hordeCount} 只；建筑尸潮 ${buildingCount} 只；**未实装 ${unimplemented} 只**（四个来源都没有）。`,
   );
   L.push("");
-  L.push("相关文档：`docs/monster-scaling-logic.md`（强化逻辑）、`docs/horde-buildings.md`（逐建筑尸潮）、`docs/monster-difficulty-analysis.md`（推导与实测校核）。");
+  L.push("相关文档：`docs/monster-handbook.md`（属性 / 结算 / 刷怪 / 尸潮单篇）、`docs/horde-buildings.md`（逐建筑尸潮）、`docs/monster-difficulty-table.md`（场景抽样与尸潮天数档）。");
   L.push("");
   L.push("## 1. 梯度总览");
   L.push("");

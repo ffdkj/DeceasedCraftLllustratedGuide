@@ -74,6 +74,12 @@ function emit(blocks: Block[]): string {
 }
 
 async function main(): Promise<void> {
+  const guideExists = await fs.stat(GUIDE).then(() => true).catch(() => false);
+  if (!guideExists) {
+    console.error('找不到 public/guide/css/app.css：合并已经完成过，guide 副本也已删除。');
+    console.error('如需重跑，先从 git 历史取回该文件（git show <commit>:public/guide/css/app.css > public/guide/css/app.css）。');
+    process.exit(1);
+  }
   const guideText = await fs.readFile(GUIDE, 'utf8');
   const rootText = await fs.readFile(ROOT, 'utf8');
   if (!process.argv.includes('--force') && rootText.includes('合并自根站的新增块')) {
