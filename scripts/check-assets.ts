@@ -21,22 +21,27 @@ async function main() {
     JSON.parse(await fs.readFile(path.join(DIST, 'media-manifest.json'), 'utf8'))
   );
 
-  const sources = [
-    'index.html',
-    'data/guides.js',
-    'data/gunsmith.js',
-    'data/loot.js',
-    'data/textures.js',
-    'css/app.css',
-    'sw.js'
-  ];
+  // 构建期指纹化后，data/ 与 assets/ 里的文件名带哈希，不能再写死清单：
+  // 直接扫目录，避免「改名后 check:assets 静悄悄漏检」。
+  const dirs = ['css', 'data', 'assets'];
+  const sources = ['index.html', 'manifest.webmanifest', 'sw.js'];
+  for (const dir of dirs) {
+    const abs = path.join(DIST, dir);
+    if (!(await exists(abs))) continue;
+    for (const name of await fs.readdir(abs)) {
+      if (!/\.(?:js|css|json|webmanifest)$/.test(name)) continue;
+      // asset-map 的键是旧路径（值才是带指纹的真名），不是引用，别当缺失报。
+      if (/^asset-map\./.test(name)) continue;
+      sources.push(dir + '/' + name);
+    }
+  }
 
   const refs = new Set<string>();
   for (const rel of sources) {
     const file = path.join(DIST, rel);
     if (!(await exists(file))) continue;
     const text = await fs.readFile(file, 'utf8');
-    for (const m of text.matchAll(/(?:\.?\/)?(?:images\/[^"'\s)]+|textures\/atlas\.webp|media\/[^"'\s)]+)/g)) {
+    for (const m of text.matchAll(/(?:\.?\/)?(?:images\/[^"'\s)]+|textures\/atlas(?:\.[0-9a-f]{8})?\.webp|media\/[^"'\s)]+)/g)) {
       refs.add(stripQuery('/' + m[0].replace(/^\.?\//, '')));
     }
   }

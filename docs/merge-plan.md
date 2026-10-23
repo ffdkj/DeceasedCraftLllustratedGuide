@@ -34,11 +34,15 @@
 
 ## 四步交付
 
-1. **资产去重 + 指纹**（进行中）
+1. **资产去重 + 指纹**（已完成）
    - `scripts/sync-media.ts`：把 guide 独有的 743 张全尺寸图上传 RustFS（key `public/images/<rel>`），HEAD 校验，
      更新 `public/media-manifest.json`；幂等（体积相同即跳过）。
    - 296 张冲突图用 guide 版覆盖仓库本地图（同像素、不换名）。
    - 校验通过后删除仓库里的全尺寸原图；随后进入指纹（引用改写 + SW 版本）。
+   - 结果：`scripts/fingerprint.ts` 给 `dist/client/{images,textures,icons,fonts,data}` 全部加 8 位内容指纹并改写
+     html/css/打包产物/data 引用；运行时拼路径的（弹药图标）走 `data/asset-map.js`；
+     SW 的图片缓存版本改为内容哈希、不再预取 `/media` 大图；`scripts/verify-fingerprint.ts`（18 项断言）进门禁。
+     去重结果：删 217 张已在对象存储的全尺寸副本（4.11MB），296 张冲突图以 guide 版覆盖。
 2. **CSS 合并**：guide `app.css` 为基座 + 根站新增块，逐页验收（含浅色/深色）。
 3. **guide 逻辑回灌**：monster-grid（切换按钮、默认列表）、照片墙上传/聊天附图、0.1.0-beta 日志、
    `building-content.js`、审核词库、`/downloads/`。

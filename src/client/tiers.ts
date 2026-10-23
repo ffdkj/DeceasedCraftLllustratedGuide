@@ -47,9 +47,15 @@
   /* 子弹本体图标：图集里只有「金属冲压模具」，梯度缩写要显示子弹本身，
      所以弹药走单独出图的 public/images/ammo/<口径名>.webp（scripts/gen-ammo-icons.ts）。
      点击落地页仍然是模具页。 */
+  /* 构建期会把图片名换成带内容指纹的名字（dist/data/asset-map.js），
+     运行时拼出来的路径只能查表；开发模式没有这张表，回落到原始路径。 */
+  function assetUrl(url) {
+    const map = window.WZ_ASSET_MAP;
+    return (map && map[url]) || url;
+  }
   function ammoIcon(ammoId) {
     const name = String(ammoId || "").split(":")[1];
-    return name ? "/images/ammo/" + name + ".webp" : null;
+    return name ? assetUrl("/images/ammo/" + name + ".webp") : null;
   }
   function iconHTML(row, size) {
     const box = "width:" + size + "px;height:" + size + "px;";

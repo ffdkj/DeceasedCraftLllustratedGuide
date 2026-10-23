@@ -9,7 +9,9 @@ const FETCH_TIMEOUT_MS = 5000;
 // 预缓存单项超时：单个 shell 资源卡住不会拖住整个 install。
 const SHELL_ADD_TIMEOUT_MS = 5000;
 // 图片/音频缓存名与构建版本解耦，部署不再触发全量重下。
-const IMAGE_CACHE_VERSION = 'v1';
+// 图片/音频缓存的版本：跟着图片清单与媒体清单的内容走，
+// 这样「图换了但 SW 版本没变」不会再让老用户一直看旧图。
+let IMAGE_CACHE_VERSION = 'v1';
 
 async function exists(file: string): Promise<boolean> {
   try {
@@ -26,6 +28,23 @@ async function main() {
   for (const m of html.matchAll(/(?:src|href)="(\/[^"]+)"/g)) {
     const url = m[1];
     if (/\.(?:js|css|webp|png|svg|json|webmanifest)$/.test(url)) refs.add(url);
+  }
+
+  // build:fingerprint 之后，资源文件名带内容指纹；shell 清单要按映射表改写，
+  // 否则 SW 预缓存会去拉已经不存在的旧名字。
+  const assetMap: Record<string, string> = await fs
+    .readFile(path.join(DIST, 'asset-map.json'), 'utf8')
+    .then((text) => JSON.parse(text) as Record<string, string>)
+    .catch(() => ({}));
+  const mapRel = (rel: string): string => {
+    const bare = rel.replace(/^\.\//, '');
+    return assetMap[bare] ? './' + assetMap[bare] : rel;
+  };
+  {
+    const imageManifest = await fs.readFile(path.join(DIST, 'images/manifest.json'), 'utf8').catch(() => '[]');
+    const mediaManifest = await fs.readFile(path.join(DIST, 'media-manifest.json'), 'utf8').catch(() => '[]');
+    const digest = crypto.createHash('sha1').update(imageManifest).update(mediaManifest).update(JSON.stringify(assetMap));
+    IMAGE_CACHE_VERSION = digest.digest('hex').slice(0, 10);
   }
 
   const shell = Array.from(new Set([
@@ -53,7 +72,7 @@ async function main() {
     './icons/apple-touch-icon.png',
     './images/manifest.json',
     './media-manifest.json'
-  ]));
+  ])).map((rel) => (rel === './' ? rel : mapRel(rel)));
 
   // Version from the content of the shell files so data edits bump the cache.
   const hash = crypto.createHash('sha1');
@@ -315,8 +334,8 @@ self.addEventListener("message", function (event) {
       ]);
       const local = both[0];
       const media = both[1];
-      const images = media.filter(function (u) { return u.indexOf("/media/audio/") !== 0; });
-      await prefetch(local.concat(images), IMAGE_CACHE, "images", source);
+      // 对象存储里的大图（media 前缀）不预取：首次查看时按需缓存，避免首装就背十几 MB。
+      await prefetch(local, IMAGE_CACHE, "images", source);
     })());
   }
 
