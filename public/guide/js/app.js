@@ -778,9 +778,9 @@
     return order.filter(function (g) { return present.has(g); });
   }
   const VEHICLE_CAT_IMAGES = {
-    "民用车辆": "./images/vehicles/categories/civil_cars.png",
-    "民用飞机": "./images/vehicles/categories/civil_aircraft.png",
-    "船只": "./images/vehicles/categories/boats.png"
+    "民用车辆": "/guide/images/vehicles/categories/civil_cars.png",
+    "民用飞机": "/guide/images/vehicles/categories/civil_aircraft.png",
+    "船只": "/guide/images/vehicles/categories/boats.png"
   };
   function vehicleImage(v) { return (v && v.image) || ""; }
   function renderVehiclesHub() {
@@ -1405,9 +1405,9 @@
     const hearts = Number(hp) / 2;
     const heartTitle = hp != null && hp !== "" ? ' title="生命 ' + hp + (isFinite(hearts) ? '（' + (Number.isInteger(hearts) ? hearts : hearts.toFixed(1)) + ' 颗心）' : '') + '"' : "";
     return '<div class="monster-vitals">' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"' + heartTitle + '><img class="stat-ico" src="./images/ui/stat-heart-half.png" alt=""></span><b>' + esc(fmtNum(hp)) + '</b></div><span class="mv-label">基础生命</span></div>' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="./images/ui/stat-armor-half.png" alt=""></span><b>' + esc(fmtNum(armor)) + '</b></div><span class="mv-label">基础护甲</span></div>' +
-      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="./images/ui/stat-attack.png" alt=""></span><b>' + esc(fmtNum(atk)) + '</b></div><span class="mv-label">基础攻击</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"' + heartTitle + '><img class="stat-ico" src="/guide/images/ui/stat-heart-half.png" alt=""></span><b>' + esc(fmtNum(hp)) + '</b></div><span class="mv-label">基础生命</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="/guide/images/ui/stat-armor-half.png" alt=""></span><b>' + esc(fmtNum(armor)) + '</b></div><span class="mv-label">基础护甲</span></div>' +
+      '<div class="monster-vital"><div class="mv-top"><span class="mv-icon"><img class="stat-ico" src="/guide/images/ui/stat-attack.png" alt=""></span><b>' + esc(fmtNum(atk)) + '</b></div><span class="mv-label">基础攻击</span></div>' +
     '</div>';
   }
   function monsterHpHTML(hp) {
@@ -1602,7 +1602,7 @@
     } else {
       left = '<button class="me-btn" data-action="open-me" aria-label="我的">' + icon("user", 21) + '<span class="me-btn-label">我的</span></button>';
     }
-    const brand = '<div class="brand"><div class="brand-mark"><img src="./images/brand/deceasedcraft_icon.png" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
+    const brand = '<div class="brand"><div class="brand-mark"><img src="/guide/images/brand/deceasedcraft_icon.png" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
     let center = "";
     if (opts.title) {
       center = '<div style="flex:1;min-width:0;text-align:center"><div class="page-title" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(opts.title) + "</div>" + (opts.sub ? '<div class="page-sub">' + esc(opts.sub) + "</div>" : "") + "</div>";
@@ -2546,9 +2546,9 @@
     if (tiers.has("建筑")) extras.push("建筑");
     if (tiers.has("尸潮")) extras.push("尸潮");
     return '<div class="monster-card-stats"><span class="stat-chips">' +
-      '<span class="stat-chip" title="生命"><img class="stat-ico" src="./images/ui/stat-heart-half.png" alt="">' + esc(fmtNum(m.hp)) + '</span>' +
-      '<span class="stat-chip" title="护甲"><img class="stat-ico" src="./images/ui/stat-armor-half.png" alt="">' + esc(fmtNum(m.armor)) + '</span>' +
-      '<span class="stat-chip" title="攻击"><img class="stat-ico" src="./images/ui/stat-attack.png" alt="">' + esc(fmtNum(m.attack)) + '</span>' +
+      '<span class="stat-chip" title="生命"><img class="stat-ico" src="/guide/images/ui/stat-heart-half.png" alt="">' + esc(fmtNum(m.hp)) + '</span>' +
+      '<span class="stat-chip" title="护甲"><img class="stat-ico" src="/guide/images/ui/stat-armor-half.png" alt="">' + esc(fmtNum(m.armor)) + '</span>' +
+      '<span class="stat-chip" title="攻击"><img class="stat-ico" src="/guide/images/ui/stat-attack.png" alt="">' + esc(fmtNum(m.attack)) + '</span>' +
       '</span><span class="tier-dots" role="img" aria-label="刷新区域">' + tierHTML + '</span>' +
       (extras.length ? '<i class="tier-any">' + extras.join("·") + '</i>' : "") +
     '</div>';
