@@ -3,6 +3,7 @@ import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { checkText } from './moderation.js';
 
 type User = { id: string; email: string; name: string; salt: string; hash: string; createdAt: number };
 type Post = { id: string; userId: string; user: string; text: string; ts: number };
@@ -87,6 +88,13 @@ community.post('/auth/login', async (c) => {
 
 community.post('/auth/logout', (c) => { clearSession(c); return c.json({ ok: true }); });
 
+community.post('/moderate', async (c) => {
+  const body = await c.req.json().catch(() => null) as any;
+  const text = String(body?.text || '').slice(0, 2000);
+  const result = checkText(text);
+  return c.json({ ok: result.ok, hits: result.hits });
+});
+
 community.get('/posts', (c) => c.json({ posts: store.posts.slice(-100) }));
 community.post('/posts', async (c) => {
   const user = currentUser(c);
@@ -94,6 +102,8 @@ community.post('/posts', async (c) => {
   const body = await c.req.json().catch(() => null) as any;
   const text = String(body?.text || '').trim().slice(0, 500);
   if (!text) return c.json({ error: '内容不能为空' }, 400);
+  const audit = checkText(text);
+  if (!audit.ok) return c.json({ error: '内容包含不当词汇，请修改后重试', hits: audit.hits }, 422);
   const last = store.posts.filter((p) => p.userId === user.id).slice(-1)[0];
   if (last && Date.now() - last.ts < 1500) return c.json({ error: '发送太快，稍后再试' }, 429);
   const post: Post = { id: randomBytes(8).toString('hex'), userId: user.id, user: user.name, text, ts: Date.now() };
