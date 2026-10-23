@@ -1424,7 +1424,8 @@ import {
         "</button>";
     }).join("");
 
-    const hot = ["铁锭", "钢锭", "金苹果", "弹药", "绷带", "罐头", "汽油", "钻石"];
+    /* 「找到某张图纸/某个模具在哪栋楼」比找单个材料更常问，所以蓝图与模具排最前。 */
+    const hot = ["蓝图", "模具", "铁锭", "钢锭", "金苹果", "弹药", "绷带", "罐头", "汽油", "钻石"];
     const hotChips = hot.map(function (x) {
       return '<button class="hot-chip" data-hot="' + esc(x) + '">' + esc(x) + "</button>";
     }).join("");

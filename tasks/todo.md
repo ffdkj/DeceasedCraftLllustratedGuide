@@ -157,3 +157,9 @@
     图集保持原样（补格子会整图重编码，把已有 2000+ 枚图标一起再压一遍）
   - Files: `scripts/gen-ammo-icons.ts`、`src/client/tiers.ts`、`public/css/app.css`、`public/images/ammo/`、
     `public/images/manifest.json`、`scripts/verify-tiers.ts`、`package.json`、`CONTEXT.md`
+
+- [x] T29 战利品首页快速查找加「蓝图」「模具」
+  - Acceptance: 快速查找里加两枚 chip（蓝图、模具），并排在最前两个
+  - Result: `hot` 数组改为 蓝图、模具、铁锭、钢锭、金苹果、弹药、绷带、罐头、汽油、钻石；
+    点击直接把词灌进搜索框（命中 蓝图 37 条 / 模具 26 条物品）
+  - Files: `src/client/app.ts`
