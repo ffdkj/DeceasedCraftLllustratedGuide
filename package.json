@@ -24,6 +24,8 @@
     "gen:compat": "tsx scripts/gen-compat.ts",
     "gen:atlas": "tsx scripts/gen-atlas-extra.ts",
     "gen:ammo-icons": "tsx scripts/gen-ammo-icons.ts",
+    "media:upload": "tsx scripts/upload-media.ts",
+    "media:verify": "tsx scripts/upload-media.ts --verify",
     "verify:recipes": "tsx scripts/verify-recipes.ts",
     "verify:tiers": "tsx scripts/verify-tiers.ts",
     "verify:gunsmith": "tsx scripts/verify-gunsmith.ts",
