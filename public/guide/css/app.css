@@ -3147,3 +3147,8 @@ body.page-creatures {
 body.community-page .topbar { display: none !important; }
 body.community-page .tabbar { top: 0 !important; }
 body.community-page .view { padding-top: 56px !important; }
+
+.community-auth-form { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+.community-auth-form label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--muted); }
+.community-auth-form input { height:42px; padding:0 12px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; }
+.community-auth-form .btn { margin-top:6px; }
