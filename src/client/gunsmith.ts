@@ -524,7 +524,8 @@
     return '<button class="gs-gun-card" data-gs-action="open" data-gun-id="' + esc(g.id) + '">' +
       '<div class="gs-gun-thumb">' + gunImg(g, gs, 76) + '</div>' +
       '<div class="gs-gun-body"><div class="gs-gun-name">' + esc(g.name || (gs && gs.name) || g.id) + (isUnreleased(g.id) ? '<span class="badge unreleased">未实装</span>' : "") + '</div>' +
-      '<div class="gs-gun-sub">' + esc((gs && gs.type) || g.type || "枪械") + ' · ' + esc(modes) + '</div>' +
+      '<div class="gs-gun-sub"><span class="gs-sub-text">' + esc((gs && gs.type) || g.type || "枪械") + ' · ' + esc(modes) + '</span>' +
+        (tiersUI() && tiersUI().available() ? '<span class="gs-tier-minis">' + tiersUI().mini(g.id) + '</span>' : "") + '</div>' +
       '<div class="gs-gun-stats"><span>伤害 <b>' + fmt(gs ? gs.damage : g.damage, 1) + '</b></span><span>RPM <b>' + fmt(gs ? gs.rpm : g.rpm, 0) + '</b></span><span>弹容 <b>' + ((gs && gs.magLabel) ? esc(gs.magLabel) : fmt(gs ? gs.mag : g.mag, 0)) + '</b></span></div></div>' +
       '<span class="gs-gun-arrow">' + icon("chevron", 16) + '</span></button>';
   }

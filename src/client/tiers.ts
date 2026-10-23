@@ -147,11 +147,30 @@
     return rows(gunId).map(badgeHTML).join("");
   }
 
+  /* ---------------- 紧凑版：枪械卡片副标题用 ---------------- */
+  /* 「图标 + 枪械T1」「图标 + 子弹T1」。卡片本身是 <button>，所以这里只能用 span，不可点。 */
+  function miniHTML(row) {
+    if (!row || !row.tier) return "";
+    const label = (row.kind === "gun" ? "枪械" : "子弹") + row.tier;
+    const title = row.label + (row.inferred ? "（推断）" : "") + (row.name ? "：" + row.name : "");
+    return (
+      '<span class="gs-tier-mini tier-' + row.tier + (row.inferred ? " inferred" : "") +
+      '" title="' + esc(title) + '">' +
+      '<span class="tier-ico">' + iconHTML(row.ico, row.name, 14) + "</span>" +
+      esc(label) +
+      "</span>"
+    );
+  }
+  function mini(gunId) {
+    return rows(gunId).map(miniHTML).join("");
+  }
+
   window.WZ_TIERS_UI = {
     available: function () {
       return !!data();
     },
     rows: rows,
     badges: badges,
+    mini: mini,
   };
 })();

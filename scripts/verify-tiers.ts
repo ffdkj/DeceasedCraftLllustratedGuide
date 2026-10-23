@@ -271,6 +271,24 @@ for (const ammoId of moldIds) {
 }
 check(Object.prototype.hasOwnProperty.call(textureItems, "tacz:ammo"), "无模具弹药退用 tacz:ammo 图标（可解析）");
 
+/* ---------------- 卡片上的梯度缩写接线 ---------------- */
+{
+  const { readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const root = process.cwd();
+  const tiersSrc = readFileSync(join(root, "src/client/tiers.ts"), "utf8");
+  const gsSrc = readFileSync(join(root, "src/client/gunsmith.ts"), "utf8");
+  const css = readFileSync(join(root, "public/css/app.css"), "utf8");
+  check(/mini: mini,/.test(tiersSrc), "WZ_TIERS_UI 暴露 mini()");
+  check(/kind === "gun" \? "枪械" : "子弹"/.test(tiersSrc), "缩写文案是 枪械 / 子弹 + 档位");
+  check(gsSrc.includes("tiersUI().mini(g.id)"), "枪械卡片副标题用 mini()");
+  check(gsSrc.includes('class="gs-sub-text"'), "副标题文本单独包一层，超长只截文本");
+  for (const t of ["T1", "T2", "T3", "T4"]) {
+    check(css.includes(`.gs-tier-mini.tier-${t}`), `卡片梯度缩写配色 ${t}`);
+  }
+  check(/\[data-theme="light"\] \.gs-tier-mini\.tier-T1/.test(css), "缩写配色有浅色主题覆盖");
+}
+
 /* ---------------- 生成器自检干净 ---------------- */
 check((tiers.meta?.warnings ?? []).length === 0, `生成器无 warning（实际 ${(tiers.meta?.warnings ?? []).length}）`);
 check((tiers.meta?.missingIcons ?? []).length === 0, `无缺图标（实际 ${(tiers.meta?.missingIcons ?? []).length}）`);
