@@ -3815,7 +3815,7 @@
     if (!chip) return;
     const input = document.getElementById('variant-search');
     if (!input) return;
-    input.value = chip.textContent.trim();
+    input.value = chip.textContent.replace(/\s+/g, ' ').replace(/^.*?-\s*/, '').trim();
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
@@ -3843,15 +3843,15 @@
   }, { passive: false });
   document.addEventListener('input', function (e) {
     if (!e.target || e.target.id !== 'variant-search') return;
-    const q = String(e.target.value || '').trim().toLowerCase();
+    const q = String(e.target.value || '').replace(/\s+/g, ' ').trim().toLowerCase();
     const section = e.target.closest('.section');
     if (!section) return;
     const cards = Array.from(document.querySelectorAll('.source-card'));
-    const hasNbtMatch = !!q && cards.some(function (card) { return (card.dataset.nbt || '').toLowerCase().indexOf(q) >= 0; });
-    cards.forEach(function (card) { card.style.display = (!hasNbtMatch || (card.dataset.nbt || '').toLowerCase().indexOf(q) >= 0) ? '' : 'none'; });
+    const hasNbtMatch = !!q && cards.some(function (card) { return (card.dataset.nbt || '').replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0; });
+    cards.forEach(function (card) { card.style.display = (!hasNbtMatch || (card.dataset.nbt || '').replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0) ? '' : 'none'; });
     let first = null;
     section.querySelectorAll('.chip-row .chip').forEach(function (chip) {
-      const hit = !q || chip.textContent.toLowerCase().indexOf(q) >= 0;
+      const hit = !q || chip.textContent.replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0;
       chip.style.display = hit ? '' : 'none';
       chip.classList.remove('flash');
       if (hit && q) { first = first || chip; chip.classList.add('flash'); }
