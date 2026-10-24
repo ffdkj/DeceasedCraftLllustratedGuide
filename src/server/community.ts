@@ -23,7 +23,9 @@ const STORE_KEY = 'public/community/community.json';
 type User = { id: string; email: string; name: string; salt: string; hash: string; createdAt: number };
 type Post = { id: string; userId: string; user: string; text: string; image?: string; ts: number };
 type Photo = { id: string; userId: string; user: string; image: string; caption: string; ts: number };
-type Store = { users: User[]; posts: Post[]; photos: Photo[] };
+type Comment = { id: string; targetType: string; targetId: string; userId: string; user: string; text: string; ts: number; status: string };
+type Mute = { userId: string; scope: string; reason: string; until: number; by: string };
+type Store = { users: User[]; posts: Post[]; photos: Photo[]; comments: Comment[]; mutes: Mute[] };
 
 const dataPath = process.env.COMMUNITY_DATA || path.resolve(process.cwd(), '.data/community.json');
 const SESSION_COOKIE = 'wz_session';
@@ -34,6 +36,8 @@ function normalize(d: Store | null): Store {
   out.users ||= [];
   out.posts ||= [];
   out.photos ||= [];
+  out.comments ||= [];
+  out.mutes ||= [];
   return out;
 }
 
@@ -118,6 +122,10 @@ function setSession(c: any, userId: string) {
   const token = randomBytes(32).toString('hex');
   sessions.set(token, { userId, exp: Date.now() + 7 * 24 * 3600 * 1000 });
   setCookie(c, SESSION_COOKIE, token, { httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 7 * 24 * 3600, secure: process.env.NODE_ENV === 'production' });
+}
+function isMuted(userId: string): boolean {
+  const now = Date.now();
+  return store.mutes.some((m) => m.userId === userId && m.until > now);
 }
 function clearSession(c: any) {
   const token = getCookie(c, SESSION_COOKIE);
@@ -231,6 +239,7 @@ community.get('/posts', (c) => c.json({ posts: store.posts.slice(-100) }));
 community.post('/posts', async (c) => {
   const user = currentUser(c);
   if (!user) return c.json({ error: '请先登录' }, 401);
+  if (isMuted(user.id)) return c.json({ error: '你已被禁言' }, 403);
   const body = await c.req.json().catch(() => null) as any;
   const text = String(body?.text || '').trim().slice(0, 500);
   const image = String(body?.image || '');
@@ -255,6 +264,7 @@ community.get('/photos', (c) => c.json({ photos: store.photos.slice(-100) }));
 community.post('/photos', async (c) => {
   const user = currentUser(c);
   if (!user) return c.json({ error: '请先登录' }, 401);
+  if (isMuted(user.id)) return c.json({ error: '你已被禁言' }, 403);
   const body = await c.req.json().catch(() => null) as any;
   const image = String(body?.image || '');
   const caption = String(body?.caption || '').trim().slice(0, 120);
@@ -271,4 +281,80 @@ community.post('/photos', async (c) => {
   await save();
   return c.json({ photo });
 });
+
+community.get('/comments', (c) => {
+  const type = String(c.req.query('type') || '').slice(0, 20);
+  const id = String(c.req.query('id') || '').slice(0, 200);
+  const list = store.comments.filter((x) => x.targetType === type && x.targetId === id && x.status === 'normal');
+  return c.json({ comments: list.slice(-200) });
+});
+
+community.post('/comments', async (c) => {
+  const user = currentUser(c);
+  if (!user) return c.json({ error: '请先登录' }, 401);
+  if (isMuted(user.id)) return c.json({ error: '你已被禁言' }, 403);
+  const body = await c.req.json().catch(() => null) as any;
+  const targetType = String(body?.targetType || '').slice(0, 20);
+  const targetId = String(body?.targetId || '').slice(0, 200);
+  const text = String(body?.text || '').trim().slice(0, 500);
+  if (!['monster', 'building', 'gun'].includes(targetType) || !targetId) return c.json({ error: '目标无效' }, 400);
+  if (!text) return c.json({ error: '内容不能为空' }, 400);
+  const audit = checkText(text);
+  if (!audit.ok) return c.json({ error: '内容包含不当词汇', hits: audit.hits }, 422);
+  const last = store.comments.filter((x) => x.userId === user.id).slice(-1)[0];
+  if (last && Date.now() - last.ts < 1200) return c.json({ error: '发送太快，稍后再试' }, 429);
+  const comment: Comment = { id: randomBytes(8).toString('hex'), targetType, targetId, userId: user.id, user: user.name, text, ts: Date.now(), status: 'normal' };
+  store.comments.push(comment);
+  if (store.comments.length > 5000) store.comments = store.comments.slice(-5000);
+  await save();
+  return c.json({ comment });
+});
+
+community.delete('/admin/comments/:id', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const id = c.req.param('id');
+  const item = store.comments.find((x) => x.id === id);
+  if (!item) return c.json({ error: 'not found' }, 404);
+  store.comments = store.comments.filter((x) => x.id !== id);
+  await save();
+  return c.json({ ok: true });
+});
+
+community.delete('/admin/posts/:id', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const id = c.req.param('id');
+  store.posts = store.posts.filter((x) => x.id !== id);
+  await save();
+  return c.json({ ok: true });
+});
+
+community.delete('/admin/photos/:id', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const id = c.req.param('id');
+  store.photos = store.photos.filter((x) => x.id !== id);
+  await save();
+  return c.json({ ok: true });
+});
+
+community.post('/admin/mute', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const body = await c.req.json().catch(() => null) as any;
+  const userId = String(body?.userId || '');
+  const hours = Math.max(1, Math.min(24 * 30, Number(body?.hours) || 24));
+  const reason = String(body?.reason || '').slice(0, 200);
+  if (!store.users.some((u) => u.id === userId)) return c.json({ error: '用户不存在' }, 404);
+  store.mutes = store.mutes.filter((m) => m.userId !== userId);
+  store.mutes.push({ userId, scope: 'global', reason, until: Date.now() + hours * 3600 * 1000, by: adminName(c) || 'admin' });
+  await save();
+  return c.json({ ok: true });
+});
+
+community.delete('/admin/mute/:userId', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const userId = c.req.param('userId');
+  store.mutes = store.mutes.filter((m) => m.userId !== userId);
+  await save();
+  return c.json({ ok: true });
+});
+
 community.get('/explored', (c) => c.json({ explored: [] }));
