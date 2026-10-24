@@ -2516,6 +2516,13 @@
           (all.length > shown.length ? '<span class="chip" style="cursor:default">还有 ' + (all.length - shown.length) + " 种</span>" : "") +
           "</div></div>";
       })() : "") +
+      (function () {
+        const ammo = (GUIDE.ammo || []).filter(function (x) { return x.id === rec.id || x.itemId === rec.id; })[0];
+        if (!ammo || !(ammo.guns || []).length) return "";
+        const gm = {}; (GUIDE.guns || []).forEach(function (x) { gm[x.id] = x.name; });
+        return '<div class="section"><div class="section-head"><div class="section-title">适用枪械</div><div class="section-note">' + ammo.guns.length + ' 把</div></div><div class="list">' +
+          ammo.guns.map(function (id) { return '<button class="row-card" data-go="' + guideDetailHref("guns", id) + '"><div class="row-main"><div class="row-title">' + esc(gm[id] || id) + '</div><div class="row-sub mono">' + esc(id) + '</div></div><div class="row-right"><span class="badge">查看枪械</span></div></button>'; }).join("") + "</div></div>";
+      })() +
       '<div class="section"><div class="section-head"><div class="section-title">最佳来源</div><div class="section-note">按实际掉率排序</div></div><div class="list">' + best.map(sourceCard).join("") + "</div></div>" +
       (sources.length > 5 ? '<div class="section"><div class="section-head"><div class="section-title">全部掉落点</div><div class="section-note">' + sources.length + " 处</div></div><div class=\"list\">" + rest.map(sourceCard).join("") + "</div>" +
         (!showAll && sources.length > 35 ? '<button class="btn ghost block" style="margin-top:10px" data-action="show-all-sources">显示全部 ' + sources.length + " 处</button>" : "") +
