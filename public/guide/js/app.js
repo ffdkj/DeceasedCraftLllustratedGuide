@@ -1369,6 +1369,21 @@
   }
 
 
+
+  function installPageSearch() {
+    const view = q("view");
+    if (!view || view.querySelector(".page-search")) return;
+    if (location.hash.indexOf("#/community") === 0 || location.hash.indexOf("#/monster/") === 0 || location.hash.indexOf("#/item/") === 0) return;
+    const bar = document.createElement("div");
+    bar.className = "page-search";
+    bar.innerHTML = '<input id="page-search-input" placeholder="全站搜索：怪物 / 建筑 / 枪械 / 物品 / 附魔"><span>搜索</span>';
+    view.insertBefore(bar, view.firstChild);
+    const input = bar.querySelector("#page-search-input");
+    input.addEventListener("focus", function () { input.blur(); openGlobalSearch(); });
+    bar.addEventListener("click", function (e) { if (e.target !== input) openGlobalSearch(); });
+  }
+  new MutationObserver(function () { setTimeout(installPageSearch, 0); }).observe(document.getElementById("view"), { childList: true });
+
   function openGlobalSearch() {
     openSheet({
       title: "全站搜索",
