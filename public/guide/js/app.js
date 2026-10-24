@@ -379,7 +379,7 @@
   }
   function radiationBanner(region) {
     if (!region || climateClass(region) !== "climate-rad") return "";
-    return '<div class="rad-banner"><span class="rad-banner-tag">辐射</span> 高辐射区域 · 请穿戴防护服并携带抗辐射药剂</div>';
+    return '<div class="rad-banner"><span class="rad-banner-tag">辐射</span> 高辐射区域 · 请佩戴防毒面具或穿戴防护服</div>';
   }
   function buildingSizeBadges(b) {
     if (b._sizeKind === "super") return '<span class="b-size super" title="超大型建筑（' + b._partCount + ' 区块）">超大型</span>';
@@ -492,7 +492,8 @@
   /* ---------------- 图鉴数据类型 ---------------- */
   const GUIDE_TYPES = {
     armor: { title: "护甲套装", list: "#/gear/armor", back: "#/gear", data: GUIDE.armor || [], groupKey: "tier", icon: "shield", subtitle: "护甲套装、部件与套装效果", accent: "#e0a94a" },
-    guns: { title: "枪械库", list: "#/gear/guns", back: "#/gear", data: GUIDE.guns || [], groupKey: "type", icon: "crosshair", subtitle: "TACZ 枪械数据：伤害、射速、弹容与弹药", accent: "#7ea8c9" },
+    /* 枪械没有列表页了（并入改枪台），这条只剩数据与文案，供数据表与详情链接用 */
+    guns: { title: "枪械", list: "#/gear/gunsmith", back: "#/gear", data: GUIDE.guns || [], groupKey: "type", icon: "crosshair", subtitle: "TACZ 枪械数据：伤害、射速、弹容与弹药", accent: "#7ea8c9" },
     ammo: { title: "弹药库", list: "#/gear/ammo", back: "#/gear", data: GUIDE.ammo || [], groupKey: "type", icon: "box", subtitle: "TACZ 全弹药：合成材料、适用枪械与区域来源", accent: "#e0a94a" },
     melee: { title: "近战兵器库", list: "#/gear/melee", back: "#/gear", data: GUIDE.melee || [], groupKey: "weaponType", icon: "sword", subtitle: "按任务书武器类型分类：斧 / 刀 / 砍刀 / 剑 / 武士刀 / 锤 / 盾牌等", accent: "#e07a5f" },
     trinkets: { title: "饰品收藏", list: "#/gear/trinkets", back: "#/gear", data: GUIDE.trinkets || [], groupKey: "group", icon: "gem", subtitle: "饰品、徽章与收藏品", accent: "#b09acb" },
@@ -507,6 +508,8 @@
     vehicles: "vehicles", defense: "defense", story: "story", npcs: "npc"
   };
   function guideDetailHref(type, id) {
+    /* 枪械库已删：枪械没有独立详情页了，点进去就是改枪台的工作台（含合成 / 作用 / 来源） */
+    if (type === "guns") return "#/gear/gunsmith/" + encodeURIComponent(id);
     const seg = GUIDE_DETAIL_PATHS[type] || type;
     const base = (type === "vehicles" || type === "story" || type === "defense") ? "#/world/" : type === "npcs" ? "#/creatures/" : "#/gear/";
     return base + seg + "/" + encodeURIComponent(id);
@@ -546,7 +549,6 @@
         '<div class="hero-desc" style="margin-top:10px">从护甲套装到 TACZ 枪械，再到近战武器与饰品。数据来自任务书、模组配置与本地整合包。</div></div>' +
       '<div class="section"><div class="hub-grid">' +
         hubCard({ href: "#/gear/armor", image: "./images/guides/bg_armor_tiers.webp", icon: "shield", title: "护甲套装", sub: "护甲部件与套装效果", count: GUIDE_TYPES.armor.data.length, unit: "套", accent: "#e0a94a" }) +
-        hubCard({ href: "#/gear/guns", image: (GUIDE.meta.banners||{}).guns, icon: "crosshair", title: "枪械库", sub: "伤害 / 射速 / 弹容 / 弹药", count: GUIDE_TYPES.guns.data.length, unit: "把", accent: "#7ea8c9" }) +
         hubCard({ href: "#/gear/ammo", image: "./images/guides/bg_ammo.webp", icon: "box", title: "弹药库", sub: "合成材料 / 适用枪械 / 区域来源", count: (GUIDE.ammo || []).length, unit: "种", accent: "#e0a94a" }) +
         hubCard({ href: "#/gear/gunsmith", image: (GUIDE.meta.banners||{}).guns, icon: "gear", title: "改枪台", sub: "配件兼容 / 数值对比 / 推荐方案", count: ((window.WZ_GUNSMITH || {}).counts || {}).attachments || 0, unit: "件配件", accent: "#7fc79a" }) +
         hubCard({ href: "#/gear/melee", image: (GUIDE.meta.banners||{}).melee, icon: "sword", title: "近战兵器库", sub: "棒球棒 / 斧 / 刀 / 特殊武器", count: GUIDE_TYPES.melee.data.length, unit: "件", accent: "#e07a5f" }) +
@@ -633,14 +635,14 @@
     }).join("")+'</div>';
   }
   function renderGunTable() {
-    renderTopbar({back:"#/gear/guns", title:"枪械数据表", sub:"按基础伤害排序"});
+    renderTopbar({back:"#/gear/gunsmith", title:"枪械数据表", sub:"按基础伤害排序"});
     document.title="枪械数据表 · 亡者世界";
     const rows=(GUIDE.guns||[]).map(function(g){
       const gs=((window.WZ_GUNSMITH||{}).guns||{})[g.id]||{};
       return {id:g.id,name:g.name,type:g.type,damage:gs.damage!=null?gs.damage:g.damage,rpm:gs.rpm!=null?gs.rpm:g.rpm,mag:gs.mag!=null?gs.mag:g.mag,ammo:gs.ammoName||gs.ammo||g.ammo||"",armor:gs.armorIgnore!=null?gs.armorIgnore:g.armorIgnore,head:gs.headshot||g.headshot,range:gs.range||0,weight:gs.weight||0};
     }).sort(function(a,b){return (b.damage||0)-(a.damage||0)||(b.rpm||0)-(a.rpm||0);});
     q("view").innerHTML=
-      '<div class="detail-hero' + heroClass("guns") + '"' + heroStyle("guns") + '><h1>枪械数据表</h1><div class="meta"><span class="badge">'+rows.length+' 把</span><span class="badge custom">TACZ data 同步</span></div><div class="hero-desc" style="margin-top:10px">按基础伤害从高到低排列；数值来自 TACZ index/data，换弹优先取 script_param。点击行进入枪械详情。</div></div>'+
+      '<div class="detail-hero' + heroClass("guns") + '"' + heroStyle("guns") + '><h1>枪械数据表</h1><div class="meta"><span class="badge">'+rows.length+' 把</span><span class="badge custom">TACZ data 同步</span></div><div class="hero-desc" style="margin-top:10px">按基础伤害从高到低排列；数值来自 TACZ index/data，换弹优先取 script_param。点击行进入改枪台的工作台。</div></div>'+
       '<div class="section"><div class="table-wrap"><table class="data-table"><thead><tr><th>枪械</th><th>类型</th><th>伤害</th><th>RPM</th><th>弹容</th><th>弹药</th><th>穿甲</th><th>爆头</th><th>射程</th><th>重量</th></tr></thead><tbody>'+
       rows.map(function(r){return '<tr data-go="'+guideDetailHref("guns",r.id)+'"><td>'+esc(r.name||r.id)+'</td><td>'+esc(r.type||"")+'</td><td><b>'+fmtNum(r.damage)+'</b></td><td>'+fmtNum(r.rpm)+'</td><td>'+fmtNum(r.mag)+'</td><td>'+esc(r.ammo)+'</td><td>'+Math.round((r.armor||0)*100)+'%</td><td>'+fmtNum(r.head)+'×</td><td>'+fmtNum(r.range)+'</td><td>'+fmtNum(r.weight)+'</td></tr>';}).join("")+
       '</tbody></table></div></div>'+
@@ -988,7 +990,7 @@
     box.innerHTML = html || '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的武器</div></div>';
   }
   function renderGuideList(type) {
-    if (type === "armor" || type === "guns") { renderGearShowcase(type); return; }
+    if (type === "armor") { renderGearShowcase(type); return; }
     if (type === "melee") { renderMeleePage(); return; }
     const cfg = GUIDE_TYPES[type];
     renderTopbar({ back: cfg.back, title: cfg.title, sub: cfg.data.length + " 条资料" });
@@ -997,7 +999,6 @@
       '<div class="detail-hero' + heroClass(type) + '"' + heroStyle(type) + '><h1>' + esc(cfg.title) + "</h1><div class=\"meta\"><span class=\"badge\">" + cfg.data.length + " 条</span><span class=\"badge custom\">离线可用</span></div>" +
         '<div class="hero-desc" style="margin-top:10px">' + esc(cfg.subtitle) + "</div></div>" +
       '<div class="section"><div class="searchbar">' + icon("search") + '<input id="guide-search-' + type + '" type="search" placeholder="搜索' + esc(cfg.title) + '名称或关键词" value="' + esc(ui.guideQuery[type] || "") + '" autocomplete="off"></div></div>' +
-      (type === "guns" ? '<div class="section"><button class="btn ghost block" data-go="#/gear/guntable">查看枪械数据表（伤害 / RPM / 弹容 / 弹药）</button></div>' : "") +
       (type === "vehicles" ? '<div class="section"><button class="btn ghost block" data-go="#/world/vehicle-audit">查看载具补全清单（51 条核对记录）</button></div>' : "") +
       '<div class="section"><div class="chip-row" id="guide-groups-' + type + '"></div></div>' +
       '<div class="section"><div class="list" id="guide-list-' + type + '"></div></div>';
@@ -1072,6 +1073,12 @@
     }
     return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;display:grid;place-items:center;color:var(--dim)\">" + icon(ico, Math.round(size * 0.45)) + "</div>";
   }
+  /* 长列表滚动加载（js/lazy.js）。没有该脚本时退回一次渲染，不让页面空着。 */
+  function lazyList(container, items, htmlOf) {
+    const L = window.WZ_LAZY;
+    if (L && L.list) L.list(container, items, htmlOf);
+    else container.innerHTML = items.map(htmlOf).join("");
+  }
   function renderGuideRows(type) {
     const box = q("guide-list-" + type);
     if (!box) return;
@@ -1084,14 +1091,18 @@
       return [item.name, item.effect, item.description, item.text, item.location, item.group, item.type, item.faction, item.region, item.source, item.weaponType, item.damageBand, item.speedBand].join(" ").toLowerCase().indexOf(query) >= 0;
     });
     if (type === "defense") { renderDefenseTree(type, list); return; }
-    box.innerHTML = list.length ? list.map(function (item) {
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的条目</div><div class="em-sub">换个关键词或分类试试</div></div>';
+      return;
+    }
+    lazyList(box, list, function (item) {
       return '<button class="row-card" data-go="' + guideDetailHref(type, item.id) + '">' +
         guideThumb(item, 52, type) +
         '<div class="row-main"><div class="row-title">' + esc(item.name || "未命名") + "</div>" +
           '<div class="row-sub">' + esc(guideRowSub(type, item)) + "</div></div>" +
         '<div class="row-right"><span class="badge">' + esc(guideRowTag(type, item)) + "</span></div>" +
         "</button>";
-    }).join("") : '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的条目</div><div class="em-sub">换个关键词或分类试试</div></div>';
+    });
   }
   function lootSourcesFor(ids) {
     const map = new Map();
@@ -1303,28 +1314,6 @@
       }
       return h;
     }
-    if (type === "guns") {
-      const gs = ((window.WZ_GUNSMITH || {}).guns || {})[item.id];
-      const modes = gs && gs.fireModeLabels && gs.fireModeLabels.length
-        ? '<div class="gs-gun-modes">' + gs.fireModeLabels.map(function (x) { return '<span class="gs-badge fire">' + esc(x) + "</span>"; }).join("") +
-          (gs.boltLabel ? '<span class="gs-badge bolt">' + esc(gs.boltLabel) + "</span>" : "") + "</div>"
-        : "";
-      const ammoId = item.ammoId || item.ammo || "";
-      const ammoItem = (GUIDE.ammo || []).filter(function (x) { return x.id === ammoId; })[0];
-      const ammoLink = ammoItem ? '<button class="row-card" data-go="#/gear/ammo/' + encodeURIComponent(ammoItem.id) + '"><div class="row-main"><div class="row-title">使用弹药：' + esc(ammoItem.name) + '</div><div class="row-sub mono">' + esc(ammoItem.id) + '</div></div><div class="row-right"><span class="badge">查看弹药</span></div></button>' : "";
-      return '<div class="section"><div class="stat-grid">' +
-        '<div class="stat-box"><b>' + fmtNum(item.damage) + '</b><span>基础伤害</span></div>' +
-        '<div class="stat-box"><b>' + fmtNum(item.rpm) + '</b><span>RPM 射速</span></div>' +
-        '<div class="stat-box"><b>' + esc(item.magLabel || fmtNum(item.mag)) + '</b><span>弹容</span></div>' +
-        '<div class="stat-box"><b>' + esc(item.ammo || "—") + '</b><span>弹药</span></div>' +
-        '<div class="stat-box"><b>' + (item.armorIgnore != null ? Math.round(item.armorIgnore * 100) + "%" : "—") + '</b><span>护甲穿透</span></div>' +
-        '<div class="stat-box"><b>' + (item.headshot != null ? "×" + item.headshot : "—") + '</b><span>爆头倍率</span></div>' +
-        "</div>" + modes +
-        ammoLink +
-        '<button class="gs-open-btn" data-go="#/gear/gunsmith/' + encodeURIComponent(item.id) + '">' + icon("gear", 17) + '<span>在改枪台查看配件与完整数值</span>' + icon("chevron", 16) + "</button></div>" +
-        effectSection(item.effect, "定位 / 作用", item.description ? "背景：" + item.description : "") +
-        lootSourcesSection([item.id], 6);
-    }
     if (type === "npcs") {
       let h = '<div class="section"><div class="stat-grid">' +
         '<div class="stat-box"><b>' + fmtNum(item.hp) + '</b><span>生命</span></div>' +
@@ -1381,6 +1370,7 @@
   }
   function mountPageComments(type, id) {
     const list = q("comment-list"); if (!list) return;
+    /* 普通用户登录暂时关闭：没登录就不给评论框，避免提交后吃 403 */
     let signedIn = false;
     function load() {
       Promise.all([
@@ -1527,7 +1517,7 @@
       if (x && !chosen.some(function (y) { return y.set.id === x.set.id; })) chosen.push(x);
     });
     function weaponButtons(which) {
-      const rows = which === "melee" ? picks.melee.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/melee/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.weaponType || "近战") + ' · ' + esc(x.item.tier || "") + '</span></button>'; }) : picks.guns.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/gun/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.type || "枪械") + ' · DPS ' + Math.round(x.dps) + '</span></button>'; });
+      const rows = which === "melee" ? picks.melee.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/melee/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.weaponType || "近战") + ' · ' + esc(x.item.tier || "") + '</span></button>'; }) : picks.guns.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/gunsmith/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.type || "枪械") + ' · DPS ' + Math.round(x.dps) + '</span></button>'; });
       return rows.join("");
     }
     let html = '<div class="text-block armor-formula"><div class="section-head"><div class="section-title">评分公式</div><div class="section-note">原版护甲模型</div></div>' +
@@ -1597,7 +1587,7 @@
         ["guns", "armor", "melee", "trinkets"].forEach(function (type) {
           const cfg = GUIDE_TYPES[type]; if (!cfg) return;
           (cfg.data || []).forEach(function (x) { if (norm(x.name + " " + x.id).indexOf(query) >= 0) {
-            const href = type === "guns" ? "#/gear/gun/" + encodeURIComponent(x.id) : "#/gear/" + type + "/" + encodeURIComponent(x.id);
+            const href = type === "guns" ? "#/gear/gunsmith/" + encodeURIComponent(x.id) : "#/gear/" + type + "/" + encodeURIComponent(x.id);
             out.push(row(x.name, cfg.title, href));
           } });
         });
@@ -1813,6 +1803,16 @@
       setTimeout(function () { wheelLock = false; }, 720);
     }, { passive: false });
   }
+  /* 枪械库（#/gear/guns）已删，并入改枪台。老链接（含别人分享过的）不能变死链：
+     #/gear/guns       → #/gear/gunsmith
+     #/gear/gun/<id>   → #/gear/gunsmith/<id>（枪械详情页也没有了，工作台就是详情） */
+  function legacyHash(hash) {
+    const seg = hash.replace(/^#\/?/, "").split("?")[0].split("/");
+    if (seg[0] !== "gear") return "";
+    if (seg[1] === "guns") return "#/gear/gunsmith";
+    if (seg[1] === "gun" && seg[2]) return "#/gear/gunsmith/" + seg[2];
+    return "";
+  }
 
   const LANG_DICT = {
     "区域战利品": "Loot", "生物": "Creatures", "装备": "Gear", "世界": "World", "社区": "Community",
@@ -1907,6 +1907,8 @@
 
   function route() {
     const nextHash = currentHash();
+    const legacy = legacyHash(nextHash);
+    if (legacy) { location.replace(legacy); return; }
     rememberScroll();
     closeSheet(true);
     closeMeDrawer();
@@ -3388,7 +3390,16 @@
         }
         fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "失败"); closeSheet(); loadCommunity(); if (isAdmin) toast("管理员已登录"); })
+          .then(function (x) {
+            if (!x.ok) throw new Error(x.d.error || "失败");
+            closeSheet();
+            loadCommunity();
+            if (isAdmin) {
+              toast("管理员已登录");
+              /* 换图浮层（js/admin.js）跟着登录状态走，不用刷新页面 */
+              if (window.WZ_ADMIN_UI) window.WZ_ADMIN_UI.refresh();
+            }
+          })
           .catch(function (err) { toast(err.message || "登录失败"); });
       });
     }, 0);
@@ -3896,7 +3907,7 @@
       case "npc-trade-list": openNpcTradeList(); break;
       case "cms-text": cmsStart("text"); break;
       case "cms-image": cmsStart("image"); break;
-      case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
+      case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); if (window.WZ_ADMIN_UI) window.WZ_ADMIN_UI.refresh(); }).catch(function () { toast("退出失败"); }); break;
       case "community-logout": fetch("/api/auth/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "toggle-theme": {
         const next = (document.documentElement.dataset.theme === "light") ? "dark" : "light";
@@ -4098,7 +4109,12 @@
   window.WZ_APP_UI = {
     q: q, esc: esc, icon: icon, renderTopbar: renderTopbar,
     heroClass: heroClass, heroStyle: heroStyle, toast: toast,
-    go: go, closeSheet: closeSheet, openSheet: openSheet
+    go: go, closeSheet: closeSheet, openSheet: openSheet,
+    /* 枪械库删掉后，合成材料 / 作用 / 来源 / 评论这几块搬到改枪台，
+       复用这里的实现，别再写一份 */
+    recipeSection: recipeSection, effectSection: effectSection,
+    lootSourcesSection: lootSourcesSection,
+    commentsHTML: commentsHTML, mountPageComments: mountPageComments
   };
   function installWatermark() {
     if (document.querySelector(".site-watermark")) return;

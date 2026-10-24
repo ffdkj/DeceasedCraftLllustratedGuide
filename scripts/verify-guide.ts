@@ -133,6 +133,16 @@ function check(cond: boolean, message: string): void {
   check(gunsmith.includes('recipeSection') && gunsmith.includes('lootSourcesSection'), '合成材料与来源复用 app.js 的分区，没有第二份实现');
   check(app.includes('recipeSection: recipeSection'), 'app.js 把分区渲染导出给改枪台');
   check(app.includes('lazyList(box, list'), '图鉴通用长列表仍然接在滚动加载上');
+
+  /* 评论登录门槛（gfor14415 加的功能；服务端已关普通用户登录） */
+  {
+    const community = has('src/server/community.ts') ? read('src/server/community.ts') : '';
+    check(app.includes('<form id="comment-form" class="comment-form" hidden>'), '评论框默认隐藏（未登录不显示）');
+    check(app.includes('signedIn = !!(arr[1] || {}).user'), '按 /api/me 带回的 user 判断登录态');
+    check(app.includes('comment-login-note'), '未登录时插一行登录说明');
+    check(app.includes('if (!signedIn) { toast("请先登录后再评论"); return; }'), '提交时二次拦截未登录');
+    check(community.includes('userLogin: false'), '服务端标注普通用户登录已关闭');
+  }
 }
 
 if (errors.length) {
