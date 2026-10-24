@@ -2411,8 +2411,10 @@
       "</div></div>" +
       (rec.nbts.size ? (function () {
         const all = Array.from(rec.nbts);
-        const shown = all.slice(0, 24);
-        return '<div class="section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note">' + rec.nbts.size + " 种</div></div><div class=\"chip-row\">" +
+        const shown = all;
+        return '<div class="section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note">' + rec.nbts.size + " 种</div></div>" +
+          '<input class="variant-search" id="variant-search" placeholder="搜索变体 / 附魔，例如：精准采集">' +
+          '<div class="chip-row">' +
           shown.map(function (n) { return '<span class="chip" style="cursor:default">' + texIcon(rec.id, n, n, "chip-ico", 20) + esc(n.replace(/\n/g, " ")) + "</span>"; }).join("") +
           (all.length > shown.length ? '<span class="chip" style="cursor:default">还有 ' + (all.length - shown.length) + " 种</span>" : "") +
           "</div></div>";
@@ -3740,3 +3742,13 @@
   applyTheme(getTheme());
   route();
 })();
+
+  document.addEventListener('input', function (e) {
+    if (!e.target || e.target.id !== 'variant-search') return;
+    const q = String(e.target.value || '').trim().toLowerCase();
+    const section = e.target.closest('.section');
+    if (!section) return;
+    section.querySelectorAll('.chip-row .chip').forEach(function (chip) {
+      chip.style.display = (!q || chip.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+    });
+  });
