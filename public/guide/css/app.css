@@ -3366,3 +3366,9 @@ body.page-community .view { background: #050706 !important; }
 .variant-row .variant-chip { flex: 0 0 auto; white-space: nowrap; background: rgba(224,169,74,.06); border-color: rgba(224,169,74,.28); }
 .variant-row .variant-chip:hover { background: rgba(224,169,74,.16); border-color: rgba(224,169,74,.75); }
 .variant-search { border-color: rgba(224,169,74,.35) !important; }
+
+.global-results { display:flex; flex-direction:column; gap:4px; max-height:55vh; overflow:auto; margin-top:8px; }
+.global-result { display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:6px; padding:7px 9px; cursor:pointer; }
+.global-result:hover { border-color:rgba(224,169,74,.7); background:rgba(224,169,74,.08); }
+.global-result b { font-size:13px; }
+.global-result span { font-size:10.5px; color:var(--muted); }
