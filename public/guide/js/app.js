@@ -2265,6 +2265,20 @@
     let partFilter = ui.buildingPart[key];
     if (partFilter === undefined) partFilter = building._partCount > 1 ? 0 : 0;
     const parts = building.parts.map(function (p, i) { return { p: p, i: i }; });
+    const hashQuery = new URLSearchParams((location.hash.split('?')[1] || ''));
+    const targetItem = hashQuery.get('item') || '';
+    const targetNbt = hashQuery.get('nbt') || '';
+    let targetPos = null;
+    if (targetItem) {
+      building.parts.forEach(function (p, pi) {
+        p.floors.forEach(function (f, fi) {
+          f.containers.forEach(function (c, ci) {
+            if (!targetPos && c.items.some(function (it) { return it[0] === targetItem && (!targetNbt || it[7] === targetNbt); })) targetPos = { p: pi, f: fi, c: ci };
+          });
+        });
+      });
+      if (targetPos) partFilter = targetPos.p;
+    }
     const shown = building._partCount > 1 ? parts.filter(function (x) { return x.i === Number(partFilter); }) : parts;
     const entriesShown = shown.reduce(function (sum, x) {
       return sum + x.p.floors.reduce(function (s, f) {
@@ -2296,7 +2310,7 @@
             '<div class="container-items" data-loaded="0"></div>' +
           "</div>";
         }).join("");
-        return '<div class="accordion ' + (floorIndex === 0 ? "open" : "") + '">' +
+        return '<div class="accordion ' + (floorIndex === 0 || (targetPos && targetPos.f === floorIndex && targetPos.p === x.i) ? "open" : "") + '">' +
           '<button class="acc-head" data-action="toggle-acc">' +
             '<div class="acc-title">' + esc(f.name) + '<div class="acc-sub">' + f.containers.length + " 个容器 · " + itemCount + " 条掉落</div></div>" + icon("chevron", 18) +
           "</button>" +
@@ -2327,6 +2341,17 @@
     ui.currentBuilding = building;
     ui.currentPartIndex = shown.length === 1 ? shown[0].i : null;
     q("view").insertAdjacentHTML("beforeend", commentsHTML("building", building.id)); mountPageComments("building", building.id);
+    if (targetPos) {
+      setTimeout(function () {
+        const block = document.querySelector('.container-block[data-part="' + targetPos.p + '"][data-fi="' + targetPos.f + '"][data-ci="' + targetPos.c + '"]');
+        if (!block) return;
+        const head = block.querySelector('.container-head'); if (head) head.click();
+        setTimeout(function () {
+          block.classList.add('flash-target');
+          block.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 250);
+      }, 120);
+    }
   }
 
   function itemRowHTML(it, showStar) {
@@ -2389,7 +2414,7 @@
       const p = clampPct(s.it[4]);
       const region = s.r, b = s.b, f = s.f, c = s.c, it = s.it;
       const partLabel = s.p && s.p.part != null ? " · 区块 " + s.p.part : "";
-      return '<button class="source-card" style="width:100%;text-align:left" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '">' +
+      return '<button class="source-card" style="width:100%;text-align:left" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '?item=' + encodeURIComponent(it[0]) + '&nbt=' + encodeURIComponent(it[7] || '') + '">' +
         '<div class="source-top"><div class="source-name">' + esc(b.name) + '<div class="tiny dim" style="font-weight:400;margin-top:2px">' + esc(region.name) + partLabel + "</div></div>" +
           '<div class="source-prob"><b>' + fmtPct(it[4]) + '</b><span>实际掉率</span><div class="prob-bar ' + (p >= 50 ? "high" : "") + '" style="width:64px;margin-left:auto"><i style="width:' + Math.max(3, p) + '%"></i></div></div>' +
         "</div>" +
