@@ -3221,8 +3221,8 @@ body.community-page .view { padding-top: 56px !important; }
 .tier-card .tier-dot.on { color: #10130f; }
 
 /* 区域战利品 T 级图标：放大两倍 */
-.tier-dots-lg .tier-dot { width: 44px; height: 32px; font-size: 19px; border-radius: 8px; }
-.tier-dots-lg { gap: 6px; }
+.tier-dots-lg .tier-dot { width: 66px; height: 48px; font-size: 28px; border-radius: 10px; }
+.tier-dots-lg { gap: 9px; }
 .tier-card .tier-dots-lg .tier-dot { background: rgba(0,0,0,.42); color: #fff; border-color: rgba(255,255,255,.28); }
 .tier-card .tier-dots-lg .tier-dot.on { background: rgba(224,122,95,.92) !important; color: #10130f; border-color: transparent !important; }
 
@@ -3306,3 +3306,6 @@ body.page-community .view { background: #050706 !important; }
 /* 社区管理员标识与登录按钮 */
 .profile-card .btn + .btn { margin-left: 6px; }
 .admin-badge { display:inline-block; margin-left:6px; padding:1px 5px; border:1px solid rgba(224,169,74,.65); border-radius:3px; color:#e0a94a; font-size:9px; letter-spacing:.08em; vertical-align:2px; }
+
+/* 列表渲染优化：屏幕外卡片跳过绘制 */
+.tier-card, .region-card, .hub-card { content-visibility: auto; contain-intrinsic-size: 320px; }
