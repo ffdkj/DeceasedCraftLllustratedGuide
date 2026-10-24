@@ -2331,14 +2331,17 @@
 
   function containerIcon(name) {
     const n = String(name || "");
-    let id = "minecraft:chest";
-    if (n.indexOf("冰箱") >= 0) id = "minecraft:blast_furnace";
-    else if (n.indexOf("保险箱") >= 0) id = "minecraft:ender_chest";
-    else if (n.indexOf("货架") >= 0) id = "minecraft:barrel";
-    else if (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0) id = "minecraft:chest";
-    else if (n.indexOf("箱") >= 0) id = "minecraft:chest";
-    return '<span class="container-ico">' + itemIcon(id, n, null, 24) + '</span>';
+    let file = "drawer_oak.webp";
+    if (n.indexOf("冰箱") >= 0) file = n.indexOf("深色") >= 0 ? "fridge_dark.webp" : "fridge_light.webp";
+    else if (n.indexOf("保险箱") >= 0) file = "safe_iron.webp";
+    else if (n.indexOf("黄色") >= 0 && (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0)) file = "drawer_yellow.webp";
+    else if (n.indexOf("深色橡木") >= 0 && (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0)) file = "drawer_dark_oak.webp";
+    else if (n.indexOf("淡灰色") >= 0 && (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0)) file = "drawer_light_gray.webp";
+    else if (n.indexOf("货架") >= 0) file = "pallet.webp";
+    else if (n.indexOf("箱") >= 0) return '<span class="container-ico">' + itemIcon("minecraft:chest", n, null, 24) + "</span>";
+    return '<span class="container-ico"><img class="container-img" src="./images/containers/' + file + '" alt="" loading="lazy"></span>';
   }
+
 
 
   function renderBuilding(rid, bid) {
