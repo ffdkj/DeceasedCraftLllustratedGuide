@@ -3416,3 +3416,19 @@ body.page-community .view { background: #050706 !important; }
 .armor-weapon:hover { border-color:rgba(224,169,74,.7); }
 .armor-weapon span { color:var(--muted); font-size:9.5px; }
 @media (max-width:700px) { .armor-report-grid { grid-template-columns:1fr; } }
+
+/* 护甲部件：分层卡片，避免透出背景图 */
+.piece-row {
+  background: linear-gradient(180deg, rgba(27,34,28,.98), rgba(17,22,19,.98)) !important;
+  border: 1px solid rgba(224,169,74,.16) !important;
+  border-bottom: 1px solid rgba(224,169,74,.16) !important;
+  border-radius: 10px;
+  padding: 10px 12px !important;
+  margin-bottom: 7px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.35);
+}
+.piece-row:last-child { margin-bottom: 0; }
+.piece-row .piece-name { color: var(--text) !important; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.piece-row .piece-id { color: #9aa69b !important; }
+.piece-row .badge { background: rgba(224,169,74,.10) !important; border: 1px solid rgba(224,169,74,.25) !important; color: #e0c48a !important; }
+.piece-row .item-ico, .piece-row .ico { background-color: rgba(255,255,255,.06); border-radius: 6px; }
