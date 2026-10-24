@@ -32,9 +32,7 @@ function resolveStaticRoot(): string {
   return candidates.find((p) => existsSync(p)) ?? path.resolve(process.cwd(), 'public');
 }
 
-let staticRoot = resolveStaticRoot();
-const guideRoot = path.join(staticRoot, 'guide');
-if (existsSync(path.join(guideRoot, 'index.html'))) staticRoot = guideRoot;
+const staticRoot = resolveStaticRoot();
 configureOverrides(staticRoot);
 
 app.get('/api/health', (c) => c.json({ ok: true, service: 'wzsj-atlas' }));
@@ -54,8 +52,8 @@ async function indexHtml(): Promise<string> {
   return html;
 }
 
-app.get('/', serveIndex);
-app.get('/index.html', serveIndex);
+app.get('/', (c) => c.redirect('/guide/'));
+app.get('/index.html', (c) => c.redirect('/guide/'));
 
 async function serveIndex(c: Context) {
   const html = await indexHtml();
