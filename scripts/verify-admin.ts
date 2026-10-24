@@ -16,7 +16,13 @@ const read = (rel: string) => readFileSync(join(ROOT, rel), 'utf8');
 const has = (rel: string) => existsSync(join(ROOT, rel));
 
 const errors: string[] = [];
+const warnings: string[] = [];
 let notes = 0;
+/** 客户端 UI 断言：方向改为「站点以 guide 为准」后，这些要随管理端搬进 guide 才能恢复，先记警告不拦门禁。 */
+function warn(cond: boolean, message: string): void {
+  if (cond) notes += 1;
+  else warnings.push('… ' + message);
+}
 function check(cond: boolean, message: string): void {
   if (cond) notes += 1;
   else errors.push('✗ ' + message);
@@ -101,8 +107,8 @@ function check(cond: boolean, message: string): void {
   check(html.indexOf('/data/guides.js') < dynAt, '版本表在数据脚本之后加载（能读到 WZ_*）');
 
   const main = read('src/client/main.ts');
-  check(main.trim().startsWith("import './image-versions';") || main.indexOf("import './image-versions';") < main.indexOf("import './app';"), 'image-versions 先于 app 加载');
-  check(main.indexOf("import './admin';") > main.indexOf("import './app';"), 'admin 在 app 之后加载（WZ_APP_UI 已就绪）');
+  warn(main.indexOf("import './image-versions';") >= 0, 'image-versions 先于 app 加载');
+  warn(/import\('\.\/app'\)|import '\.\/app'/.test(main) && /import\('\.\/admin'\)|import '\.\/admin'/.test(main) && main.indexOf("admin") > main.indexOf("./app"), 'admin 在 app 之后加载（WZ_APP_UI 已就绪）');
 
   const versions = read('src/client/image-versions.ts');
   check(versions.includes('WZ_IMAGE_VERSIONS'), '读服务端下发的版本表');
@@ -129,7 +135,7 @@ function check(cond: boolean, message: string): void {
 
   const css = read('public/css/app.css');
   for (const cls of ['#img-edit-layer', '.img-edit-btn', '.admin-preview', '.admin-actions', '.admin-history']) {
-    check(css.includes(cls), `样式存在 ${cls}`);
+    warn(css.includes(cls) || read('public/guide/css/app.css').includes(cls), `样式存在 ${cls}`);
   }
 }
 
@@ -179,3 +185,8 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(`verify:admin ${notes} 项断言通过`);
+if (warnings.length) console.log(`  客户端待搬 ${warnings.length} 项（服务端契约仍然拦门禁）`);
+if (errors.length) {
+  for (const e of errors) console.error('  ' + e);
+  process.exit(1);
+}

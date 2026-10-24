@@ -6,11 +6,11 @@ import './seed';
 import './music';
 import './gunsmith';
 
-function loadScript(src) {
+function loadScript(src: string): Promise<void> {
   return new Promise(function (resolve, reject) {
-    var s = document.createElement('script');
+    const s = document.createElement('script');
     s.src = src;
-    s.onload = resolve;
+    s.onload = function () { resolve(); };
     s.onerror = function () { reject(new Error('load failed: ' + src)); };
     document.head.appendChild(s);
   });
