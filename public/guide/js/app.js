@@ -2971,6 +2971,51 @@
       });
     }, 0);
   }
+
+  function renderAdminPanel() {
+    renderTopbar({ back: "#/community", title: "管理面板", sub: "评论 · 聊天 · 照片" });
+    document.title = "管理面板 · 亡者世界";
+    q("view").innerHTML = '<div class="section"><div class="tiny dim">正在加载…</div></div>';
+    Promise.all([
+      fetch("/api/posts").then(function (r) { return r.json(); }),
+      fetch("/api/photos").then(function (r) { return r.json(); }),
+      fetch("/api/admin/comments").then(function (r) { return r.json(); })
+    ]).then(function (arr) {
+      const posts = (arr[0] || {}).posts || [], photos = (arr[1] || {}).photos || [], comments = (arr[2] || {}).comments || [];
+      function actions(kind, id, userId) {
+        return '<button class="admin-mini danger" data-admin-del="' + kind + '" data-id="' + esc(id) + '">删除</button>' +
+          (userId ? '<button class="admin-mini" data-mute="' + esc(userId) + '">禁言 24h</button>' : "");
+      }
+      let h = '<div class="section"><div class="section-head"><div class="section-title">评论管理</div><div class="section-note">' + comments.length + ' 条</div></div><div class="admin-list">' +
+        (comments.length ? comments.map(function (c) {
+          return '<div class="admin-row"><div class="admin-main"><b>' + esc(c.user) + '</b><span class="tiny dim"> ' + esc(c.targetType) + ' / ' + esc(c.targetId) + '</span><div class="admin-text">' + esc(c.text) + '</div></div>' + actions("comments", c.id, c.userId) + '</div>';
+        }).join("") : '<div class="tiny dim">暂无评论</div>') + "</div></div>";
+      h += '<div class="section"><div class="section-head"><div class="section-title">聊天管理</div><div class="section-note">' + posts.length + ' 条</div></div><div class="admin-list">' +
+        (posts.length ? posts.slice().reverse().map(function (x) {
+          return '<div class="admin-row"><div class="admin-main"><b>' + esc(x.user) + '</b><div class="admin-text">' + esc(x.text || "[图片]") + '</div></div>' + actions("posts", x.id, x.userId) + '</div>';
+        }).join("") : '<div class="tiny dim">暂无聊天</div>') + "</div></div>";
+      h += '<div class="section"><div class="section-head"><div class="section-title">照片管理</div><div class="section-note">' + photos.length + ' 张</div></div><div class="admin-list">' +
+        (photos.length ? photos.slice().reverse().map(function (x) {
+          return '<div class="admin-row"><img class="admin-thumb" src="' + esc(x.image || "") + '" alt=""><div class="admin-main"><b>' + esc(x.user) + '</b><div class="admin-text">' + esc(x.caption || "") + '</div></div>' + actions("photos", x.id, x.userId) + '</div>';
+        }).join("") : '<div class="tiny dim">暂无照片</div>') + "</div></div>";
+      q("view").innerHTML = h;
+      q("view").querySelectorAll('[data-admin-del]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!confirm('确认删除这条内容？')) return;
+          fetch('/api/admin/' + btn.dataset.adminDel + '/' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' })
+            .then(function () { renderAdminPanel(); }).catch(function () { toast('删除失败'); });
+        });
+      });
+      q("view").querySelectorAll('[data-mute]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!confirm('禁言该用户 24 小时？')) return;
+          fetch('/api/admin/mute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: btn.dataset.mute, hours: 24, reason: '管理员操作' }) })
+            .then(function () { toast('已禁言 24 小时'); renderAdminPanel(); }).catch(function () { toast('禁言失败'); });
+        });
+      });
+    }).catch(function () { q("view").innerHTML = '<div class="section"><div class="tiny dim">加载失败，请确认管理员已登录。</div></div>'; });
+  }
+
   function loadCommunity() {
     const root = q("community-root");
     if (!root) return;
@@ -2987,7 +3032,7 @@
       const admin = me.admin || null;
       let profileActions;
       if (admin) {
-        profileActions = '<button class="btn ghost" data-action="admin-logout">退出管理员</button>' + (user ? '<button class="btn ghost" data-action="community-logout">退出账号</button>' : '');
+        profileActions = '<button class="btn primary" data-action="admin-panel">管理面板</button><button class="btn ghost" data-action="admin-logout">退出管理员</button>' + (user ? '<button class="btn ghost" data-action="community-logout">退出账号</button>' : '');
       } else if (user) {
         profileActions = '<button class="btn ghost" data-action="community-logout">退出</button>';
       } else {
@@ -3382,6 +3427,7 @@
       case "community-login": openCommunityAuth("login"); break;
       case "community-register": openCommunityAuth("register"); break;
       case "admin-login": openCommunityAuth("admin"); break;
+      case "admin-panel": renderAdminPanel(); break;
       case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "community-logout": fetch("/api/auth/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "toggle-theme": {
