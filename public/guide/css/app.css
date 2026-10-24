@@ -3245,6 +3245,11 @@ body.page-world .view {
   background-size: cover !important; background-position: center top !important; background-repeat: no-repeat !important;
 }
 body.page-gear .showcase-main { background: var(--panel) !important; }
+body.page-gear .showcase-visual {
+  background-image: linear-gradient(180deg, rgba(5,8,7,.10) 0%, rgba(5,8,7,.35) 50%, rgba(5,8,7,.72) 100%), url("../images/guides/page_armor_ui.webp") !important;
+  background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important;
+}
+body.page-gear .showcase-visual .showcase-icon { opacity: 0 !important; }
 
 /* 社区页固定深色，避免浅色主题下看不清 */
 body.page-community {
