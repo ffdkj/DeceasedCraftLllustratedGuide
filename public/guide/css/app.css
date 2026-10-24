@@ -3451,3 +3451,5 @@ body.page-community .view { background: #050706 !important; }
 .trade-list-stock { font-size:9px; color:var(--muted); min-width:48px; text-align:right; }
 
 .ammo-trade-ico { width:40px; height:40px; object-fit:contain; image-rendering:pixelated; }
+
+.lang-btn { font-size:11px; font-weight:800; letter-spacing:.4px; min-width:32px; color:#e0c48a !important; }
