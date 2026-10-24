@@ -3748,7 +3748,12 @@
     const q = String(e.target.value || '').trim().toLowerCase();
     const section = e.target.closest('.section');
     if (!section) return;
+    let first = null;
     section.querySelectorAll('.chip-row .chip').forEach(function (chip) {
-      chip.style.display = (!q || chip.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+      const hit = !q || chip.textContent.toLowerCase().indexOf(q) >= 0;
+      chip.style.display = hit ? '' : 'none';
+      chip.classList.remove('flash');
+      if (hit && q) { first = first || chip; chip.classList.add('flash'); }
     });
+    if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
