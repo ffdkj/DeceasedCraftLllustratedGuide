@@ -2446,7 +2446,7 @@
         return '<div class="section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note">' + rec.nbts.size + " 种</div></div>" +
           '<input class="variant-search" id="variant-search" placeholder="搜索变体 / 附魔，例如：精准采集">' +
           '<div class="chip-row">' +
-          shown.map(function (n) { return '<span class="chip" style="cursor:default">' + texIcon(rec.id, n, n, "chip-ico", 20) + esc(n.replace(/\n/g, " ")) + "</span>"; }).join("") +
+          shown.map(function (n) { return '<button class="chip variant-chip" title="点击搜索这个变体">' + texIcon(rec.id, n, n, "chip-ico", 20) + esc(n.replace(/\n/g, " ")) + "</button>"; }).join("") +
           (all.length > shown.length ? '<span class="chip" style="cursor:default">还有 ' + (all.length - shown.length) + " 种</span>" : "") +
           "</div></div>";
       })() : "") +
@@ -3789,6 +3789,15 @@
   route();
 })();
 
+  document.addEventListener('click', function (e) {
+    const chip = e.target.closest('.variant-chip');
+    if (!chip) return;
+    const input = document.getElementById('variant-search');
+    if (!input) return;
+    input.value = chip.textContent.trim();
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
   document.addEventListener('input', function (e) {
     if (!e.target || e.target.id !== 'variant-search') return;
     const q = String(e.target.value || '').trim().toLowerCase();
