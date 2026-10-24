@@ -698,13 +698,17 @@
     });
   }
   function gearVisual(type, g, size) {
+    if (type === "ammo") {
+      const tex = ammoTexture(g.id);
+      if (tex) return '<div class="showcase-img" role="img" aria-label="' + esc(g.name) + '" style="width:100%;height:100%;background-image:url(\'' + tex + '\');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:pixelated"></div>';
+    }
     if (type === "guns" && g.image) return '<div class="showcase-img" role="img" aria-label="' + esc(g.name) + '" style="width:100%;height:100%;background-image:url(\'' + esc(g.image) + '\');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:pixelated"></div>';
     if (g.iconItem) return '<div class="showcase-icon">' + itemIcon(g.iconItem, g.name, null, size || 96) + "</div>";
     return '<div class="showcase-icon">' + icon(type === "armor" ? "shield" : "crosshair", size || 96) + "</div>";
   }
   function gearShowcaseItem(type, g) {
     const sub = type === "armor" ? (g.tier || "护甲") : (g.type || "枪械");
-    const thumb = type === "guns" && g.image ? '<img src="' + esc(g.image) + '" alt="" loading="lazy">' : itemIcon(g.iconItem || "", g.name, null, 30);
+    const thumb = type === "ammo" && ammoTexture(g.id) ? '<img src="' + ammoTexture(g.id) + '" alt="" loading="lazy" style="image-rendering:pixelated">' : (type === "guns" && g.image ? '<img src="' + esc(g.image) + '" alt="" loading="lazy">' : itemIcon(g.iconItem || "", g.name, null, 30));
     return '<button class="showcase-item" data-action="gear-select" data-type="' + type + '" data-id="' + esc(g.id) + '"><span class="showcase-item-thumb">' + thumb + '</span><span class="showcase-item-main"><b>' + esc(g.name) + '</b><small>' + esc(sub) + '</small></span></button>';
   }
   function renderGearShowcase(type) {
@@ -1020,11 +1024,12 @@
     if (type === "npcs") return item.faction || "NPC";
     return item.group || "条目";
   }
+  function ammoTexture(id) { const m = String(id || "").match(/^tacz:(.+)$/); return m && AMMO_TEX[m[1]] ? "./images/ammo/tacz/" + m[1] + ".webp" : ""; }
   const AMMO_TEX = { "12g":1,"308":1,"30_06":1,"338":1,"357mag":1,"40mm":1,"45acp":1,"500mag":1,"50ae":1,"50bmg":1,"556x45":1,"57x28":1,"58x42":1,"762x39":1,"762x54":1,"9mm":1,"rpg_rocket":1 };
   function guideThumb(item, size, type) {
     if (type === "ammo") {
-      const m = String(item.id || "").match(/^tacz:(.+)$/);
-      if (m && AMMO_TEX[m[1]]) return '<div class="guide-thumb ammo-thumb" style="width:' + size + 'px;height:' + size + 'px;background-image:url(\'./images/ammo/tacz/' + m[1] + '.webp\')"></div>';
+      const tex = ammoTexture(item.id);
+      if (tex) return '<div class="guide-thumb ammo-thumb" style="width:' + size + 'px;height:' + size + 'px;background-image:url(\'' + tex + '\')"></div>';
     }
     if (item.iconImage) {
       return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(item.iconImage) + "')\"></div>";
