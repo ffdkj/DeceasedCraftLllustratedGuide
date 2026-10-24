@@ -1320,6 +1320,45 @@
     }
     return "";
   }
+
+  function commentsHTML(type, id) {
+    return '<div class="section" id="page-comments"><div class="section-head"><div class="section-title">玩家评论</div><div class="section-note" id="comment-count"></div></div>' +
+      '<div id="comment-list" class="comment-list"><div class="tiny dim">正在加载评论…</div></div>' +
+      '<form id="comment-form" class="comment-form"><input id="comment-input" maxlength="500" placeholder="说点什么…" autocomplete="off"><button class="btn primary" type="submit">发表</button></form></div>';
+  }
+  function mountPageComments(type, id) {
+    const list = q("comment-list"); if (!list) return;
+    function load() {
+      Promise.all([
+        fetch("/api/comments?type=" + encodeURIComponent(type) + "&id=" + encodeURIComponent(id)).then(function (r) { return r.json(); }),
+        fetch("/api/me").then(function (r) { return r.json(); }).catch(function () { return {}; })
+      ]).then(function (arr) {
+        const comments = (arr[0] || {}).comments || [];
+        const admin = (arr[1] || {}).admin || null;
+        q("comment-count").textContent = comments.length + " 条";
+        list.innerHTML = comments.length ? comments.slice().reverse().map(function (c) {
+          return '<div class="comment-row"><div class="comment-head"><b>' + esc(c.user) + '</b><span>' + new Date(c.ts).toLocaleString() + '</span>' +
+            (admin ? '<button class="comment-del" data-comment-id="' + esc(c.id) + '">删除</button>' : '') + '</div><div class="comment-text">' + esc(c.text) + '</div></div>';
+        }).join("") : '<div class="tiny dim">还没有评论，登录后发第一条。</div>';
+        list.querySelectorAll('.comment-del').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            fetch('/api/admin/comments/' + encodeURIComponent(btn.dataset.commentId), { method: 'DELETE' }).then(function () { load(); });
+          });
+        });
+      }).catch(function () { list.innerHTML = '<div class="tiny dim">评论加载失败。</div>'; });
+    }
+    load();
+    const form = q("comment-form");
+    if (form) form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const input = q("comment-input"); const text = input.value.trim(); if (!text) return;
+      fetch('/api/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetType: type, targetId: id, text: text }) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (x) { if (!x.ok) throw new Error(x.d.error || '发送失败'); input.value = ''; load(); })
+        .catch(function (err) { toast(err.message || '发送失败'); });
+    });
+  }
+
   function renderGuideDetail(type, id) {
     const cfg = GUIDE_TYPES[type];
     const item = (cfg.data || []).filter(function (x) { return x.id === id; })[0];
@@ -1342,6 +1381,7 @@
       guideDetailExtra(type, item) +
       (item.source ? '<div class="section"><div class="section-head"><div class="section-title">资料来源</div></div><div class="tiny dim">' + esc(item.source) + "</div></div>" : "") +
       '<div class="section"><button class="btn ghost block" data-go="' + cfg.list + '">' + icon("back", 17) + "返回" + esc(cfg.title) + "</button></div>";
+    if (type === "guns") { q("view").insertAdjacentHTML("beforeend", commentsHTML("gun", id)); mountPageComments("gun", id); }
   }
 
   /* ---------------- 建筑列表 ---------------- */
@@ -2277,6 +2317,7 @@
     // 保存当前建筑供容器懒加载
     ui.currentBuilding = building;
     ui.currentPartIndex = shown.length === 1 ? shown[0].i : null;
+    q("view").insertAdjacentHTML("beforeend", commentsHTML("building", building.id)); mountPageComments("building", building.id);
   }
 
   function itemRowHTML(it, showStar) {
@@ -2699,6 +2740,7 @@
       '<div class="section" style="display:flex;gap:8px"><button class="btn" style="flex:1" data-action="edit-monster" data-id="' + esc(m.id) + '">' + icon("edit", 17) + "编辑/补充</button>" +
         (m._custom ? '<button class="btn danger" data-action="delete-monster" data-id="' + esc(m.id) + '">' + icon("trash", 17) + "删除</button>" : (m._override ? '<button class="btn ghost" data-action="reset-monster" data-id="' + esc(m.id) + '">恢复初始</button>' : "")) +
       "</div>";
+    q("view").insertAdjacentHTML("beforeend", commentsHTML("monster", m.id)); mountPageComments("monster", m.id);
   }
 
   /* ---------------- 机器 ---------------- */
