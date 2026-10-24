@@ -1246,6 +1246,7 @@
         h += '<div class="section"><div class="section-head"><div class="section-title">区域建筑来源</div><div class="section-note">按掉率</div></div><div class="list">' +
           item.sources.slice().sort(function(a,b){return (b.chance||0)-(a.chance||0);}).slice(0,40).map(function (x) {
             return '<button class="row-card" data-go="#/loot/building/' + encodeURIComponent(x.regionId) + "/" + encodeURIComponent(x.buildingId) + '">' +
+              buildingThumb({ id: x.buildingId, name: x.building }, 46) +
               '<div class="row-main"><div class="row-title">' + esc(x.building) + '</div><div class="row-sub">' + esc(x.region) + " · " + esc(x.floor) + " · " + esc(x.container) + "</div></div>" +
               '<div class="row-right"><span class="badge">' + (Number(x.chance || 0)).toFixed(1) + "%</span></div></button>";
           }).join("") + "</div></div>";
@@ -2503,8 +2504,10 @@
       const p = clampPct(s.it[4]);
       const region = s.r, b = s.b, f = s.f, c = s.c, it = s.it;
       const partLabel = s.p && s.p.part != null ? " · 区块 " + s.p.part : "";
+      const bg = buildingGuide(b.id);
       return '<button class="source-card" style="width:100%;text-align:left" data-nbt="' + esc(it[7] || '') + '" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '?item=' + encodeURIComponent(it[0]) + '&nbt=' + encodeURIComponent(it[7] || '') + '">' +
-        '<div class="source-top"><div class="source-name">' + esc(b.name) + '<div class="tiny dim" style="font-weight:400;margin-top:2px">' + esc(region.name) + partLabel + "</div></div>" +
+        '<div class="source-top">' + (bg && bg.image ? '<img class="source-thumb" src="' + esc(bg.image) + '" alt="" loading="lazy">' : '<span class="source-thumb source-thumb-empty">' + esc(initial(b.name)) + '</span>') +
+        '<div class="source-name">' + esc(b.name) + '<div class="tiny dim" style="font-weight:400;margin-top:2px">' + esc(region.name) + partLabel + "</div></div>" +
           '<div class="source-prob"><b>' + fmtPct(it[4]) + '</b><span>实际掉率</span><div class="prob-bar ' + (p >= 50 ? "high" : "") + '" style="width:64px;margin-left:auto"><i style="width:' + Math.max(3, p) + '%"></i></div></div>' +
         "</div>" +
         '<div class="source-meta">' +
