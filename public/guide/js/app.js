@@ -2030,8 +2030,24 @@
       return x.building.name.toLowerCase().indexOf(ql) >= 0 || x.building.id.toLowerCase().indexOf(ql) >= 0;
     }).slice(0, 8);
     const top = items.slice(0, 50);
+    const variantRows = [];
+    itemList.forEach(function (rec) {
+      Array.from(rec.nbts).forEach(function (nbt) {
+        if (nbt.toLowerCase().indexOf(ql) >= 0) variantRows.push({ rec: rec, nbt: nbt, term: nbt.split('-').pop().trim() });
+      });
+    });
 
-    let html = '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">搜索结果</div><div class="section-note">' + (items.length ? "找到 " + items.length + " 种物品" : "没有匹配物品") + "</div></div>";
+    let html = '';
+    if (variantRows.length) {
+      html += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">附魔词条</div><div class="section-note">' + variantRows.length + ' 条</div></div><div class="list">' +
+        variantRows.slice(0, 60).map(function (x) {
+          return '<button class="row-card" data-item-id="' + esc(x.rec.id) + '" data-variant="' + esc(x.term) + '">' +
+            texIcon(x.rec.id, x.nbt, x.nbt, 'chip-ico', 28) +
+            '<div class="row-main"><div class="row-title">' + esc(x.rec.name) + '</div><div class="row-sub">' + esc(x.nbt.replace(/\n/g, ' ')) + '</div></div>' +
+            '<div class="row-right"><div class="cap">点此查看</div></div></button>';
+        }).join("") + "</div></section>";
+    }
+    html += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">搜索结果</div><div class="section-note">' + (items.length ? "找到 " + items.length + " 种物品" : "没有匹配物品") + "</div></div>";
     if (top.length) {
       html += '<div class="list">' + top.map(function (x) {
         const rec = x.rec;
@@ -3469,7 +3485,12 @@
     if (itemEl) {
       e.preventDefault();
       ui.itemBack = currentHash();
+      const variant = itemEl.dataset.variant || '';
       go("#/item/" + encodeURIComponent(itemEl.dataset.itemId));
+      if (variant) setTimeout(function () {
+        const input = document.getElementById('variant-search');
+        if (input) { input.value = variant; input.dispatchEvent(new Event('input', { bubbles: true })); input.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      }, 180);
       return;
     }
     const goEl = e.target.closest("[data-go]");
