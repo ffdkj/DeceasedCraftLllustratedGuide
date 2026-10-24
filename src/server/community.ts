@@ -25,7 +25,7 @@ type Post = { id: string; userId: string; user: string; text: string; image?: st
 type Photo = { id: string; userId: string; user: string; image: string; caption: string; ts: number };
 type Comment = { id: string; targetType: string; targetId: string; userId: string; user: string; text: string; ts: number; status: string };
 type Mute = { userId: string; scope: string; reason: string; until: number; by: string };
-type Store = { users: User[]; posts: Post[]; photos: Photo[]; comments: Comment[]; mutes: Mute[] };
+type Store = { users: User[]; posts: Post[]; photos: Photo[]; comments: Comment[]; mutes: Mute[]; texts: Record<string, string>; images: Record<string, string> };
 
 const dataPath = process.env.COMMUNITY_DATA || path.resolve(process.cwd(), '.data/community.json');
 const SESSION_COOKIE = 'wz_session';
@@ -38,6 +38,8 @@ function normalize(d: Store | null): Store {
   out.photos ||= [];
   out.comments ||= [];
   out.mutes ||= [];
+  out.texts ||= {};
+  out.images ||= {};
   return out;
 }
 
