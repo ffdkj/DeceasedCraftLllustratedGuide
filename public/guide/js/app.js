@@ -544,7 +544,7 @@
       '<div class="detail-hero' + heroClass("gear") + '"' + heroStyle("gear") + '><h1>装备图鉴</h1><div class="meta"><span class="badge">套装</span><span class="badge">枪械</span><span class="badge">近战</span><span class="badge">饰品</span></div>' +
         '<div class="hero-desc" style="margin-top:10px">从护甲套装到 TACZ 枪械，再到近战武器与饰品。数据来自任务书、模组配置与本地整合包。</div></div>' +
       '<div class="section"><div class="hub-grid">' +
-        hubCard({ href: "#/gear/armor", image: "./images/guides/bg_armor_sets.webp", icon: "shield", title: "护甲套装", sub: "护甲部件与套装效果", count: GUIDE_TYPES.armor.data.length, unit: "套", accent: "#e0a94a" }) +
+        hubCard({ href: "#/gear/armor", image: "./images/guides/bg_armor_tiers.webp", icon: "shield", title: "护甲套装", sub: "护甲部件与套装效果", count: GUIDE_TYPES.armor.data.length, unit: "套", accent: "#e0a94a" }) +
         hubCard({ href: "#/gear/guns", image: (GUIDE.meta.banners||{}).guns, icon: "crosshair", title: "枪械库", sub: "伤害 / 射速 / 弹容 / 弹药", count: GUIDE_TYPES.guns.data.length, unit: "把", accent: "#7ea8c9" }) +
         hubCard({ href: "#/gear/ammo", image: "./images/guides/bg_ammo.webp", icon: "box", title: "弹药库", sub: "合成材料 / 适用枪械 / 区域来源", count: (GUIDE.ammo || []).length, unit: "种", accent: "#e0a94a" }) +
         hubCard({ href: "#/gear/gunsmith", image: "./images/guides/bg_gunsmith.webp", icon: "gear", title: "改枪台", sub: "配件兼容 / 数值对比 / 推荐方案", count: ((window.WZ_GUNSMITH || {}).counts || {}).attachments || 0, unit: "件配件", accent: "#7fc79a" }) +
