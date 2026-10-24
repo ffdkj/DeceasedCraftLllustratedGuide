@@ -3302,3 +3302,7 @@ body.page-community .view { background: #050706 !important; }
 
 :root[data-theme="light"] body.page-community .topbar .page-title { color: #ffffff !important; }
 :root[data-theme="light"] body.page-community .topbar .page-sub { color: #aab3ac !important; }
+
+/* 社区管理员标识与登录按钮 */
+.profile-card .btn + .btn { margin-left: 6px; }
+.admin-badge { display:inline-block; margin-left:6px; padding:1px 5px; border:1px solid rgba(224,169,74,.65); border-radius:3px; color:#e0a94a; font-size:9px; letter-spacing:.08em; vertical-align:2px; }
