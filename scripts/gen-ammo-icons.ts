@@ -11,7 +11,7 @@
  *
  * 用法：tsx scripts/gen-ammo-icons.ts --pack ./DeceasedCraft5.11.19 [--force]
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import sharp from "sharp";
 import { readGlobal } from "./pack-readers.js";
@@ -74,6 +74,26 @@ async function main(): Promise<void> {
   }
 
   for (const line of written) console.log(`写出 ${line}`);
+
+  /* guide 外壳（public/guide）现在才是被服务的站点：图要跟过去一份，
+     并写一张清单给前端查表 —— 浏览器里没有「这个文件在不在」的同步判断。 */
+  const guideImgDir = join(root, "public/guide/images/ammo");
+  const guideDataDir = join(root, "public/guide/data");
+  mkdirSync(guideImgDir, { recursive: true });
+  mkdirSync(guideDataDir, { recursive: true });
+  const names = [...written.map((line) => line.split(" ←")[0]), ...skipped].sort();
+  for (const name of names) {
+    const from = join(outDir, `${name}.webp`);
+    if (!existsSync(from)) continue;
+    copyFileSync(from, join(guideImgDir, `${name}.webp`));
+  }
+  writeFileSync(
+    join(guideDataDir, "ammo-icons.js"),
+    `/* 亡者世界 · 弹药本体图标清单（由 scripts/gen-ammo-icons.ts 生成，勿手改） */\n` +
+      `window.WZ_AMMO_ICONS = ${JSON.stringify({ dir: "./images/ammo/", count: names.length, names }, null, 0)};\n`,
+  );
+  console.log(`guide 同步：public/guide/images/ammo ${names.length} 张 + data/ammo-icons.js`);
+
   console.log(
     `弹药本体图标：新增 ${written.length} · 已存在 ${skipped.length} · 缺源 ${missing.length}`,
   );

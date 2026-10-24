@@ -58,21 +58,46 @@ function check(cond: boolean, message: string): void {
   check(typeof data.meta === 'object' && data.meta.version, 'guide 数据带版本号');
 }
 
-/* ---------------- 已搬进来的小件（随搬运逐步补全） ---------------- */
+/* ---------------- 已搬进来的小件 ---------------- */
 {
   const app = has('public/guide/js/app.js') ? read('public/guide/js/app.js') : '';
   const gunsmith = has('public/guide/js/gunsmith.js') ? read('public/guide/js/gunsmith.js') : '';
   const css = has('public/guide/css/app.css') ? read('public/guide/css/app.css') : '';
+  const html = read('public/guide/index.html');
   check(app.includes('tier-dot'), 'guide 已有梯度点阵');
   check(gunsmith.length > 0 && css.includes('gs-stat-bar'), 'guide 已有数值条');
-  // 待搬项：搬完把 false 改 true
-  const PENDING = {
-    弹药本体图标: app.includes('ammo-ico') || gunsmith.includes('ammo-ico'),
-    数值条两段: /gs-stat-bar[^{]*\{[^}]*-\-/.test(css) && gunsmith.includes('data-delta-seg'),
-    懒加载: app.includes('lazy-sentinel'),
-    枪械库已删: !app.includes('枪械库')
-  };
-  for (const [name, ok] of Object.entries(PENDING)) pending.push([name, ok]);
+
+  /* 弹药本体图标：清单 + 图 + 用图的地方 + 入口加载顺序 */
+  const ammo = has('public/guide/data/ammo-icons.js') ? read('public/guide/data/ammo-icons.js') : '';
+  const ammoNames = /"names":\[([^\]]*)\]/.exec(ammo);
+  const names = ammoNames ? ammoNames[1].split(',').map((s) => s.replace(/"/g, '').trim()).filter(Boolean) : [];
+  check(names.length > 0, '弹药本体图标清单非空');
+  check(names.length === 15, `弹药本体图标 15 张（实际 ${names.length}）`);
+  check(names.every((n) => has(`public/guide/images/ammo/${n}.webp`)), '清单里的每张图都在 guide 里');
+  check(app.includes('ammo-thumb'), '弹药库列表用了本体图标');
+  check(app.includes('WZ_AMMO_ICONS'), '列表按清单查表，不硬编码文件名');
+  check(html.includes('./data/ammo-icons.js'), 'guide 入口加载弹药图标清单');
+  check(css.includes('.guide-thumb.ammo-thumb'), '本体图标有按比例缩放的样式');
+
+  /* 数值条两段：底段 = 基准值，变化段绿/红，且必须绝对定位才不会挤到第二行 */
+  check(gunsmith.includes('deltaBar'), '数值条画出了配件变化段');
+  check(gunsmith.includes('"base" style="width:'), '数值条底段带 class="base"');
+  check(/gs-stat-bar i \{[^}]*position: absolute/.test(css), '数值条分段绝对定位（否则第二段被裁掉）');
+  check(css.includes('.gs-stat-bar i.good'), '改善段是绿的');
+  check(css.includes('.gs-stat-bar i.bad'), '变差段是红的');
+  check(!/gs-stat-bar"><i style="width:/.test(gunsmith), '旧的单段数值条已移除');
+
+  /* 滚动加载：helper 在 guide 里、入口按顺序加载、两处长列表都接上 */
+  const lazy = has('public/guide/js/lazy.js') ? read('public/guide/js/lazy.js') : '';
+  check(lazy.includes('lazy-sentinel'), '滚动加载用哨兵');
+  check(lazy.includes('IntersectionObserver'), '滚动加载用 IntersectionObserver');
+  check(lazy.includes('rootMargin'), '滚动加载有预取边距（不会滚到底才卡）');
+  check(html.indexOf('./js/lazy.js') > 0 && html.indexOf('./js/lazy.js') < html.indexOf('./js/gunsmith.js'), 'helper 在 app/gunsmith 之前加载');
+  check(app.includes('lazyList(box, list'), '图鉴通用长列表接上了滚动加载');
+  check(gunsmith.includes('L.list(grid, list, gunCard)'), '改枪台枪械网格接上了滚动加载');
+  check(css.includes('.lazy-sentinel'), '哨兵样式存在（多列网格里不留半格空位）');
+
+  pending.push(['枪械库已删', !app.includes('枪械库')]);
 }
 
 if (errors.length) {

@@ -308,12 +308,20 @@
       const cls = statClass(b, c, def.better);
       const width = Math.max(0, Math.min(100, (c / (def.max || 1)) * 100));
       const baseWidth = Math.max(0, Math.min(100, (b / (def.max || 1)) * 100));
+      // 配件带来的那一段单独画：改善绿、变差红（方向看 def.better，跟「变化」列同一套判定）。
+      // 后坐力 / 散布 / 瞄速 / 重量这些越低越好的指标，被配件压下去时是绿条。
+      const lo = Math.min(width, baseWidth);
+      const hi = Math.max(width, baseWidth);
+      const deltaWidth = hi - lo;
+      const deltaBar = cls === "same" || deltaWidth < 0.4 ? "" :
+        '<i class="' + cls + '" style="left:' + lo + '%;width:' + deltaWidth + '%"></i>';
       return '<div class="gs-stat-row">' +
         '<div class="gs-stat-label">' + esc(def.label) + '</div>' +
         '<div class="gs-stat-base">' + fmt(b, def.digits) + '</div>' +
         '<div class="gs-stat-value ' + cls + '">' + fmt(c, def.digits) + '<span>' + esc(def.unit) + '</span></div>' +
         '<div class="gs-stat-delta ' + cls + '">' + deltaText(b, c, def) + '</div>' +
-        '<div class="gs-stat-bar"><i style="width:' + width + '%"></i><b style="left:' + baseWidth + '%"></b></div>' +
+        '<div class="gs-stat-bar"><i class="base" style="width:' + lo + '%"></i>' + deltaBar +
+        '<b style="left:' + baseWidth + '%"></b></div>' +
         '</div>';
     }).join("");
   }
@@ -388,8 +396,17 @@
       '<div class="gs-chiprow">' + types.map(function (t) {
         return '<button class="chip ' + (state.gunType === t ? "active" : "") + '" data-gs-action="gun-type" data-type="' + esc(t) + '">' + esc(t) + '</button>';
       }).join("") + '</div></div>' +
-      '<div class="gs-gun-grid">' + (list.length ? list.map(gunCard).join("") : '<div class="empty"><div class="em-title">没有找到枪械</div><div class="em-sub">换个关键词或类型试试。</div></div>') + '</div></div>' +
+      '<div class="gs-gun-grid" id="gs-gun-grid"></div></div>' +
       '<div class="section"><div class="guide-note">' + icon("info", 18) + '<div>数值来自 TACZ 的枪械/配件文件；不同枪包与整合包版本可能有差异，以游戏内 Z 键面板为准。</div></div></div>';
+    const grid = UIx.q ? UIx.q("gs-gun-grid") : document.getElementById("gs-gun-grid");
+    if (!grid) return;
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty"><div class="em-title">没有找到枪械</div><div class="em-sub">换个关键词或类型试试。</div></div>';
+      return;
+    }
+    const L = window.WZ_LAZY;
+    if (L && L.list) L.list(grid, list, gunCard);
+    else grid.innerHTML = list.map(gunCard).join("");
   }
 
   function slotCard(gun, slot, att) {
