@@ -1020,7 +1020,12 @@
     if (type === "npcs") return item.faction || "NPC";
     return item.group || "条目";
   }
+  const AMMO_TEX = { "12g":1,"308":1,"30_06":1,"338":1,"357mag":1,"40mm":1,"45acp":1,"500mag":1,"50ae":1,"50bmg":1,"556x45":1,"57x28":1,"58x42":1,"762x39":1,"762x54":1,"9mm":1,"rpg_rocket":1 };
   function guideThumb(item, size, type) {
+    if (type === "ammo") {
+      const m = String(item.id || "").match(/^tacz:(.+)$/);
+      if (m && AMMO_TEX[m[1]]) return '<div class="guide-thumb ammo-thumb" style="width:' + size + 'px;height:' + size + 'px;background-image:url(\'./images/ammo/tacz/' + m[1] + '.webp\')"></div>';
+    }
     if (item.iconImage) {
       return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(item.iconImage) + "')\"></div>";
     }
