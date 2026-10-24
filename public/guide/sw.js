@@ -1,5 +1,5 @@
 /* 亡者世界图鉴 · 离线缓存 */
-const CACHE = "wz-guide-v3.9.1-admin";
+const CACHE = "wz-guide-v3.9.2-admin";
 const ASSETS = [
   "./",
   "./index.html",
