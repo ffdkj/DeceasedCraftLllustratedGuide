@@ -1793,6 +1793,56 @@
     "负面": "Negative", "推荐近战": "Melee pick", "推荐远程": "Ranged pick", "综合最佳": "Best overall",
     "近战最佳": "Best melee", "远程最佳": "Best ranged", "防御最佳": "Best defense", "库存": "Stock", "无限": "Unlimited"
   };
+
+  let TR_CACHE = {};
+  try { TR_CACHE = JSON.parse(localStorage.getItem("wz_tr_en") || "{}"); } catch (e) { TR_CACHE = {}; }
+  let trBusy = false;
+  async function autoTranslate() {
+    if (ui.lang !== "en" || trBusy) return;
+    trBusy = true;
+    try {
+      function collect() {
+        const nodes = [];
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+        while (walker.nextNode()) {
+          const n = walker.currentNode;
+          if (n.parentElement && /^(SCRIPT|STYLE|NOSCRIPT)$/.test(n.parentElement.tagName)) continue;
+          if (/[\u4e00-\u9fff]/.test(n.nodeValue || "")) nodes.push(n);
+        }
+        return nodes;
+      }
+      let nodes = collect();
+      const uniq = [];
+      nodes.forEach(function (n) { const k = (n.nodeValue || "").trim(); if (k && !TR_CACHE[k] && uniq.indexOf(k) < 0) uniq.push(k); });
+      for (let i = 0; i < uniq.length; i += 25) {
+        const batch = uniq.slice(i, i + 25);
+        try {
+          const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=en&dt=t&q=" + encodeURIComponent(batch.join("\n"));
+          const res = await fetch(url);
+          const data = await res.json();
+          let out = (data[0] || []).map(function (x) { return x[0]; }).join("");
+          let lines = out.split("\n");
+          if (lines.length === batch.length) {
+            batch.forEach(function (k, j) { TR_CACHE[k] = lines[j].trim(); });
+          } else {
+            for (let j = 0; j < batch.length; j++) {
+              try {
+                const r2 = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=en&dt=t&q=" + encodeURIComponent(batch[j]));
+                const d2 = await r2.json(); TR_CACHE[batch[j]] = (d2[0] || []).map(function (x) { return x[0]; }).join("").trim();
+              } catch (e) {}
+            }
+          }
+        } catch (e) {}
+      }
+      try { localStorage.setItem("wz_tr_en", JSON.stringify(TR_CACHE)); } catch (e) {}
+      nodes = collect();
+      nodes.forEach(function (n) {
+        const raw = n.nodeValue || ""; const key = raw.trim();
+        if (TR_CACHE[key]) n.nodeValue = raw.replace(key, TR_CACHE[key]);
+      });
+    } catch (e) {} finally { trBusy = false; }
+  }
+
   function applyLang() {
     if (ui.lang !== "en") { document.documentElement.lang = "zh-CN"; return; }
     document.documentElement.lang = "en";
@@ -1814,6 +1864,7 @@
         for (const k in LANG_DICT) if (v.indexOf(k) >= 0) { el.setAttribute(attr, v.split(k).join(LANG_DICT[k])); break; }
       });
     });
+    autoTranslate();
   }
 
   function route() {
