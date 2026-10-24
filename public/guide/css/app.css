@@ -3379,3 +3379,11 @@ body.page-community .view { background: #050706 !important; }
 
 .ammo-gun-chip { color:#9fd0ff !important; border-color:rgba(126,168,201,.65) !important; background:rgba(126,168,201,.12) !important; font-weight:700; }
 .ammo-gun-chip:hover { color:#c9e6ff !important; border-color:#9fd0ff !important; background:rgba(126,168,201,.22) !important; }
+
+.container-ico { width:24px; height:24px; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; border-radius:5px; background:rgba(224,169,74,.10); color:#e0a94a; }
+.container-ico svg { width:16px; height:16px; }
+.container-ico.fridge { color:#9fd0ff; background:rgba(126,168,201,.12); }
+.container-ico.safe { color:#f0c36a; background:rgba(240,195,106,.12); }
+.container-ico.drawer { color:#b09acb; background:rgba(176,154,203,.12); }
+.container-ico.crate { color:#7fc79a; background:rgba(127,199,154,.12); }
+.container-head { gap:8px; }
