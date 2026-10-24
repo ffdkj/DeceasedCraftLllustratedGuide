@@ -2990,7 +2990,16 @@
         }
         fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "失败"); closeSheet(); loadCommunity(); if (isAdmin) toast("管理员已登录"); })
+          .then(function (x) {
+            if (!x.ok) throw new Error(x.d.error || "失败");
+            closeSheet();
+            loadCommunity();
+            if (isAdmin) {
+              toast("管理员已登录");
+              /* 换图浮层（js/admin.js）跟着登录状态走，不用刷新页面 */
+              if (window.WZ_ADMIN_UI) window.WZ_ADMIN_UI.refresh();
+            }
+          })
           .catch(function (err) { toast(err.message || "登录失败"); });
       });
     }, 0);
@@ -3489,7 +3498,7 @@
       case "admin-panel": renderAdminPanel(); break;
       case "cms-text": cmsStart("text"); break;
       case "cms-image": cmsStart("image"); break;
-      case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
+      case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); if (window.WZ_ADMIN_UI) window.WZ_ADMIN_UI.refresh(); }).catch(function () { toast("退出失败"); }); break;
       case "community-logout": fetch("/api/auth/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "toggle-theme": {
         const next = (document.documentElement.dataset.theme === "light") ? "dark" : "light";

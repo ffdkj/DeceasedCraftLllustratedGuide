@@ -3338,3 +3338,34 @@ body.page-community .view { background: #050706 !important; }
 .admin-mini { border:1px solid var(--line); background:transparent; color:var(--text); border-radius:4px; padding:3px 7px; font-size:11px; cursor:pointer; }
 .admin-mini.danger { color:#e07a5f; border-color:rgba(224,122,95,.4); }
 .admin-thumb { width:44px; height:44px; object-fit:cover; border-radius:6px; }
+
+/* ===== 管理员换图（仅登录后可见，js/admin.js） =====
+   按钮放在 #img-edit-layer 这个 position:fixed 浮层里，按目标图的位置做 translate，
+   完全不改页面布局 —— 避免给任意父元素加 position:relative 把现有排版顶歪。
+   z-index 取 55（低于 .overlay 的 60）：弹层打开时按钮落在遮罩下面，点不到也不会浮在对话框上。 */
+#img-edit-layer { position: fixed; inset: 0; z-index: 55; pointer-events: none; }
+#img-edit-layer .img-edit-btn {
+  position: fixed; left: 0; top: 0; pointer-events: auto;
+  height: 20px; padding: 0 6px; border-radius: 5px;
+  border: 1px solid var(--line-strong); background: var(--panel); color: var(--text);
+  font-size: 10.5px; font-weight: 700; line-height: 18px; cursor: pointer;
+  box-shadow: var(--shadow); opacity: .92;
+}
+#img-edit-layer .img-edit-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; opacity: 1; }
+.admin-path { font-size: 11px; color: var(--dim); word-break: break-all; margin-bottom: 10px; }
+.admin-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.admin-preview figure { margin: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg); }
+.admin-preview img { display: block; width: 100%; height: 132px; object-fit: contain; }
+.admin-preview figcaption { padding: 5px 8px; font-size: 10.5px; color: var(--dim); text-align: center; border-top: 1px solid var(--line); }
+.admin-meta { margin: 10px 0; font-size: 11.5px; color: var(--dim); line-height: 1.6; }
+.admin-meta.warn, .admin-meta.warn b { color: var(--amber); }
+.admin-meta.error { color: var(--red); }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.admin-actions .btn { flex: 1 1 auto; min-width: 104px; }
+.admin-history { margin-top: 14px; font-size: 11px; color: var(--dim); }
+.admin-history-title { margin-bottom: 6px; font-weight: 650; color: var(--muted); }
+.admin-history-row {
+  display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center;
+  padding: 5px 0; border-top: 1px solid var(--line);
+}
+.admin-history-row b { color: var(--accent); font-weight: 700; }

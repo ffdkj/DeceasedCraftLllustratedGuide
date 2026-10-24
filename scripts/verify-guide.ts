@@ -31,7 +31,8 @@ function check(cond: boolean, message: string): void {
   check(html.includes('./js/gunsmith.js'), 'guide 入口加载改枪台');
   check(html.includes('./data/guides.js'), 'guide 入口加载数据');
   check(has('public/guide/css/app.css'), 'guide 样式存在');
-  pending.push(['管理端 UI 搬进 guide', has('public/guide/js/admin.js') || html.includes('./js/admin.js')]);
+  check(has('public/guide/js/admin.js'), '管理端换图脚本在 guide 里');
+  check(html.includes('./js/admin.js'), 'guide 入口加载管理端换图');
 }
 
 /* ---------------- 构建与服务的接线 ---------------- */
@@ -96,6 +97,30 @@ function check(cond: boolean, message: string): void {
   check(app.includes('lazyList(box, list'), '图鉴通用长列表接上了滚动加载');
   check(gunsmith.includes('L.list(grid, list, gunCard)'), '改枪台枪械网格接上了滚动加载');
   check(css.includes('.lazy-sentinel'), '哨兵样式存在（多列网格里不留半格空位）');
+
+  /* 管理端换图：版本串注入标记 + 四个接口 + 回退能力 + 浮层样式 */
+  const admin = has('public/guide/js/admin.js') ? read('public/guide/js/admin.js') : '';
+  const server = read('src/server/index.ts');
+  const marker = /const DYNAMIC_SCRIPT_TAG = '([^']+)'/.exec(server);
+  check(!!marker, '服务端有版本串注入标记');
+  check(!!marker && html.includes(marker[1]), 'guide 入口带版本串注入标记（和服务端常量一致，否则换图不生效）');
+  check(html.indexOf('/data/image-versions.js') < html.indexOf('./js/admin.js'), '版本表先于换图脚本加载');
+  check(admin.includes('/api/me'), '换图浮层按 /api/me 判断登录态');
+  check(admin.includes('/api/admin/image/preview'), '有预览转换接口');
+  check(admin.includes('/api/admin/image/commit'), '有确认替换接口');
+  check(admin.includes('/api/admin/image/revert'), '有回退上一版');
+  check(admin.includes('/api/admin/image/original'), '有恢复原图');
+  check(admin.includes('/api/admin/image/history'), '有版本历史');
+  check(admin.includes('?v='), '换图后换 URL（版本串），不是只改缓存头');
+  check(admin.includes('WeakSet'), '改写数据时防环（WZ_DATA 有互相引用的索引）');
+  check(app.includes('WZ_ADMIN_UI.refresh'), '登录/退出后同步换图浮层');
+  check(css.includes('#img-edit-layer .img-edit-btn'), '换图按钮浮层样式存在');
+  check(css.includes('.admin-preview') && css.includes('.admin-actions') && css.includes('.admin-history'), '换图弹层样式存在');
+  {
+    const layerZ = /#img-edit-layer \{[^}]*z-index:\s*(\d+)/.exec(css);
+    const overlayZ = /\.overlay \{[^}]*z-index:\s*(\d+)/.exec(css);
+    check(!!layerZ && !!overlayZ && Number(layerZ[1]) < Number(overlayZ[1]), '浮层 z-index 低于弹层遮罩（按钮不会浮在对话框上）');
+  }
 
   pending.push(['枪械库已删', !app.includes('枪械库')]);
 }
