@@ -3328,3 +3328,12 @@ body.page-community .view { background: #050706 !important; }
 .admin-mini { border:1px solid var(--line); background:transparent; color:var(--text); border-radius:4px; padding:3px 7px; font-size:11px; cursor:pointer; }
 .admin-mini.danger { color:#e07a5f; border-color:rgba(224,122,95,.4); }
 .admin-thumb { width:44px; height:44px; object-fit:cover; border-radius:6px; }
+
+/* 手机版：右下角悬浮按钮移到左侧，避免遮挡评论/表单 */
+@media (max-width: 600px) {
+  .music-fab { left: 12px !important; right: auto !important; bottom: 84px !important; }
+  .back-top { left: 12px !important; right: auto !important; bottom: 24px !important; }
+  .comment-form { flex-direction: column; }
+  .comment-form .btn { width: 100%; }
+  .comment-row { padding: 8px; }
+}
