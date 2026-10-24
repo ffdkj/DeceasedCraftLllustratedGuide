@@ -2269,11 +2269,15 @@
     const targetItem = hashQuery.get('item') || '';
     const targetNbt = hashQuery.get('nbt') || '';
     let targetPos = null;
+    const targetHits = [];
     if (targetItem) {
       building.parts.forEach(function (p, pi) {
         p.floors.forEach(function (f, fi) {
           f.containers.forEach(function (c, ci) {
-            if (!targetPos && c.items.some(function (it) { return it[0] === targetItem && (!targetNbt || it[7] === targetNbt); })) targetPos = { p: pi, f: fi, c: ci };
+            if (c.items.some(function (it) { return it[0] === targetItem && (!targetNbt || it[7] === targetNbt); })) {
+              targetHits.push({ p: pi, f: fi, c: ci });
+              if (!targetPos) targetPos = { p: pi, f: fi, c: ci };
+            }
           });
         });
       });
@@ -2303,14 +2307,16 @@
       return floor.map(function (f, floorIndex) {
         const itemCount = f.containers.reduce(function (a, c) { return a + c.items.length; }, 0);
         const containers = f.containers.map(function (c, ci) {
-          return '<div class="container-block" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '">' +
+          const hit = targetHits.filter(function (h) { return h.p === x.i && h.f === floorIndex && h.c === ci; })[0];
+          return '<div class="container-block' + (hit ? " has-target" : "") + '" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '"' +
+            (hit ? ' data-target-item="' + esc(targetItem) + '" data-target-nbt="' + esc(targetNbt) + '"' : "") + '>' +
             '<button class="container-head" data-action="toggle-container">' +
               '<span class="container-name">' + esc(c.name) + '</span><span class="container-count">' + c.items.length + " 项</span>" + icon("chevron", 16) +
             "</button>" +
             '<div class="container-items" data-loaded="0"></div>' +
           "</div>";
         }).join("");
-        return '<div class="accordion ' + (floorIndex === 0 || (targetPos && targetPos.f === floorIndex && targetPos.p === x.i) ? "open" : "") + '">' +
+        return '<div class="accordion ' + (floorIndex === 0 || targetHits.some(function (h) { return h.p === x.i && h.f === floorIndex; }) ? "open" : "") + '">' +
           '<button class="acc-head" data-action="toggle-acc">' +
             '<div class="acc-title">' + esc(f.name) + '<div class="acc-sub">' + f.containers.length + " 个容器 · " + itemCount + " 条掉落</div></div>" + icon("chevron", 18) +
           "</button>" +
@@ -2341,17 +2347,7 @@
     ui.currentBuilding = building;
     ui.currentPartIndex = shown.length === 1 ? shown[0].i : null;
     q("view").insertAdjacentHTML("beforeend", commentsHTML("building", building.id)); mountPageComments("building", building.id);
-    if (targetPos) {
-      setTimeout(function () {
-        const block = document.querySelector('.container-block[data-part="' + targetPos.p + '"][data-fi="' + targetPos.f + '"][data-ci="' + targetPos.c + '"]');
-        if (!block) return;
-        const head = block.querySelector('.container-head'); if (head) head.click();
-        setTimeout(function () {
-          block.classList.add('flash-target');
-          block.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        }, 250);
-      }, 120);
-    }
+
   }
 
   function itemRowHTML(it, showStar) {
@@ -3527,7 +3523,18 @@
         const block = el.closest(".container-block");
         if (!block) break;
         const open = block.classList.toggle("open");
-        if (open) fillContainer(block);
+        if (open) {
+          fillContainer(block);
+          const targetId = block.dataset.targetItem;
+          if (targetId) {
+            setTimeout(function () {
+              const rows = Array.from(block.querySelectorAll('.item-row[data-item-id]'));
+              const nbt = String(block.dataset.targetNbt || '').replace(/\n/g, ' ').trim();
+              const row = rows.find(function (r) { return r.dataset.itemId === targetId && (!nbt || r.textContent.indexOf(nbt) >= 0); }) || rows.find(function (r) { return r.dataset.itemId === targetId; });
+              if (row) { row.classList.add('flash-item'); row.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+            }, 60);
+          }
+        }
         break;
       }
       case "building-part": {
