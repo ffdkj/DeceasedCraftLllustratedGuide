@@ -2327,6 +2327,18 @@
   }
 
   /* ---------------- 建筑 ---------------- */
+
+  function containerIcon(name) {
+    const n = String(name || "");
+    let inner = '<rect x="4" y="7" width="16" height="13" rx="2"/><path d="M4 11h16"/><path d="M9 14h6"/>';
+    let cls = "box";
+    if (n.indexOf("冰箱") >= 0) { inner = '<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M6 10h12"/><path d="M15 6v2"/><path d="M15 13v2"/>'; cls = "fridge"; }
+    else if (n.indexOf("保险箱") >= 0) { inner = '<rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 5V3h12v2"/>'; cls = "safe"; }
+    else if (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0) { inner = '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16"/><path d="M10 8h4"/><path d="M10 16h4"/>'; cls = "drawer"; }
+    else if (n.indexOf("箱") >= 0 || n.indexOf("架") >= 0) { inner = '<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v9l9 4 9-4V8"/><path d="M12 12v9"/>'; cls = "crate"; }
+    return '<span class="container-ico ' + cls + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg></span>';
+  }
+
   function renderBuilding(rid, bid) {
     const region = DATA.regions.filter(function (r) { return r.id === rid; })[0];
     const building = region && region.buildings.filter(function (b) { return b.id === bid; })[0];
@@ -2381,6 +2393,7 @@
           return '<div class="container-block' + (hit ? " target-hit" : "") + '" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '"' +
             (hit ? ' data-target-item="' + esc(targetItem) + '" data-target-nbt="' + esc(targetNbt) + '"' : "") + '>' +
             '<button class="container-head" data-action="toggle-container">' +
+              containerIcon(c.name) +
               '<span class="container-name">' + esc(c.name) + '</span><span class="container-count">' + c.items.length + " 项</span>" + icon("chevron", 16) +
             "</button>" +
             '<div class="container-items" data-loaded="0"></div>' +
