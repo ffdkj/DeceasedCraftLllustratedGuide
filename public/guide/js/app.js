@@ -2972,6 +2972,41 @@
     }, 0);
   }
 
+
+  const CMS = { edit: null, data: { texts: {}, images: {} }, loaded: false };
+  function cmsLoad() {
+    if (CMS.loaded) return Promise.resolve(CMS.data);
+    return fetch('/api/content').then(function (r) { return r.json(); }).then(function (d) { CMS.data = { texts: d.texts || {}, images: d.images || {} }; CMS.loaded = true; return CMS.data; }).catch(function () { return CMS.data; });
+  }
+  function cmsRoute() { return location.hash.split('?')[0]; }
+  function cmsTextEls() {
+    return Array.from(document.querySelectorAll('#view h1, #view h2, #view .section-title, #view .text-block, #view p')).filter(function (el) { return el.children.length === 0 && el.textContent.trim().length > 1; });
+  }
+  function cmsApply() {
+    cmsLoad().then(function () {
+      const route = cmsRoute();
+      cmsTextEls().forEach(function (el, i) { el.dataset.cmsKey = route + '|t|' + i; const v = CMS.data.texts[el.dataset.cmsKey]; if (v != null) el.textContent = v; });
+      Array.from(document.querySelectorAll('#view img')).forEach(function (img, i) { img.dataset.cmsKey = route + '|i|' + i; const v = CMS.data.images[img.dataset.cmsKey]; if (v) img.src = v; });
+    });
+  }
+  function cmsStart(mode) {
+    CMS.edit = mode;
+    toast(mode === 'text' ? '文本编辑：点击页面文字修改' : '图片编辑：点击图片输入新地址');
+  }
+  document.addEventListener('click', function (e) {
+    if (!CMS.edit) return;
+    const el = e.target.closest('[data-cms-key]'); if (!el) return;
+    e.preventDefault(); e.stopPropagation();
+    const key = el.dataset.cmsKey; const isImg = el.tagName === 'IMG';
+    const value = prompt(isImg ? '图片新地址（URL）' : '新的文字', isImg ? el.src : el.textContent);
+    if (value == null) return;
+    fetch(isImg ? '/api/admin/image' : '/api/admin/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key, value: value }) })
+      .then(function (r) { if (!r.ok) throw new Error('保存失败'); if (isImg) el.src = value; else el.textContent = value; toast('已保存'); CMS.loaded = false; })
+      .catch(function (err) { toast(err.message); });
+  });
+  new MutationObserver(function () { setTimeout(cmsApply, 0); }).observe(document.getElementById('view'), { childList: true, subtree: true });
+  setTimeout(cmsApply, 400);
+
   function renderAdminPanel() {
     renderTopbar({ back: "#/community", title: "管理面板", sub: "评论 · 聊天 · 照片" });
     document.title = "管理面板 · 亡者世界";
@@ -2986,7 +3021,7 @@
         return '<button class="admin-mini danger" data-admin-del="' + kind + '" data-id="' + esc(id) + '">删除</button>' +
           (userId ? '<button class="admin-mini" data-mute="' + esc(userId) + '">禁言 24h</button>' : "");
       }
-      let h = '<div class="section"><div class="section-head"><div class="section-title">评论管理</div><div class="section-note">' + comments.length + ' 条</div></div><div class="admin-list">' +
+      let h = '<div class="section"><div class="chip-row"><button class="btn primary" data-action="cms-text">编辑当前页文本</button><button class="btn ghost" data-action="cms-image">替换当前页图片</button></div></div>' + '<div class="section"><div class="section-head"><div class="section-title">评论管理</div><div class="section-note">' + comments.length + ' 条</div></div><div class="admin-list">' +
         (comments.length ? comments.map(function (c) {
           return '<div class="admin-row"><div class="admin-main"><b>' + esc(c.user) + '</b><span class="tiny dim"> ' + esc(c.targetType) + ' / ' + esc(c.targetId) + '</span><div class="admin-text">' + esc(c.text) + '</div></div>' + actions("comments", c.id, c.userId) + '</div>';
         }).join("") : '<div class="tiny dim">暂无评论</div>') + "</div></div>";
@@ -3428,6 +3463,8 @@
       case "community-register": openCommunityAuth("register"); break;
       case "admin-login": openCommunityAuth("admin"); break;
       case "admin-panel": renderAdminPanel(); break;
+      case "cms-text": cmsStart("text"); break;
+      case "cms-image": cmsStart("image"); break;
       case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "community-logout": fetch("/api/auth/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "toggle-theme": {
