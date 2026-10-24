@@ -1140,7 +1140,21 @@
       (note ? '<div class="tiny dim" style="margin-top:8px">' + esc(note) + "</div>" : "") +
       "</div>";
   }
+  const AMMO_NAME_TEX = [
+    ["12 号口径霰弹", "12g"], ["9mm 手枪弹", "9mm"], [".45 ACP 手枪弹", "45acp"], [".357 马格南", "357mag"],
+    [".308 温彻斯特", "308"], [".30-06 春田", "30_06"], [".338 拉普马格南", "338"], ["40mm 榴弹", "40mm"],
+    [".500 马格南", "500mag"], [".50 AE", "50ae"], [".50 BMG", "50bmg"], ["5.56x45", "556x45"],
+    ["5.7x28", "57x28"], ["5.8x42", "58x42"], ["7.62x39", "762x39"], ["7.62x54", "762x54"], ["RPG-7 火箭弹", "rpg_rocket"]
+  ];
+  function ammoTextureByName(name) {
+    const n = String(name || "");
+    for (let i = 0; i < AMMO_NAME_TEX.length; i++) if (n.indexOf(AMMO_NAME_TEX[i][0]) >= 0) return "./images/ammo/tacz/" + AMMO_NAME_TEX[i][1] + ".webp";
+    return "";
+  }
   function tradeIconHTML(it, size) {
+    if (it && ammoTextureByName(it.name)) {
+      return '<div class="quote-ico-wrap"><img class="quote-ico-img ammo-trade-ico" src="' + ammoTextureByName(it.name) + '" alt="' + esc(it.name) + '" loading="lazy"></div>';
+    }
     if (it && it.iconImage) {
       return '<div class="quote-ico-wrap"><img class="quote-ico-img" src="' + esc(it.iconImage) + '" alt="' + esc(it.name || "") + '" loading="lazy"></div>';
     }
