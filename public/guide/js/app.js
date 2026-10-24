@@ -378,7 +378,7 @@
   }
   function radiationBanner(region) {
     if (!region || climateClass(region) !== "climate-rad") return "";
-    return '<div class="rad-banner"><span class="rad-banner-tag">辐射</span> 高辐射区域 · 请穿戴防护服并携带抗辐射药剂</div>';
+    return '<div class="rad-banner"><span class="rad-banner-tag">辐射</span> 高辐射区域 · 请佩戴防毒面具或穿戴防护服</div>';
   }
   function buildingSizeBadges(b) {
     if (b._sizeKind === "super") return '<span class="b-size super" title="超大型建筑（' + b._partCount + ' 区块）">超大型</span>';
@@ -1020,9 +1020,23 @@
     if (type === "npcs") return item.faction || "NPC";
     return item.group || "条目";
   }
+  /* 弹药本体图标：图集 atlas 里只有「金属冲压模具」，弹药库那一列之前显示的是通用箱型符号。
+     TACZ 的弹药槽贴图另外出图（scripts/gen-ammo-icons.ts → public/guide/images/ammo/），
+     清单在 data/ammo-icons.js（浏览器里没法同步判断「这张图在不在」）。 */
+  function ammoThumb(item, size) {
+    const A = window.WZ_AMMO_ICONS;
+    if (!A || !A.names) return null;
+    const name = String((item && item.id) || "").split(":")[1];
+    if (!name || A.names.indexOf(name) < 0) return null;
+    return "<div class=\"guide-thumb ammo-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(A.dir + name + ".webp") + "')\"></div>";
+  }
   function guideThumb(item, size, type) {
     if (item.iconImage) {
       return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(item.iconImage) + "')\"></div>";
+    }
+    if (type === "ammo") {
+      const ammo = ammoThumb(item, size);
+      if (ammo) return ammo;
     }
     if ((type === "armor" || type === "melee" || type === "trinkets") && item.iconItem) {
       return itemIcon(item.iconItem, item.name, null, size);
@@ -1038,6 +1052,12 @@
     }
     return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;display:grid;place-items:center;color:var(--dim)\">" + icon(ico, Math.round(size * 0.45)) + "</div>";
   }
+  /* 长列表滚动加载（js/lazy.js）。没有该脚本时退回一次渲染，不让页面空着。 */
+  function lazyList(container, items, htmlOf) {
+    const L = window.WZ_LAZY;
+    if (L && L.list) L.list(container, items, htmlOf);
+    else container.innerHTML = items.map(htmlOf).join("");
+  }
   function renderGuideRows(type) {
     const box = q("guide-list-" + type);
     if (!box) return;
@@ -1050,14 +1070,18 @@
       return [item.name, item.effect, item.description, item.text, item.location, item.group, item.type, item.faction, item.region, item.source, item.weaponType, item.damageBand, item.speedBand].join(" ").toLowerCase().indexOf(query) >= 0;
     });
     if (type === "defense") { renderDefenseTree(type, list); return; }
-    box.innerHTML = list.length ? list.map(function (item) {
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的条目</div><div class="em-sub">换个关键词或分类试试</div></div>';
+      return;
+    }
+    lazyList(box, list, function (item) {
       return '<button class="row-card" data-go="' + guideDetailHref(type, item.id) + '">' +
         guideThumb(item, 52, type) +
         '<div class="row-main"><div class="row-title">' + esc(item.name || "未命名") + "</div>" +
           '<div class="row-sub">' + esc(guideRowSub(type, item)) + "</div></div>" +
         '<div class="row-right"><span class="badge">' + esc(guideRowTag(type, item)) + "</span></div>" +
         "</button>";
-    }).join("") : '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有匹配的条目</div><div class="em-sub">换个关键词或分类试试</div></div>';
+    });
   }
   function lootSourcesFor(ids) {
     const map = new Map();
