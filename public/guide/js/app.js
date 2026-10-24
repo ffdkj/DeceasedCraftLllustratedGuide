@@ -547,7 +547,7 @@
         hubCard({ href: "#/gear/armor", image: (GUIDE.meta.banners||{}).armor, icon: "shield", title: "护甲套装", sub: "护甲部件与套装效果", count: GUIDE_TYPES.armor.data.length, unit: "套", accent: "#e0a94a" }) +
         hubCard({ href: "#/gear/guns", image: (GUIDE.meta.banners||{}).guns, icon: "crosshair", title: "枪械库", sub: "伤害 / 射速 / 弹容 / 弹药", count: GUIDE_TYPES.guns.data.length, unit: "把", accent: "#7ea8c9" }) +
         hubCard({ href: "#/gear/ammo", image: "./images/guides/bg_ammo.webp", icon: "box", title: "弹药库", sub: "合成材料 / 适用枪械 / 区域来源", count: (GUIDE.ammo || []).length, unit: "种", accent: "#e0a94a" }) +
-        hubCard({ href: "#/gear/gunsmith", image: (GUIDE.meta.banners||{}).guns, icon: "gear", title: "改枪台", sub: "配件兼容 / 数值对比 / 推荐方案", count: ((window.WZ_GUNSMITH || {}).counts || {}).attachments || 0, unit: "件配件", accent: "#7fc79a" }) +
+        hubCard({ href: "#/gear/gunsmith", image: "./images/guides/bg_gunsmith.webp", icon: "gear", title: "改枪台", sub: "配件兼容 / 数值对比 / 推荐方案", count: ((window.WZ_GUNSMITH || {}).counts || {}).attachments || 0, unit: "件配件", accent: "#7fc79a" }) +
         hubCard({ href: "#/gear/melee", image: (GUIDE.meta.banners||{}).melee, icon: "sword", title: "近战兵器库", sub: "棒球棒 / 斧 / 刀 / 特殊武器", count: GUIDE_TYPES.melee.data.length, unit: "件", accent: "#e07a5f" }) +
         hubCard({ href: "#/gear/trinkets", image: (GUIDE.meta.banners||{}).trinkets, icon: "gem", title: "饰品收藏", sub: "饰品、徽章与收藏", count: GUIDE_TYPES.trinkets.data.length, unit: "件", accent: "#b09acb" }) +
       "</div></div>" +
