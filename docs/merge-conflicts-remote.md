@@ -64,7 +64,7 @@
 | R2 | `docs/data-architecture.md` | **值得**：作为覆盖层的约定文档 |
 | R3 | `community.ts` 的 comments / mutes | 值得（评论 + 禁言），但要和我的 upload/photos 逻辑对齐 |
 | R4 | `texts` / `images` 覆盖映射 | **与我的管理员换图重复** —— 二选一（见 C3） |
-| R5 | guide 的 `public/guide/` 目录 | **不建议保留**：32MB、1598 文件、每次构建还要复制覆盖产物；它只是旧快照 |
+| R5 | guide 的 `public/guide/` 目录 | **建议不成立**：D1 最终选了 guide 为准，它就是站点本身（32MB 的复制开销接受） |
 
 ---
 
@@ -82,11 +82,23 @@
 
 所以删枪械库有三个前提：
 
-- [ ] C1 把「合成材料 / 作用 / 来源」搬进改枪台工作台（或做成工作台里的折叠块）
-- [ ] C2 三处入链改指 `#/gear/gunsmith/<id>`（现在都指向 `#/gear/gun/<id>`，删了就是死链）
-- [ ] C3 决定 `#/gear/guns` 路由怎么处理：404 还是重定向到改枪台（重定向对已分享的链接友好）
+- [x] C1 把「合成材料 / 作用 / 来源」搬进改枪台工作台
+  —— 落在 `gunInfoSections()`：复用 `app.js` 的 `recipeSection` / `effectSection` / `lootSourcesSection`
+     与 `commentsHTML` + `mountPageComments`（玩家评论原本挂在枪械详情页，不搬就变孤儿），
+     `WZ_APP_UI` 多导出这四个口子。没有第二份实现。
+- [x] C2 入链改指 `#/gear/gunsmith/<id>`
+  —— 只在 `guideDetailHref()` 里改一处（`type === "guns"` 直接返回改枪台地址），
+     于是数据表行、弹药「适用枪械」芯片、showcase「完整资料」按钮同时被覆盖，不会漏。
+- [x] C3 `#/gear/guns` 重定向到改枪台
+  —— `legacyHash()`：`#/gear/guns → #/gear/gunsmith`、`#/gear/gun/<id> → #/gear/gunsmith/<id>`，
+     在 `route()` 最前面 `location.replace`，已分享的老链接不会死。
 
-顺带：`#/gear` hub 上「枪械库」「改枪台」两张卡片也会变成重复入口，删掉一张。
+顺带：`#/gear` hub 上「枪械库」卡片已删，只留改枪台；`#/gear/guntable` 数据表保留
+（177 行的对照表，改枪台的卡片网格替代不了），入口从改枪台 hub 进，行仍指向工作台。
+枪械详情页（`#/gear/gun/<id>`）与 `guideDetailExtra('guns')` 分支一并删除。
+
+实测（Node DOM 桩）：旧地址两条都重定向到位、工作台含作用/合成材料/可搜刮建筑/评论、
+数据表每行指向工作台、齿轮页无枪械库入口。`verify:guide` 64 项（含 9 条防回潮断言）。
 
 ---
 
@@ -100,7 +112,13 @@
 - [ ] D6 R4 `texts`/`images` 覆盖 vs 我的管理员换图：二选一还是并存
 - [ ] D7 我的 8 个提交怎么落地：rebase 到 origin/main（逐个解冲突）还是先 stash、按 D1 的结论重新组织
 
-**建议**：D1 选「根站单应用 + 吸收 R1/R2/R3」，再回滚他们的三处部署改动（D2）。
-理由：G8/G9 两项在 guide 侧等于重做一遍构建管线与整个管理后端，而 guide 快照本身只是为了不丢旧内容——
-旧内容已经在 git 历史里，不需要每次构建复制 32MB。
-枪械库的删除（C1–C3）可以在任一路线下单独做，前提是先搬 recipe 与改入链。
+**当时的建议**：D1 选「根站单应用 + 吸收 R1/R2/R3」，再回滚他们的三处部署改动（D2）。
+理由是 G8/G9 在 guide 侧等于重做一遍构建管线与整个管理后端。
+
+**实际走向（D1 反向）**：站点以 guide 为准，根站 `src/client` 作为存档不再上线。
+这条建议里「要重做的成本」被逐项拒绝了：
+- G8 管理端不是重做 —— 服务端（SQLite 覆盖表 + RustFS + `/api/admin/*`）本来就在他们的树里，
+  缺的只是前端，`public/guide/js/admin.js` 一个文件搬完；
+- G9 指纹不再需要 —— guide 的图片没有指纹，覆盖层用「逻辑路径 + `?v=`」换 URL 就够；
+- 32MB 复制开销保留，换来的是不用维护两套前端。
+枪械库的删除（C1–C3）已按另一条线独立做完，见上。

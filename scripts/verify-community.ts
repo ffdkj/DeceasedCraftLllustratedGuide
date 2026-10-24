@@ -79,8 +79,10 @@ for (const cls of ['.community-form .chat-upload', '.community-photo-form', '.ch
   check(server.includes("community.use('*'"), '所有端点先确保状态已加载');
 
   const index = readFileSync(join(ROOT, "src/server/index.ts"), "utf8");
-  check(index.includes("app.all('/guide/*'"), '/guide/* 显式 404');
-  check(!existsSync(join(ROOT, "public/guide")), 'public/guide 静态副本已删除');
+  /* 方向变了：站点以 guide 为准，public/guide 是唯一的静态根，/guide/* 不再是旧入口 */
+  check(index.includes("process.cwd(), 'public/guide'"), '静态根是 public/guide');
+  check(existsSync(join(ROOT, "public/guide/index.html")), 'public/guide 是站点入口');
+  check(!index.includes("app.all('/guide/*'"), '/guide/* 不再被单独拦掉');
   check(!existsSync(join(ROOT, "wzsj-20261021")), 'wzsj-20261021 旧快照已删除');
   check(!existsSync(join(ROOT, "wrangler.jsonc")), 'wrangler.jsonc 已删除');
 }

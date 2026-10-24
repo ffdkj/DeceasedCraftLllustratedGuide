@@ -229,3 +229,17 @@
     `docs/merge-conflicts.md`、`docs/merge-conflicts-remote.md`、`scripts/gen-monster-difficulty.ts`、
     `public/data/monsters-difficulty.js`、`public/data/monster-spawn-tiers.js`、`CONTEXT.md`
 
+
+- [x] T36 删枪械库（C1–C3）+ 门禁指向 guide
+  - Acceptance: 枪械库列表页与枪械详情页下线，但它们承载的内容（合成材料 / 作用 / 来源 / 评论）
+    与三处入链都有去处；老地址不变死链；数据表仍可达
+  - Result: `guideDetailHref` 对 guns 直接返回 `#/gear/gunsmith/<id>`（一处改，数据表行 +
+    弹药「适用枪械」芯片 + showcase「完整资料」全覆盖）；`legacyHash()` 把 `#/gear/guns`
+    与 `#/gear/gun/<id>` 重定向到改枪台；工作台新增 `gunInfoSections()`（作用 / 合成材料 /
+    可搜刮建筑 / 玩家评论，全部复用 `app.js` 的分区，`WZ_APP_UI` 多导出四个口子）；
+    `#/gear` hub 去掉枪械库卡片，`#/gear/guntable` 入口移到改枪台；
+    顺带修了 `verify:gunsmith`（读根站 CSS → 读 guide，数值条 3px → 4px）与
+    `verify:community`（还在断言「guide 副本已删 + /guide/* 404」的旧方向）
+  - Files: `public/guide/js/app.js`、`public/guide/js/gunsmith.js`、`public/guide/css/app.css`、
+    `scripts/verify-guide.ts`、`scripts/verify-gunsmith.ts`、`scripts/verify-community.ts`、
+    `docs/merge-conflicts-remote.md`

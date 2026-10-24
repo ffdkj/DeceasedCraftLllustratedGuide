@@ -1276,8 +1276,8 @@ body.music-open .music-fab { opacity: 0; pointer-events: none; transform: scale(
 .gs-stat-value.bad, .gs-stat-delta.bad { color: var(--red); }
 .gs-stat-delta.same { color: var(--dim); font-weight: 500; }
 .gs-stat-bar {
-  position: absolute; left: 10px; right: 10px; bottom: 6px;
-  height: 3px; border-radius: 3px; background: var(--panel-3); overflow: hidden;
+  position: absolute; left: 10px; right: 10px; bottom: 5px;
+  height: 4px; border-radius: 4px; background: var(--panel-3); overflow: hidden;
 }
 /* 两段制：底段永远是「基准值」（琥珀），配件带来的那一段叠在上面（改善绿 / 变差红）。
    left/width 都由 JS 给，所以这里必须绝对定位 —— 否则第二段会被挤到第二行、被 overflow 裁掉。 */

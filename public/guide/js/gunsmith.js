@@ -397,6 +397,7 @@
         return '<button class="chip ' + (state.gunType === t ? "active" : "") + '" data-gs-action="gun-type" data-type="' + esc(t) + '">' + esc(t) + '</button>';
       }).join("") + '</div></div>' +
       '<div class="gs-gun-grid" id="gs-gun-grid"></div></div>' +
+      '<div class="section"><button class="btn ghost block" data-go="#/gear/guntable">枪械数据表（伤害 / RPM / 弹容 / 弹药）</button></div>' +
       '<div class="section"><div class="guide-note">' + icon("info", 18) + '<div>数值来自 TACZ 的枪械/配件文件；不同枪包与整合包版本可能有差异，以游戏内 Z 键面板为准。</div></div></div>';
     const grid = UIx.q ? UIx.q("gs-gun-grid") : document.getElementById("gs-gun-grid");
     if (!grid) return;
@@ -468,6 +469,7 @@
           '<div class="gs-note">后坐力为 TACZ 后坐力曲线的峰值；散布为对应姿态的基础值。护甲穿透按百分比显示。</div></div>' +
         '</div>' +
       '</div>' +
+      gunInfoSections(item) +
       '<div class="section"><div class="section-head"><div class="section-title">方案记录库</div><div class="gs-sub">' + recs.length + ' 条 · 手动存档</div></div>' +
         '<div class="gs-record-actions"><button class="gs-btn" data-gs-action="save-record">' + icon("check", 16) + ' 保存当前为记录</button><span class="gs-record-hint">当前方案自动保存；记录库可保留多套并区分来源</span></div>' +
         (recs.length ? '<div class="gs-records">' + recs.map(function (r) {
@@ -488,6 +490,21 @@
             '<button class="gs-preset-btn" data-gs-action="apply-preset" data-preset="' + p.id + '"' + (names.length ? "" : " disabled") + '>装配这套</button></div>';
         }).join("") + '</div></div>' +
       '<div class="section"><div class="guide-note">' + icon("info", 18) + '<div>配件兼容按枪械 <span class="mono">allow_attachment_types</span> 生成；同一配件在不同枪械上可能有专属修正。当前方案会保存在本机。</div></div></div>';
+    if (UIx.mountPageComments) UIx.mountPageComments("gun", item.id);
+  }
+
+  /* 枪械库删掉之后，原本只在枪械详情页出现的「作用 / 合成材料 / 可搜刮建筑」搬到这里。
+     分区渲染直接复用 app.js 的 WZ_APP_UI（recipeSection / effectSection / lootSourcesSection），
+     没有再写一份。 */
+  function gunInfoSections(item) {
+    const A = UI();
+    if (!A.recipeSection || !item) return "";
+    let h = "";
+    if (A.effectSection) h += A.effectSection(item.effect, "定位 / 作用", item.description ? "背景：" + item.description : "");
+    h += A.recipeSection(item.recipe, "合成材料");
+    if (A.lootSourcesSection && item.id) h += A.lootSourcesSection([item.id], 6);
+    if (A.commentsHTML) h += A.commentsHTML("gun", item.id);
+    return h;
   }
 
   function attIcon(a, size) {

@@ -11,8 +11,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
-const src = readFileSync(join(root, "src/client/gunsmith.ts"), "utf8");
-const css = readFileSync(join(root, "public/css/app.css"), "utf8");
+/* 站点以 guide 为准（public/guide 覆盖 dist/client），所以断言读 guide 那一份 */
+const src = readFileSync(join(root, "public/guide/js/gunsmith.js"), "utf8");
+const css = readFileSync(join(root, "public/guide/css/app.css"), "utf8");
 
 const errors: string[] = [];
 let notes = 0;
@@ -58,8 +59,8 @@ check(src.includes("'<div class=\"gs-stat-value ' + cls + '\">'"), "当前值的
 check(src.includes("'<div class=\"gs-stat-delta ' + cls + '\">'"), "变化列的颜色来自 cls");
 
 /* ---------------- 图例文案 ---------------- */
-check(src.includes("绿条=配件改善"), "图例写明绿条＝配件改善");
-check(src.includes("红条=配件变差"), "图例写明红条＝配件变差");
+check(src.includes("绿=改善"), "图例写明绿＝改善");
+check(src.includes("红=变差"), "图例写明红＝变差");
 
 /* ---------------- CSS ---------------- */
 check(/\.gs-stat-bar \{[^}]*height: 4px/s.test(css), "数值条 4px（3px 时绿 / 红段看不清）");

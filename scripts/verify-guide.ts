@@ -122,7 +122,17 @@ function check(cond: boolean, message: string): void {
     check(!!layerZ && !!overlayZ && Number(layerZ[1]) < Number(overlayZ[1]), '浮层 z-index 低于弹层遮罩（按钮不会浮在对话框上）');
   }
 
-  pending.push(['枪械库已删', !app.includes('枪械库')]);
+  /* 删枪械库（C1–C3）：列表页与详情页都没了，内容与入链搬进改枪台，老地址重定向 */
+  check(!app.includes('title: "枪械库"'), '没有「枪械库」这个列表页');
+  check(!app.includes('href: "#/gear/guns"'), '齿轮页没有枪械库入口卡片');
+  check(app.includes('function legacyHash'), '旧地址有重定向表');
+  check(app.includes('#/gear/gunsmith/') && app.includes('seg[1] === "gun" && seg[2]'), '旧枪械详情地址重定向到工作台');
+  check(app.includes('if (type === "guns") return "#/gear/gunsmith/'), '枪械详情链接改指改枪台（入链不留死链）');
+  check(gunsmith.includes('#/gear/guntable'), '数据表入口搬到改枪台（仍然可达）');
+  check(gunsmith.includes('gunInfoSections'), '工作台接管了枪械资料区');
+  check(gunsmith.includes('recipeSection') && gunsmith.includes('lootSourcesSection'), '合成材料与来源复用 app.js 的分区，没有第二份实现');
+  check(app.includes('recipeSection: recipeSection'), 'app.js 把分区渲染导出给改枪台');
+  check(app.includes('lazyList(box, list'), '图鉴通用长列表仍然接在滚动加载上');
 }
 
 if (errors.length) {
