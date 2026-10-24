@@ -2461,7 +2461,7 @@
         const shown = all;
         return '<div class="section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note">' + rec.nbts.size + " 种</div></div>" +
           '<input class="variant-search" id="variant-search" placeholder="搜索变体 / 附魔，例如：精准采集">' +
-          '<div class="chip-row">' +
+          '<div class="chip-row variant-row">' +
           shown.map(function (n) { return '<button class="chip variant-chip" title="点击搜索这个变体">' + texIcon(rec.id, n, n, "chip-ico", 20) + esc(n.replace(/\n/g, " ")) + "</button>"; }).join("") +
           (all.length > shown.length ? '<span class="chip" style="cursor:default">还有 ' + (all.length - shown.length) + " 种</span>" : "") +
           "</div></div>";
@@ -3819,6 +3819,28 @@
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
+  document.addEventListener('pointerdown', function (e) {
+    const row = e.target.closest('.variant-row');
+    if (!row || e.target.closest('.variant-chip')) return;
+    row.dataset.drag = '1';
+    row.dataset.startX = String(e.clientX);
+    row.dataset.startScroll = String(row.scrollLeft);
+    row.classList.add('dragging');
+  });
+  document.addEventListener('pointermove', function (e) {
+    const row = document.querySelector('.variant-row.dragging');
+    if (!row) return;
+    row.scrollLeft = Number(row.dataset.startScroll || 0) - (e.clientX - Number(row.dataset.startX || 0));
+  });
+  document.addEventListener('pointerup', function () {
+    document.querySelectorAll('.variant-row.dragging').forEach(function (row) { row.classList.remove('dragging'); });
+  });
+  document.addEventListener('wheel', function (e) {
+    const row = e.target.closest('.variant-row');
+    if (!row || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+    row.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
   document.addEventListener('input', function (e) {
     if (!e.target || e.target.id !== 'variant-search') return;
     const q = String(e.target.value || '').trim().toLowerCase();
