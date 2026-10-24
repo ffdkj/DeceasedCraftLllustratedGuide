@@ -1260,6 +1260,9 @@
         ? '<div class="gs-gun-modes">' + gs.fireModeLabels.map(function (x) { return '<span class="gs-badge fire">' + esc(x) + "</span>"; }).join("") +
           (gs.boltLabel ? '<span class="gs-badge bolt">' + esc(gs.boltLabel) + "</span>" : "") + "</div>"
         : "";
+      const ammoId = item.ammoId || item.ammo || "";
+      const ammoItem = (GUIDE.ammo || []).filter(function (x) { return x.id === ammoId; })[0];
+      const ammoLink = ammoItem ? '<button class="row-card" data-go="#/gear/ammo/' + encodeURIComponent(ammoItem.id) + '"><div class="row-main"><div class="row-title">使用弹药：' + esc(ammoItem.name) + '</div><div class="row-sub mono">' + esc(ammoItem.id) + '</div></div><div class="row-right"><span class="badge">查看弹药</span></div></button>' : "";
       return '<div class="section"><div class="stat-grid">' +
         '<div class="stat-box"><b>' + fmtNum(item.damage) + '</b><span>基础伤害</span></div>' +
         '<div class="stat-box"><b>' + fmtNum(item.rpm) + '</b><span>RPM 射速</span></div>' +
@@ -1268,6 +1271,7 @@
         '<div class="stat-box"><b>' + (item.armorIgnore != null ? Math.round(item.armorIgnore * 100) + "%" : "—") + '</b><span>护甲穿透</span></div>' +
         '<div class="stat-box"><b>' + (item.headshot != null ? "×" + item.headshot : "—") + '</b><span>爆头倍率</span></div>' +
         "</div>" + modes +
+        ammoLink +
         '<button class="gs-open-btn" data-go="#/gear/gunsmith/' + encodeURIComponent(item.id) + '">' + icon("gear", 17) + '<span>在改枪台查看配件与完整数值</span>' + icon("chevron", 16) + "</button></div>" +
         effectSection(item.effect, "定位 / 作用", item.description ? "背景：" + item.description : "") +
         lootSourcesSection([item.id], 6);
