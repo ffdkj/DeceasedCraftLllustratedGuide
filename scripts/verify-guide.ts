@@ -8,7 +8,7 @@
  *
  * 用法：tsx scripts/verify-guide.ts
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
@@ -68,17 +68,17 @@ function check(cond: boolean, message: string): void {
   check(app.includes('tier-dot'), 'guide 已有梯度点阵');
   check(gunsmith.length > 0 && css.includes('gs-stat-bar'), 'guide 已有数值条');
 
-  /* 弹药本体图标：清单 + 图 + 用图的地方 + 入口加载顺序 */
-  const ammo = has('public/guide/data/ammo-icons.js') ? read('public/guide/data/ammo-icons.js') : '';
-  const ammoNames = /"names":\[([^\]]*)\]/.exec(ammo);
-  const names = ammoNames ? ammoNames[1].split(',').map((s) => s.replace(/"/g, '').trim()).filter(Boolean) : [];
-  check(names.length > 0, '弹药本体图标清单非空');
-  check(names.length === 15, `弹药本体图标 15 张（实际 ${names.length}）`);
-  check(names.every((n) => has(`public/guide/images/ammo/${n}.webp`)), '清单里的每张图都在 guide 里');
-  check(app.includes('ammo-thumb'), '弹药库列表用了本体图标');
-  check(app.includes('WZ_AMMO_ICONS'), '列表按清单查表，不硬编码文件名');
-  check(html.includes('./data/ammo-icons.js'), 'guide 入口加载弹药图标清单');
-  check(css.includes('.guide-thumb.ammo-thumb'), '本体图标有按比例缩放的样式');
+  /* 弹药本体图标（gfor14415 的实现：images/ammo/tacz/ + ammoTexture 查表。
+     我原来那套 data/ammo-icons.js + 生成器同步版在合并时撤掉了，只留一套） */
+  const ammoDir = 'public/guide/images/ammo/tacz';
+  const texFiles = existsSync(ammoDir) ? readdirSync(ammoDir).filter((f) => f.endsWith('.webp')) : [];
+  check(texFiles.length >= 17, `TACZ 弹药贴图 ${texFiles.length} 张`);
+  check(app.includes('function ammoTexture('), '弹药贴图按 tacz id 解析');
+  check(app.includes('./images/ammo/tacz/'), '贴图目录是 images/ammo/tacz/');
+  check(app.includes('ammo-thumb'), '弹药库列表用了贴图');
+  check(css.includes('.guide-thumb.ammo-thumb'), '贴图有按比例缩放的样式（cover 会裁掉弹头）');
+  check(!html.includes('ammo-icons.js'), '旧的清单方案已撤（不留第二套实现）');
+  check(!existsSync('public/guide/data/ammo-icons.js'), '旧清单文件已删除');
 
   /* 数值条两段：底段 = 基准值，变化段绿/红，且必须绝对定位才不会挤到第二行 */
   check(gunsmith.includes('deltaBar'), '数值条画出了配件变化段');

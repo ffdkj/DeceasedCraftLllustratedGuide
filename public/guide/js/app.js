@@ -302,7 +302,8 @@
     favTab: "items",
     itemBack: "#/loot",
     showAllSources: false,
-    installPrompt: null
+    installPrompt: null,
+    lang: localStorage.getItem("wz_lang") || "zh"
   };
 
   /* ---------------- 数据索引 ---------------- */
@@ -547,8 +548,8 @@
       '<div class="detail-hero' + heroClass("gear") + '"' + heroStyle("gear") + '><h1>装备图鉴</h1><div class="meta"><span class="badge">套装</span><span class="badge">枪械</span><span class="badge">近战</span><span class="badge">饰品</span></div>' +
         '<div class="hero-desc" style="margin-top:10px">从护甲套装到 TACZ 枪械，再到近战武器与饰品。数据来自任务书、模组配置与本地整合包。</div></div>' +
       '<div class="section"><div class="hub-grid">' +
-        hubCard({ href: "#/gear/armor", image: (GUIDE.meta.banners||{}).armor, icon: "shield", title: "护甲套装", sub: "护甲部件与套装效果", count: GUIDE_TYPES.armor.data.length, unit: "套", accent: "#e0a94a" }) +
-        hubCard({ href: "#/gear/ammo", image: (GUIDE.meta.banners||{}).gear, icon: "box", title: "弹药库", sub: "合成材料 / 适用枪械 / 区域来源", count: (GUIDE.ammo || []).length, unit: "种", accent: "#e0a94a" }) +
+        hubCard({ href: "#/gear/armor", image: "./images/guides/bg_armor_tiers.webp", icon: "shield", title: "护甲套装", sub: "护甲部件与套装效果", count: GUIDE_TYPES.armor.data.length, unit: "套", accent: "#e0a94a" }) +
+        hubCard({ href: "#/gear/ammo", image: "./images/guides/bg_ammo.webp", icon: "box", title: "弹药库", sub: "合成材料 / 适用枪械 / 区域来源", count: (GUIDE.ammo || []).length, unit: "种", accent: "#e0a94a" }) +
         hubCard({ href: "#/gear/gunsmith", image: (GUIDE.meta.banners||{}).guns, icon: "gear", title: "改枪台", sub: "配件兼容 / 数值对比 / 推荐方案", count: ((window.WZ_GUNSMITH || {}).counts || {}).attachments || 0, unit: "件配件", accent: "#7fc79a" }) +
         hubCard({ href: "#/gear/melee", image: (GUIDE.meta.banners||{}).melee, icon: "sword", title: "近战兵器库", sub: "棒球棒 / 斧 / 刀 / 特殊武器", count: GUIDE_TYPES.melee.data.length, unit: "件", accent: "#e07a5f" }) +
         hubCard({ href: "#/gear/trinkets", image: (GUIDE.meta.banners||{}).trinkets, icon: "gem", title: "饰品收藏", sub: "饰品、徽章与收藏", count: GUIDE_TYPES.trinkets.data.length, unit: "件", accent: "#b09acb" }) +
@@ -700,13 +701,17 @@
     });
   }
   function gearVisual(type, g, size) {
+    if (type === "ammo") {
+      const tex = ammoTexture(g.id);
+      if (tex) return '<div class="showcase-img" role="img" aria-label="' + esc(g.name) + '" style="width:100%;height:100%;background-image:url(\'' + tex + '\');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:pixelated"></div>';
+    }
     if (type === "guns" && g.image) return '<div class="showcase-img" role="img" aria-label="' + esc(g.name) + '" style="width:100%;height:100%;background-image:url(\'' + esc(g.image) + '\');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:pixelated"></div>';
     if (g.iconItem) return '<div class="showcase-icon">' + itemIcon(g.iconItem, g.name, null, size || 96) + "</div>";
     return '<div class="showcase-icon">' + icon(type === "armor" ? "shield" : "crosshair", size || 96) + "</div>";
   }
   function gearShowcaseItem(type, g) {
     const sub = type === "armor" ? (g.tier || "护甲") : (g.type || "枪械");
-    const thumb = type === "guns" && g.image ? '<img src="' + esc(g.image) + '" alt="" loading="lazy">' : itemIcon(g.iconItem || "", g.name, null, 30);
+    const thumb = type === "ammo" && ammoTexture(g.id) ? '<img src="' + ammoTexture(g.id) + '" alt="" loading="lazy" style="image-rendering:pixelated">' : (type === "guns" && g.image ? '<img src="' + esc(g.image) + '" alt="" loading="lazy">' : itemIcon(g.iconItem || "", g.name, null, 30));
     return '<button class="showcase-item" data-action="gear-select" data-type="' + type + '" data-id="' + esc(g.id) + '"><span class="showcase-item-thumb">' + thumb + '</span><span class="showcase-item-main"><b>' + esc(g.name) + '</b><small>' + esc(sub) + '</small></span></button>';
   }
   function renderGearShowcase(type) {
@@ -1021,23 +1026,15 @@
     if (type === "npcs") return item.faction || "NPC";
     return item.group || "条目";
   }
-  /* 弹药本体图标：图集 atlas 里只有「金属冲压模具」，弹药库那一列之前显示的是通用箱型符号。
-     TACZ 的弹药槽贴图另外出图（scripts/gen-ammo-icons.ts → public/guide/images/ammo/），
-     清单在 data/ammo-icons.js（浏览器里没法同步判断「这张图在不在」）。 */
-  function ammoThumb(item, size) {
-    const A = window.WZ_AMMO_ICONS;
-    if (!A || !A.names) return null;
-    const name = String((item && item.id) || "").split(":")[1];
-    if (!name || A.names.indexOf(name) < 0) return null;
-    return "<div class=\"guide-thumb ammo-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(A.dir + name + ".webp") + "')\"></div>";
-  }
+  function ammoTexture(id) { const m = String(id || "").match(/^tacz:(.+)$/); return m && AMMO_TEX[m[1]] ? "./images/ammo/tacz/" + m[1] + ".webp" : ""; }
+  const AMMO_TEX = { "12g":1,"308":1,"30_06":1,"338":1,"357mag":1,"40mm":1,"45acp":1,"500mag":1,"50ae":1,"50bmg":1,"556x45":1,"57x28":1,"58x42":1,"762x39":1,"762x54":1,"9mm":1,"rpg_rocket":1 };
   function guideThumb(item, size, type) {
+    if (type === "ammo") {
+      const tex = ammoTexture(item.id);
+      if (tex) return '<div class="guide-thumb ammo-thumb" style="width:' + size + 'px;height:' + size + 'px;background-image:url(\'' + tex + '\')"></div>';
+    }
     if (item.iconImage) {
       return "<div class=\"guide-thumb\" style=\"width:" + size + "px;height:" + size + "px;background-image:url('" + esc(item.iconImage) + "')\"></div>";
-    }
-    if (type === "ammo") {
-      const ammo = ammoThumb(item, size);
-      if (ammo) return ammo;
     }
     if ((type === "armor" || type === "melee" || type === "trinkets") && item.iconItem) {
       return itemIcon(item.iconItem, item.name, null, size);
@@ -1155,7 +1152,21 @@
       (note ? '<div class="tiny dim" style="margin-top:8px">' + esc(note) + "</div>" : "") +
       "</div>";
   }
+  const AMMO_NAME_TEX = [
+    ["12 号口径霰弹", "12g"], ["9mm 手枪弹", "9mm"], [".45 ACP 手枪弹", "45acp"], [".357 马格南", "357mag"],
+    [".308 温彻斯特", "308"], [".30-06 春田", "30_06"], [".338 拉普马格南", "338"], ["40mm 榴弹", "40mm"],
+    [".500 马格南", "500mag"], [".50 AE", "50ae"], [".50 BMG", "50bmg"], ["5.56x45", "556x45"],
+    ["5.7x28", "57x28"], ["5.8x42", "58x42"], ["7.62x39", "762x39"], ["7.62x54", "762x54"], ["RPG-7 火箭弹", "rpg_rocket"]
+  ];
+  function ammoTextureByName(name) {
+    const n = String(name || "");
+    for (let i = 0; i < AMMO_NAME_TEX.length; i++) if (n.indexOf(AMMO_NAME_TEX[i][0]) >= 0) return "./images/ammo/tacz/" + AMMO_NAME_TEX[i][1] + ".webp";
+    return "";
+  }
   function tradeIconHTML(it, size) {
+    if (it && ammoTextureByName(it.name)) {
+      return '<div class="quote-ico-wrap"><img class="quote-ico-img ammo-trade-ico" src="' + ammoTextureByName(it.name) + '" alt="' + esc(it.name) + '" loading="lazy"></div>';
+    }
     if (it && it.iconImage) {
       return '<div class="quote-ico-wrap"><img class="quote-ico-img" src="' + esc(it.iconImage) + '" alt="' + esc(it.name || "") + '" loading="lazy"></div>';
     }
@@ -1265,12 +1276,13 @@
         const gm = {};
         (GUIDE.guns || []).forEach(function (x) { gm[x.id] = x.name; });
         h += '<div class="section"><div class="section-head"><div class="section-title">适用枪械</div><div class="section-note">' + item.guns.length + ' 把</div></div><div class="chip-row">' +
-          item.guns.map(function (id) { return '<button class="chip" data-go="' + guideDetailHref("guns", id) + '">' + esc(gm[id] || id) + "</button>"; }).join("") + "</div></div>";
+          item.guns.map(function (id) { return '<button class="chip ammo-gun-chip" data-go="' + guideDetailHref("guns", id) + '">' + esc(gm[id] || id) + "</button>"; }).join("") + "</div></div>";
       }
       if ((item.sources || []).length) {
         h += '<div class="section"><div class="section-head"><div class="section-title">区域建筑来源</div><div class="section-note">按掉率</div></div><div class="list">' +
           item.sources.slice().sort(function(a,b){return (b.chance||0)-(a.chance||0);}).slice(0,40).map(function (x) {
             return '<button class="row-card" data-go="#/loot/building/' + encodeURIComponent(x.regionId) + "/" + encodeURIComponent(x.buildingId) + '">' +
+              buildingThumb({ id: x.buildingId, name: x.building }, 46) +
               '<div class="row-main"><div class="row-title">' + esc(x.building) + '</div><div class="row-sub">' + esc(x.region) + " · " + esc(x.floor) + " · " + esc(x.container) + "</div></div>" +
               '<div class="row-right"><span class="badge">' + (Number(x.chance || 0)).toFixed(1) + "%</span></div></button>";
           }).join("") + "</div></div>";
@@ -1345,8 +1357,17 @@
         q("comment-count").textContent = comments.length + " 条";
         list.innerHTML = comments.length ? comments.slice().reverse().map(function (c) {
           return '<div class="comment-row"><div class="comment-head"><b>' + esc(c.user) + '</b><span>' + new Date(c.ts).toLocaleString() + '</span>' +
+            '<button class="comment-like' + (c.liked ? ' liked' : '') + '" data-like-id="' + esc(c.id) + '">♥ ' + (c.likes || 0) + '</button>' +
             (admin ? '<button class="comment-del" data-comment-id="' + esc(c.id) + '">删除</button>' : '') + '</div><div class="comment-text">' + esc(c.text) + '</div></div>';
         }).join("") : '<div class="tiny dim">还没有评论，登录后发第一条。</div>';
+        list.querySelectorAll('.comment-like').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            fetch('/api/comments/' + encodeURIComponent(btn.dataset.likeId) + '/like', { method: 'POST' })
+              .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+              .then(function (x) { if (!x.ok) throw new Error(x.d.error || '操作失败'); load(); })
+              .catch(function (err) { toast(err.message || '操作失败'); });
+          });
+        });
         list.querySelectorAll('.comment-del').forEach(function (btn) {
           btn.addEventListener('click', function () {
             fetch('/api/admin/comments/' + encodeURIComponent(btn.dataset.commentId), { method: 'DELETE' }).then(function () { load(); });
@@ -1364,6 +1385,181 @@
         .then(function (x) { if (!x.ok) throw new Error(x.d.error || '发送失败'); input.value = ''; load(); })
         .catch(function (err) { toast(err.message || '发送失败'); });
     });
+  }
+
+
+
+
+  function installArmorAnalysisEntry() {
+    if (location.hash !== "#/gear/armor") return;
+    const view = q("view");
+    if (!view || view.querySelector(".armor-analysis-entry")) return;
+    const el = document.createElement("div");
+    el.className = "section armor-analysis-entry";
+    el.innerHTML = '<div class="section-head"><div class="section-title">套装评分与推荐</div><div class="section-note">护甲 / 近战 / 远程</div></div><button class="row-card" data-action="armor-analysis"><div class="row-main"><div class="row-title">计算套装评分与配套武器</div><div class="row-sub">原版护甲减伤公式 · 套装词条 · 负面权重 · 近战/远程适配</div></div><div class="row-right"><span class="badge">打开</span></div></button>';
+    view.insertBefore(el, view.firstChild);
+  }
+
+  function installPageSearch() {
+    const view = q("view");
+    if (!view || view.querySelector(".page-search")) return;
+    if (location.hash.indexOf("#/community") === 0 || location.hash.indexOf("#/monster/") === 0 || location.hash.indexOf("#/item/") === 0) return;
+    const bar = document.createElement("div");
+    bar.className = "page-search";
+    bar.innerHTML = '<input id="page-search-input" placeholder="全站搜索：怪物 / 建筑 / 枪械 / 物品 / 附魔"><span>搜索</span>';
+    view.insertBefore(bar, view.firstChild);
+    const input = bar.querySelector("#page-search-input");
+    input.addEventListener("focus", function () { input.blur(); openGlobalSearch(); });
+    bar.addEventListener("click", function (e) { if (e.target !== input) openGlobalSearch(); });
+  }
+  new MutationObserver(function () { setTimeout(installPageSearch, 0); setTimeout(installArmorAnalysisEntry, 0); setTimeout(installNpcTradeEntry, 0); setTimeout(applyLang, 0); }).observe(document.getElementById("view"), { childList: true });
+
+
+  function armorAnalyze(set) {
+    const pieces = set.pieces || [];
+    let armor = 0, tough = 0, dura = 0;
+    pieces.forEach(function (x) { armor += Number(x.armor || 0); tough += Number(x.toughness || 0); dura += Number(x.durability || 0); });
+    const incoming = 10;
+    const raw = Math.min(20, Math.max(armor / 5, armor - incoming / (2 + tough / 4)));
+    const vanillaDR = Math.max(0, raw / 25);
+    let resistance = 0, dmg = 0, speed = 0, ranged = 0, shred = 0, move = 0, health = 0, luck = 0, negative = 0;
+    const effects = [];
+    (set.bonuses || []).forEach(function (b) {
+      const v = Number(b.value || 0);
+      const name = String(b.name || "").toLowerCase();
+      const desc = String(b.description || "");
+      const factor = b.type && b.type.indexOf("部分") >= 0 ? 0.6 : 1;
+      if (name.indexOf("resistance") >= 0 || desc.indexOf("伤害减免") >= 0) resistance += Math.min(0.8, Math.abs(v) * 0.2);
+      else if (name.indexOf("attack_damage") >= 0) dmg += v * factor;
+      else if (name.indexOf("attack_speed") >= 0) speed += v * factor;
+      else if (name.indexOf("ranged_damage") >= 0) ranged += v * factor;
+      else if (name.indexOf("armor_shred") >= 0) shred += v * factor;
+      else if (name.indexOf("movement_speed") >= 0) move += v * factor;
+      else if (name.indexOf("max_health") >= 0 || name.indexOf("health") >= 0) health += v * factor;
+      else if (name.indexOf("luck") >= 0) luck += v * factor;
+      if (v < 0) negative += Math.abs(v) * factor;
+      if (/slowness|weakness|poison|wither|blindness|nausea|hunger|mining_fatigue|levitation|unluck/.test(name)) negative += Math.abs(v) * 1.5;
+      if (b.description) effects.push(b.description);
+    });
+    const dr = 1 - (1 - vanillaDR) * (1 - resistance);
+    let defense = Math.round(dr * 150 + tough * 3 + Math.min(30, dura / 40));
+    let melee = Math.round(dmg * 120 + speed * 80 + shred * 50 + defense * 0.25);
+    let rangedScore = Math.round(ranged * 120 + defense * 0.3 + move * 20);
+    let utility = Math.round(move * 100 + health * 20 + luck * 40);
+    const negPenalty = Math.min(30, Math.round(negative * 100));
+    function clamp(x) { return Math.max(0, Math.min(100, x)); }
+    defense = clamp(defense); melee = clamp(melee); rangedScore = clamp(rangedScore); utility = clamp(utility);
+    const total = clamp(Math.round(defense * 0.45 + Math.max(melee, rangedScore) * 0.35 + utility * 0.20 - negPenalty));
+    const role = melee - rangedScore >= 8 ? "近战" : rangedScore - melee >= 8 ? "远程" : "均衡";
+    return { set: set, armor: armor, tough: tough, dura: dura, vanillaDR: vanillaDR, resistance: resistance, dr: dr, defense: defense, melee: melee, ranged: rangedScore, utility: utility, negative: negPenalty, total: total, role: role, effects: effects };
+  }
+  function armorWeaponPicks() {
+    const melee = (GUIDE.melee || []).filter(function (x) { return Number(x.damageValue) > 0; }).map(function (x) {
+      return { item: x, score: Number(x.damageValue || 0) * (Number(x.speedValue) || 1) + (String(x.tier || "").indexOf("T4") >= 0 ? 8 : 0) };
+    }).sort(function (a, b) { return b.score - a.score; }).slice(0, 2);
+    const gsmap = (window.WZ_GUNSMITH || {}).guns || {};
+    const guns = (GUIDE.guns || []).map(function (g) {
+      const gs = gsmap[g.id] || {};
+      const damage = Number(gs.damage != null ? gs.damage : g.damage) || 0;
+      const rpm = Number(gs.rpm != null ? gs.rpm : g.rpm) || 0;
+      return { item: g, dps: damage * rpm / 60 };
+    }).filter(function (x) { return x.dps > 0; }).sort(function (a, b) { return b.dps - a.dps; }).slice(0, 2);
+    return { melee: melee, guns: guns };
+  }
+  function armorReportHTML() {
+    const list = (GUIDE.armor || []).map(armorAnalyze);
+    const best = list.slice().sort(function (a, b) { return b.total - a.total; });
+    const meleeBest = list.slice().sort(function (a, b) { return b.melee - a.melee; })[0];
+    const rangedBest = list.slice().sort(function (a, b) { return b.ranged - a.ranged; })[0];
+    const defenseBest = list.slice().sort(function (a, b) { return b.defense - a.defense; })[0];
+    const picks = armorWeaponPicks();
+    const chosen = [];
+    [best[0], meleeBest, rangedBest, defenseBest].forEach(function (x) {
+      if (x && !chosen.some(function (y) { return y.set.id === x.set.id; })) chosen.push(x);
+    });
+    function weaponButtons(which) {
+      const rows = which === "melee" ? picks.melee.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/melee/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.weaponType || "近战") + ' · ' + esc(x.item.tier || "") + '</span></button>'; }) : picks.guns.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/gunsmith/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.type || "枪械") + ' · DPS ' + Math.round(x.dps) + '</span></button>'; });
+      return rows.join("");
+    }
+    let html = '<div class="text-block armor-formula"><div class="section-head"><div class="section-title">评分公式</div><div class="section-note">原版护甲模型</div></div>' +
+      '<div class="armor-formula-line">原版减伤 = min(20, max(护甲/5, 护甲 − 10/(2+韧性/4))) / 25</div>' +
+      '<div class="armor-formula-line">有效减伤 = 1 − (1 − 原版减伤) × (1 − 抗性)</div>' +
+      '<div class="armor-formula-line">综合 = 防御×45% + max(近战,远程)×35% + 功能×20% − 负面权重</div>' +
+      '<div class="tiny dim">固定按 10 点 incoming 伤害计算；部分套装按 60% 计入，负面词条单独扣分。</div></div>';
+    html += '<div class="armor-report-grid">' + chosen.map(function (x) {
+      return '<div class="armor-report-card"><div class="armor-report-head"><div><b>' + esc(x.set.name) + '</b><span>' + esc(x.set.tier || "") + ' · ' + x.role + '</span></div><div class="armor-total">' + x.total + '</div></div>' +
+        '<div class="armor-metrics"><div><b>' + Math.round(x.dr * 100) + '%</b><span>有效减伤</span></div><div><b>' + x.defense + '</b><span>防御</span></div><div><b>' + x.melee + '</b><span>近战</span></div><div><b>' + x.ranged + '</b><span>远程</span></div><div><b>−' + x.negative + '</b><span>负面</span></div></div>' +
+        '<div class="armor-effects">' + (x.effects.length ? x.effects.map(function (e) { return '<span>' + esc(e) + '</span>'; }).join("") : '<span>无套装词条</span>') + '</div>' +
+        '<div class="armor-weapons"><div class="armor-weapons-title">推荐近战</div>' + weaponButtons("melee") + '<div class="armor-weapons-title">推荐远程</div>' + weaponButtons("guns") + '</div></div>';
+    }).join("") + "</div>";
+    return html;
+  }
+
+  function npcTradeListHTML() {
+    const shops = (GUIDE.npcs || []).filter(function (n) { return n.trade && (n.trade.items || []).length; });
+    let total = 0; shops.forEach(function (n) { total += n.trade.items.length; });
+    let html = '<div class="text-block"><div class="section-head"><div class="section-title">NPC 交易清单</div><div class="section-note">' + shops.length + ' 家 · ' + total + ' 条</div></div><div class="tiny dim">按 NPC 展开查看完整买卖清单、价格与库存。</div></div>';
+    html += shops.map(function (n, idx) {
+      const t = n.trade;
+      return '<details class="trade-shop"' + (idx < 2 ? " open" : "") + '><summary><b>' + esc(n.name) + '</b><span>' + esc(t.title || "商店") + ' · ' + t.items.length + ' 项</span><em>' + esc(t.currencyName || "货币") + '</em></summary><div class="trade-list">' +
+        t.items.map(function (it) {
+          return '<div class="trade-list-row">' + tradeIconHTML(it, 26) +
+            '<div class="trade-list-main"><b>' + esc(it.name || it.id) + '</b><span>' + esc(it.id) + '</span></div>' +
+            '<div class="trade-list-num">×' + esc(fmtNum(it.count)) + '</div>' +
+            '<div class="trade-list-price">' + esc(fmtNum(it.price)) + ' <span>' + esc(it.currencyName || t.currencyName || "货币") + '</span></div>' +
+            '<div class="trade-list-stock">' + (Number(it.stock) < 0 ? "无限" : "库存 " + esc(fmtNum(it.stock))) + '</div></div>';
+        }).join("") + "</div></details>";
+    }).join("");
+    return html;
+  }
+  function openNpcTradeList() {
+    openSheet({ title: "NPC 交易清单", body: npcTradeListHTML(), foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>' });
+  }
+  function installNpcTradeEntry() {
+    if (location.hash !== "#/creatures/npcs") return;
+    const view = q("view");
+    if (!view || view.querySelector(".npc-trade-entry")) return;
+    const el = document.createElement("div");
+    el.className = "section npc-trade-entry";
+    el.innerHTML = '<div class="section-head"><div class="section-title">NPC 交易</div><div class="section-note">价格 / 库存</div></div><button class="row-card" data-action="npc-trade-list"><div class="row-main"><div class="row-title">打开完整交易清单</div><div class="row-sub">所有 NPC 商店、买卖物品、价格与库存</div></div><div class="row-right"><span class="badge">打开</span></div></button>';
+    view.insertBefore(el, view.firstChild);
+  }
+
+  function openArmorAnalysis() {
+    openSheet({ title: "护甲评分与套装推荐", body: armorReportHTML(), foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>' });
+  }
+
+  function openGlobalSearch() {
+    openSheet({
+      title: "全站搜索",
+      body: '<div class="text-block"><input id="global-search" class="variant-search" placeholder="搜索怪物、建筑、枪械、物品、护甲、近战…" autocomplete="off"><div id="global-results" class="global-results"><div class="tiny dim">输入关键词开始搜索</div></div></div>',
+      foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>'
+    });
+    setTimeout(function () {
+      const input = q("global-search"); const box = q("global-results");
+      if (!input || !box) return;
+      function norm(x) { return String(x || "").replace(/\s+/g, " ").trim().toLowerCase(); }
+      function row(label, sub, href) { return '<button class="global-result" data-global-go="' + esc(href) + '"><b>' + esc(label) + '</b><span>' + esc(sub) + '</span></button>'; }
+      function run() {
+        const query = norm(input.value); if (!query) { box.innerHTML = '<div class="tiny dim">输入关键词开始搜索</div>'; return; }
+        const out = [];
+        (GUIDE.monsters || []).forEach(function (m) { if (norm(m.name + " " + m.en).indexOf(query) >= 0) out.push(row(m.name, "怪物 · " + (m.category || ""), "#/monster/" + encodeURIComponent(m.id))); });
+        (DATA.regions || []).forEach(function (r) { (r.buildings || []).forEach(function (b) { if (norm(b.name + " " + b.id).indexOf(query) >= 0) out.push(row(b.name, "建筑 · " + r.name, "#/loot/building/" + encodeURIComponent(r.id) + "/" + encodeURIComponent(b.id))); }); });
+        ["guns", "armor", "melee", "trinkets"].forEach(function (type) {
+          const cfg = GUIDE_TYPES[type]; if (!cfg) return;
+          (cfg.data || []).forEach(function (x) { if (norm(x.name + " " + x.id).indexOf(query) >= 0) {
+            const href = type === "guns" ? "#/gear/gunsmith/" + encodeURIComponent(x.id) : "#/gear/" + type + "/" + encodeURIComponent(x.id);
+            out.push(row(x.name, cfg.title, href));
+          } });
+        });
+        itemIndex.forEach(function (rec) { if (norm(rec.name + " " + rec.id + " " + Array.from(rec.nbts || []).join(" ")).indexOf(query) >= 0) out.push(row(rec.name, "物品 · " + rec.id, "#/item/" + encodeURIComponent(rec.id))); });
+        const seen = {}; const unique = out.filter(function (html) { if (seen[html]) return false; seen[html] = true; return true; }).slice(0, 60);
+        box.innerHTML = unique.length ? unique.join("") : '<div class="tiny dim">没有找到「' + esc(input.value) + '」</div>';
+      }
+      input.addEventListener('input', run);
+      box.addEventListener('click', function (e) { const b = e.target.closest('[data-global-go]'); if (!b) return; closeSheet(); go(b.dataset.globalGo); });
+      input.focus();
+    }, 0);
   }
 
   function renderGuideDetail(type, id) {
@@ -1579,6 +1775,97 @@
     return "";
   }
 
+  const LANG_DICT = {
+    "区域战利品": "Loot", "生物": "Creatures", "装备": "Gear", "世界": "World", "社区": "Community",
+    "返回": "Back", "我的": "Me", "搜索": "Search", "关闭": "Close", "取消": "Cancel", "保存": "Save",
+    "上一页": "Prev", "下一页": "Next", "当前": "Total", "容器": "Containers", "掉落": "Drops", "掉率": "Drop rate",
+    "按楼层查看": "View by floor", "套装部件": "Set pieces", "套装效果": "Set bonuses", "适用枪械": "Compatible guns",
+    "区域建筑来源": "Building sources", "使用弹药": "Ammo", "查看弹药": "View ammo", "查看枪械": "View gun",
+    "全站搜索": "Global search", "搜索结果": "Results", "附魔词条": "Enchantments", "点此查看": "Open",
+    "最佳来源": "Best sources", "变体 / NBT": "Variants / NBT", "按 T 级浏览": "Browse by tier", "快速查找": "Quick search",
+    "套装评分与推荐": "Armor rating", "计算套装评分与配套武器": "Compute armor score & weapon picks",
+    "打开完整交易清单": "Open full trade list", "交易清单": "Trade list", "打开": "Open", "装备图鉴": "Gear guide",
+    "护甲套装": "Armor sets", "枪械库": "Guns", "弹药库": "Ammo", "近战兵器库": "Melee", "饰品收藏": "Trinkets",
+    "改枪台": "Gunsmith", "搜索物品名或 ID": "Search item name or ID", "输入关键词开始搜索": "Type to search",
+    "没有找到": "No results for", "使用弹药：": "Ammo: ", "护甲评分与套装推荐": "Armor rating & recommendations",
+    "评分公式": "Formula", "有效减伤": "Effective DR", "防御": "Defense", "近战": "Melee", "远程": "Ranged",
+    "负面": "Negative", "推荐近战": "Melee pick", "推荐远程": "Ranged pick", "综合最佳": "Best overall",
+    "近战最佳": "Best melee", "远程最佳": "Best ranged", "防御最佳": "Best defense", "库存": "Stock", "无限": "Unlimited"
+  };
+
+  let TR_CACHE = {};
+  try { TR_CACHE = JSON.parse(localStorage.getItem("wz_tr_en") || "{}"); } catch (e) { TR_CACHE = {}; }
+  let trBusy = false;
+  async function autoTranslate() {
+    if (ui.lang !== "en" || trBusy) return;
+    trBusy = true;
+    try {
+      function collect() {
+        const nodes = [];
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+        while (walker.nextNode()) {
+          const n = walker.currentNode;
+          if (n.parentElement && /^(SCRIPT|STYLE|NOSCRIPT)$/.test(n.parentElement.tagName)) continue;
+          if (/[\u4e00-\u9fff]/.test(n.nodeValue || "")) nodes.push(n);
+        }
+        return nodes;
+      }
+      let nodes = collect();
+      const uniq = [];
+      nodes.forEach(function (n) { const k = (n.nodeValue || "").trim(); if (k && !TR_CACHE[k] && uniq.indexOf(k) < 0) uniq.push(k); });
+      for (let i = 0; i < uniq.length; i += 25) {
+        const batch = uniq.slice(i, i + 25);
+        try {
+          const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=en&dt=t&q=" + encodeURIComponent(batch.join("\n"));
+          const res = await fetch(url);
+          const data = await res.json();
+          let out = (data[0] || []).map(function (x) { return x[0]; }).join("");
+          let lines = out.split("\n");
+          if (lines.length === batch.length) {
+            batch.forEach(function (k, j) { TR_CACHE[k] = lines[j].trim(); });
+          } else {
+            for (let j = 0; j < batch.length; j++) {
+              try {
+                const r2 = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=en&dt=t&q=" + encodeURIComponent(batch[j]));
+                const d2 = await r2.json(); TR_CACHE[batch[j]] = (d2[0] || []).map(function (x) { return x[0]; }).join("").trim();
+              } catch (e) {}
+            }
+          }
+        } catch (e) {}
+      }
+      try { localStorage.setItem("wz_tr_en", JSON.stringify(TR_CACHE)); } catch (e) {}
+      nodes = collect();
+      nodes.forEach(function (n) {
+        const raw = n.nodeValue || ""; const key = raw.trim();
+        if (TR_CACHE[key]) n.nodeValue = raw.replace(key, TR_CACHE[key]);
+      });
+    } catch (e) {} finally { trBusy = false; }
+  }
+
+  function applyLang() {
+    if (ui.lang !== "en") { document.documentElement.lang = "zh-CN"; return; }
+    document.documentElement.lang = "en";
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function (node) {
+      const raw = node.nodeValue || ""; const key = raw.trim();
+      if (LANG_DICT[key]) node.nodeValue = raw.replace(key, LANG_DICT[key]);
+      else {
+        for (const k in LANG_DICT) {
+          if (key.indexOf(k) === 0 && key.length > k.length) { node.nodeValue = raw.replace(k, LANG_DICT[k]); break; }
+        }
+      }
+    });
+    document.querySelectorAll("[placeholder],[title],[aria-label]").forEach(function (el) {
+      ["placeholder", "title", "aria-label"].forEach(function (attr) {
+        const v = el.getAttribute(attr); if (!v) return;
+        for (const k in LANG_DICT) if (v.indexOf(k) >= 0) { el.setAttribute(attr, v.split(k).join(LANG_DICT[k])); break; }
+      });
+    });
+    autoTranslate();
+  }
+
   function route() {
     const nextHash = currentHash();
     const legacy = legacyHash(nextHash);
@@ -1696,7 +1983,9 @@
     const themeBtn = '<button class="icon-btn theme-btn" data-action="toggle-theme" aria-label="切换' +
       (theme === "light" ? "深色" : "浅色") + '背景">' + icon(theme === "light" ? "moon" : "sun") + "</button>";
     const viewBtn = '<button class="icon-btn" data-action="toggle-view" aria-label="切换电脑/手机版">' + icon(viewMode() === "pc" ? "mobile" : "monitor") + "</button>";
-    const actions = (opts.actions || []).join("") + viewBtn + themeBtn;
+    const searchBtn = '<button class="icon-btn" data-action="global-search" aria-label="全站搜索">' + icon("search", 19) + '</button>';
+    const langBtn = '<button class="icon-btn lang-btn" data-action="toggle-lang" aria-label="Switch language">' + (ui.lang === 'en' ? '中' : 'EN') + '</button>';
+    const actions = searchBtn + langBtn + (opts.actions || []).join("") + viewBtn + themeBtn;
     q("topbar").innerHTML = '<div class="topbar-inner">' + left + '<div class="topbar-center">' + center + '</div>' + '<div class="top-actions">' + actions + "</div></div>";
   }
 
@@ -1845,7 +2134,9 @@
     { tier: "T4", code: "T4", title: "荒地", desc: "高辐射区域", ids: ["wasteland"], sections: [{ title: "炎热 / 辐射 / 极热", ids: ["wasteland"] }] }
   ];
   function lootRegionById(id) { return (DATA.regions || []).filter(function (r) { return r.id === id; })[0]; }
+  const REGION_COVER_OVERRIDES = { hotel: "./images/guides/region_hotel.webp" };
   function lootRegionImage(r) {
+    if (r && REGION_COVER_OVERRIDES[r.id]) return REGION_COVER_OVERRIDES[r.id];
     if (r.cover) return r.cover;
     const all = GUIDE.buildings || {};
     for (const k in all) { const g = all[k]; if (g && g.region === r.name && g.image) return g.image; }
@@ -2041,8 +2332,24 @@
       return x.building.name.toLowerCase().indexOf(ql) >= 0 || x.building.id.toLowerCase().indexOf(ql) >= 0;
     }).slice(0, 8);
     const top = items.slice(0, 50);
+    const variantRows = [];
+    itemList.forEach(function (rec) {
+      Array.from(rec.nbts).forEach(function (nbt) {
+        if (nbt.toLowerCase().indexOf(ql) >= 0) variantRows.push({ rec: rec, nbt: nbt, term: nbt.split('-').pop().trim() });
+      });
+    });
 
-    let html = '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">搜索结果</div><div class="section-note">' + (items.length ? "找到 " + items.length + " 种物品" : "没有匹配物品") + "</div></div>";
+    let html = '';
+    if (variantRows.length) {
+      html += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">附魔词条</div><div class="section-note">' + variantRows.length + ' 条</div></div><div class="list">' +
+        variantRows.slice(0, 60).map(function (x) {
+          return '<button class="row-card" data-item-id="' + esc(x.rec.id) + '" data-variant="' + esc(x.term) + '">' +
+            texIcon(x.rec.id, x.nbt, x.nbt, 'chip-ico', 28) +
+            '<div class="row-main"><div class="row-title">' + esc(x.rec.name) + '</div><div class="row-sub">' + esc(x.nbt.replace(/\n/g, ' ')) + '</div></div>' +
+            '<div class="row-right"><div class="cap">点此查看</div></div></button>';
+        }).join("") + "</div></section>";
+    }
+    html += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">搜索结果</div><div class="section-note">' + (items.length ? "找到 " + items.length + " 种物品" : "没有匹配物品") + "</div></div>";
     if (top.length) {
       html += '<div class="list">' + top.map(function (x) {
         const rec = x.rec;
@@ -2268,6 +2575,22 @@
   }
 
   /* ---------------- 建筑 ---------------- */
+
+  function containerIcon(name) {
+    const n = String(name || "");
+    let file = "drawer_oak.webp";
+    if (n.indexOf("冰箱") >= 0) file = n.indexOf("深色") >= 0 ? "fridge_dark.webp" : "fridge_light.webp";
+    else if (n.indexOf("保险箱") >= 0) file = "safe_iron.webp";
+    else if (n.indexOf("黄色") >= 0 && (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0)) file = "drawer_yellow.webp";
+    else if (n.indexOf("深色橡木") >= 0 && (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0)) file = "drawer_dark_oak.webp";
+    else if (n.indexOf("淡灰色") >= 0 && (n.indexOf("抽屉") >= 0 || n.indexOf("柜") >= 0)) file = "drawer_light_gray.webp";
+    else if (n.indexOf("货架") >= 0) file = "pallet.webp";
+    else if (n.indexOf("箱") >= 0) return '<span class="container-ico">' + itemIcon("minecraft:chest", n, null, 24) + "</span>";
+    return '<span class="container-ico"><img class="container-img" src="./images/containers/' + file + '" alt="" loading="lazy"></span>';
+  }
+
+
+
   function renderBuilding(rid, bid) {
     const region = DATA.regions.filter(function (r) { return r.id === rid; })[0];
     const building = region && region.buildings.filter(function (b) { return b.id === bid; })[0];
@@ -2276,6 +2599,24 @@
     let partFilter = ui.buildingPart[key];
     if (partFilter === undefined) partFilter = building._partCount > 1 ? 0 : 0;
     const parts = building.parts.map(function (p, i) { return { p: p, i: i }; });
+    const hashQuery = new URLSearchParams((location.hash.split('?')[1] || ''));
+    const targetItem = hashQuery.get('item') || '';
+    const targetNbt = hashQuery.get('nbt') || '';
+    let targetPos = null;
+    const targetHits = [];
+    if (targetItem) {
+      building.parts.forEach(function (p, pi) {
+        p.floors.forEach(function (f, fi) {
+          f.containers.forEach(function (c, ci) {
+            if (c.items.some(function (it) { return it[0] === targetItem && (!targetNbt || it[7] === targetNbt); })) {
+              targetHits.push({ p: pi, f: fi, c: ci });
+              if (!targetPos) targetPos = { p: pi, f: fi, c: ci };
+            }
+          });
+        });
+      });
+      if (targetPos) partFilter = targetPos.p;
+    }
     const shown = building._partCount > 1 ? parts.filter(function (x) { return x.i === Number(partFilter); }) : parts;
     const entriesShown = shown.reduce(function (sum, x) {
       return sum + x.p.floors.reduce(function (s, f) {
@@ -2300,14 +2641,17 @@
       return floor.map(function (f, floorIndex) {
         const itemCount = f.containers.reduce(function (a, c) { return a + c.items.length; }, 0);
         const containers = f.containers.map(function (c, ci) {
-          return '<div class="container-block" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '">' +
+          const hit = targetHits.filter(function (h) { return h.p === x.i && h.f === floorIndex && h.c === ci; })[0];
+          return '<div class="container-block' + (hit ? " target-hit" : "") + '" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '"' +
+            (hit ? ' data-target-item="' + esc(targetItem) + '" data-target-nbt="' + esc(targetNbt) + '"' : "") + '>' +
             '<button class="container-head" data-action="toggle-container">' +
+              containerIcon(c.name) +
               '<span class="container-name">' + esc(c.name) + '</span><span class="container-count">' + c.items.length + " 项</span>" + icon("chevron", 16) +
             "</button>" +
             '<div class="container-items" data-loaded="0"></div>' +
           "</div>";
         }).join("");
-        return '<div class="accordion ' + (floorIndex === 0 ? "open" : "") + '">' +
+        return '<div class="accordion ' + (floorIndex === 0 || targetHits.some(function (h) { return h.p === x.i && h.f === floorIndex; }) ? "open" : "") + '">' +
           '<button class="acc-head" data-action="toggle-acc">' +
             '<div class="acc-title">' + esc(f.name) + '<div class="acc-sub">' + f.containers.length + " 个容器 · " + itemCount + " 条掉落</div></div>" + icon("chevron", 18) +
           "</button>" +
@@ -2338,6 +2682,17 @@
     ui.currentBuilding = building;
     ui.currentPartIndex = shown.length === 1 ? shown[0].i : null;
     q("view").insertAdjacentHTML("beforeend", commentsHTML("building", building.id)); mountPageComments("building", building.id);
+
+    if (targetHits.length) {
+      setTimeout(function () {
+        const h = targetHits[0];
+        const block = document.querySelector('.container-block[data-part="' + h.p + '"][data-fi="' + h.f + '"][data-ci="' + h.c + '"]');
+        if (block) {
+          const head = block.querySelector('.container-head');
+          if (head) head.click();
+        }
+      }, 160);
+    }
   }
 
   function itemRowHTML(it, showStar) {
@@ -2400,8 +2755,10 @@
       const p = clampPct(s.it[4]);
       const region = s.r, b = s.b, f = s.f, c = s.c, it = s.it;
       const partLabel = s.p && s.p.part != null ? " · 区块 " + s.p.part : "";
-      return '<button class="source-card" style="width:100%;text-align:left" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '">' +
-        '<div class="source-top"><div class="source-name">' + esc(b.name) + '<div class="tiny dim" style="font-weight:400;margin-top:2px">' + esc(region.name) + partLabel + "</div></div>" +
+      const bg = buildingGuide(b.id);
+      return '<button class="source-card" style="width:100%;text-align:left" data-nbt="' + esc(it[7] || '') + '" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '?item=' + encodeURIComponent(it[0]) + '&nbt=' + encodeURIComponent(it[7] || '') + '">' +
+        '<div class="source-top">' + (bg && bg.image ? '<img class="source-thumb" src="' + esc(bg.image) + '" alt="" loading="lazy">' : '<span class="source-thumb source-thumb-empty">' + esc(initial(b.name)) + '</span>') +
+        '<div class="source-name">' + esc(b.name) + '<div class="tiny dim" style="font-weight:400;margin-top:2px">' + esc(region.name) + partLabel + "</div></div>" +
           '<div class="source-prob"><b>' + fmtPct(it[4]) + '</b><span>实际掉率</span><div class="prob-bar ' + (p >= 50 ? "high" : "") + '" style="width:64px;margin-left:auto"><i style="width:' + Math.max(3, p) + '%"></i></div></div>' +
         "</div>" +
         '<div class="source-meta">' +
@@ -2422,12 +2779,21 @@
       "</div></div>" +
       (rec.nbts.size ? (function () {
         const all = Array.from(rec.nbts);
-        const shown = all.slice(0, 24);
-        return '<div class="section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note">' + rec.nbts.size + " 种</div></div><div class=\"chip-row\">" +
-          shown.map(function (n) { return '<span class="chip" style="cursor:default">' + texIcon(rec.id, n, n, "chip-ico", 20) + esc(n.replace(/\n/g, " ")) + "</span>"; }).join("") +
+        const shown = all;
+        return '<div class="section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note">' + rec.nbts.size + " 种</div></div>" +
+          '<input class="variant-search" id="variant-search" placeholder="搜索变体 / 附魔，例如：精准采集">' +
+          '<div class="chip-row variant-row">' +
+          shown.map(function (n) { return '<button class="chip variant-chip" title="点击搜索这个变体">' + texIcon(rec.id, n, n, "chip-ico", 20) + esc(n.replace(/\n/g, " ")) + "</button>"; }).join("") +
           (all.length > shown.length ? '<span class="chip" style="cursor:default">还有 ' + (all.length - shown.length) + " 种</span>" : "") +
           "</div></div>";
       })() : "") +
+      (function () {
+        const ammo = (GUIDE.ammo || []).filter(function (x) { return x.id === rec.id || x.itemId === rec.id; })[0];
+        if (!ammo || !(ammo.guns || []).length) return "";
+        const gm = {}; (GUIDE.guns || []).forEach(function (x) { gm[x.id] = x.name; });
+        return '<div class="section"><div class="section-head"><div class="section-title">适用枪械</div><div class="section-note">' + ammo.guns.length + ' 把</div></div><div class="list">' +
+          ammo.guns.map(function (id) { return '<button class="row-card" data-go="' + guideDetailHref("guns", id) + '"><div class="row-main"><div class="row-title">' + esc(gm[id] || id) + '</div><div class="row-sub mono">' + esc(id) + '</div></div><div class="row-right"><span class="badge">查看枪械</span></div></button>'; }).join("") + "</div></div>";
+      })() +
       '<div class="section"><div class="section-head"><div class="section-title">最佳来源</div><div class="section-note">按实际掉率排序</div></div><div class="list">' + best.map(sourceCard).join("") + "</div></div>" +
       (sources.length > 5 ? '<div class="section"><div class="section-head"><div class="section-title">全部掉落点</div><div class="section-note">' + sources.length + " 处</div></div><div class=\"list\">" + rest.map(sourceCard).join("") + "</div>" +
         (!showAll && sources.length > 35 ? '<button class="btn ghost block" style="margin-top:10px" data-action="show-all-sources">显示全部 ' + sources.length + " 处</button>" : "") +
@@ -3456,7 +3822,12 @@
     if (itemEl) {
       e.preventDefault();
       ui.itemBack = currentHash();
+      const variant = itemEl.dataset.variant || '';
       go("#/item/" + encodeURIComponent(itemEl.dataset.itemId));
+      if (variant) setTimeout(function () {
+        const input = document.getElementById('variant-search');
+        if (input) { input.value = variant; input.dispatchEvent(new Event('input', { bubbles: true })); input.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      }, 180);
       return;
     }
     const goEl = e.target.closest("[data-go]");
@@ -3476,7 +3847,7 @@
       if (ov && !ov.hidden) { closeSheet(); return; }
       const back = document.querySelector(".back-btn");
       if (back) { back.click(); return; }
-      if (location.hash && location.hash !== "#/") { history.back(); }
+      if (location.hash && location.hash !== "#/loot" && location.hash !== "#/") { go("#/loot"); }
       return;
     }
     if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-item-id]")) {
@@ -3492,6 +3863,10 @@
       case "community-register": openCommunityAuth("register"); break;
       case "admin-login": openCommunityAuth("admin"); break;
       case "admin-panel": renderAdminPanel(); break;
+      case "global-search": openGlobalSearch(); break;
+      case "toggle-lang": ui.lang = ui.lang === "en" ? "zh" : "en"; try { localStorage.setItem("wz_lang", ui.lang); } catch (e) {} route(); break;
+      case "armor-analysis": openArmorAnalysis(); break;
+      case "npc-trade-list": openNpcTradeList(); break;
       case "cms-text": cmsStart("text"); break;
       case "cms-image": cmsStart("image"); break;
       case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); if (window.WZ_ADMIN_UI) window.WZ_ADMIN_UI.refresh(); }).catch(function () { toast("退出失败"); }); break;
@@ -3520,7 +3895,22 @@
         const block = el.closest(".container-block");
         if (!block) break;
         const open = block.classList.toggle("open");
-        if (open) fillContainer(block);
+        if (open) {
+          fillContainer(block);
+          const targetId = block.dataset.targetItem;
+          if (targetId) {
+            setTimeout(function () {
+              const rows = Array.from(block.querySelectorAll('.item-row[data-item-id]'));
+              const nbt = String(block.dataset.targetNbt || '').replace(/\n/g, ' ').trim();
+              const row = rows.find(function (r) {
+                if (r.dataset.itemId !== targetId) return false;
+                if (!nbt) return true;
+                return r.textContent.replace(/\s+/g, ' ').indexOf(nbt.replace(/\s+/g, ' ')) >= 0;
+              });
+              if (row) { row.classList.add('flash-item'); row.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+            }, 60);
+          }
+        }
         break;
       }
       case "building-part": {
@@ -3765,3 +4155,52 @@
   applyTheme(getTheme());
   route();
 })();
+
+  document.addEventListener('click', function (e) {
+    const chip = e.target.closest('.variant-chip');
+    if (!chip) return;
+    const input = document.getElementById('variant-search');
+    if (!input) return;
+    input.value = chip.textContent.replace(/\s+/g, ' ').replace(/^.*?-\s*/, '').trim();
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+  document.addEventListener('pointerdown', function (e) {
+    const row = e.target.closest('.variant-row');
+    if (!row || e.target.closest('.variant-chip')) return;
+    row.dataset.drag = '1';
+    row.dataset.startX = String(e.clientX);
+    row.dataset.startScroll = String(row.scrollLeft);
+    row.classList.add('dragging');
+  });
+  document.addEventListener('pointermove', function (e) {
+    const row = document.querySelector('.variant-row.dragging');
+    if (!row) return;
+    row.scrollLeft = Number(row.dataset.startScroll || 0) - (e.clientX - Number(row.dataset.startX || 0));
+  });
+  document.addEventListener('pointerup', function () {
+    document.querySelectorAll('.variant-row.dragging').forEach(function (row) { row.classList.remove('dragging'); });
+  });
+  document.addEventListener('wheel', function (e) {
+    const row = e.target.closest('.variant-row');
+    if (!row || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+    row.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('input', function (e) {
+    if (!e.target || e.target.id !== 'variant-search') return;
+    const q = String(e.target.value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const section = e.target.closest('.section');
+    if (!section) return;
+    const cards = Array.from(document.querySelectorAll('.source-card'));
+    const hasNbtMatch = !!q && cards.some(function (card) { return (card.dataset.nbt || '').replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0; });
+    cards.forEach(function (card) { card.style.display = (!hasNbtMatch || (card.dataset.nbt || '').replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0) ? '' : 'none'; });
+    let first = null;
+    section.querySelectorAll('.chip-row .chip').forEach(function (chip) {
+      const hit = !q || chip.textContent.replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0;
+      chip.style.display = hit ? '' : 'none';
+      chip.classList.remove('flash');
+      if (hit && q) { first = first || chip; chip.classList.add('flash'); }
+    });
+    if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });

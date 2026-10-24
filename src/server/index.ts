@@ -1,3 +1,4 @@
+// deploy trigger: community comments/admin panel
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';

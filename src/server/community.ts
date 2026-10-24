@@ -23,7 +23,7 @@ const STORE_KEY = 'public/community/community.json';
 type User = { id: string; email: string; name: string; salt: string; hash: string; createdAt: number };
 type Post = { id: string; userId: string; user: string; text: string; image?: string; ts: number };
 type Photo = { id: string; userId: string; user: string; image: string; caption: string; ts: number };
-type Comment = { id: string; targetType: string; targetId: string; userId: string; user: string; text: string; ts: number; status: string };
+type Comment = { id: string; targetType: string; targetId: string; userId: string; user: string; text: string; ts: number; status: string; likes?: number; likedBy?: string[] };
 type Mute = { userId: string; scope: string; reason: string; until: number; by: string };
 type Store = { users: User[]; posts: Post[]; photos: Photo[]; comments: Comment[]; mutes: Mute[]; texts: Record<string, string>; images: Record<string, string> };
 
@@ -287,7 +287,10 @@ community.post('/photos', async (c) => {
 community.get('/comments', (c) => {
   const type = String(c.req.query('type') || '').slice(0, 20);
   const id = String(c.req.query('id') || '').slice(0, 200);
+  const user = currentUser(c);
   const list = store.comments.filter((x) => x.targetType === type && x.targetId === id && x.status === 'normal');
+  const mapped = list.map((x) => ({ ...x, likes: x.likes || 0, liked: !!user && (x.likedBy || []).includes(user.id), likedBy: undefined }));
+  mapped.sort((a, b) => (b.likes || 0) - (a.likes || 0) || a.ts - b.ts);
   return c.json({ comments: list.slice(-200) });
 });
 
@@ -305,7 +308,7 @@ community.post('/comments', async (c) => {
   if (!audit.ok) return c.json({ error: '内容包含不当词汇', hits: audit.hits }, 422);
   const last = store.comments.filter((x) => x.userId === user.id).slice(-1)[0];
   if (last && Date.now() - last.ts < 1200) return c.json({ error: '发送太快，稍后再试' }, 429);
-  const comment: Comment = { id: randomBytes(8).toString('hex'), targetType, targetId, userId: user.id, user: user.name, text, ts: Date.now(), status: 'normal' };
+  const comment: Comment = { id: randomBytes(8).toString('hex'), targetType, targetId, userId: user.id, user: user.name, text, ts: Date.now(), status: 'normal', likes: 0, likedBy: [] };
   store.comments.push(comment);
   if (store.comments.length > 5000) store.comments = store.comments.slice(-5000);
   await save();
@@ -317,6 +320,19 @@ community.get('/admin/comments', (c) => {
   return c.json({ comments: store.comments.slice(-200).reverse() });
 });
 
+community.post('/comments/:id/like', async (c) => {
+  const user = currentUser(c);
+  if (!user) return c.json({ error: '请先登录' }, 401);
+  const item = store.comments.find((x) => x.id === c.req.param('id'));
+  if (!item) return c.json({ error: 'not found' }, 404);
+  if (item.userId === user.id) return c.json({ error: '不能给自己的评论点赞' }, 400);
+  item.likedBy ||= [];
+  item.likes = Number(item.likes || 0);
+  const i = item.likedBy.indexOf(user.id);
+  if (i >= 0) { item.likedBy.splice(i, 1); item.likes = Math.max(0, item.likes - 1); } else { item.likedBy.push(user.id); item.likes += 1; }
+  await save();
+  return c.json({ likes: item.likes, liked: i < 0 });
+});
 community.delete('/admin/comments/:id', async (c) => {
   if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
   const id = c.req.param('id');

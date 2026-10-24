@@ -154,11 +154,39 @@
     return new TextDecoder().decode(bytes);
   }
   function encodeBuildCode(gunId, atts, note) {
-    const payload = { v: 1, g: gunId, a: atts || {}, n: note || "" };
-    return "WZG1-" + utf8ToB64(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const gunList = Object.keys(GS.guns || {}).sort();
+    const attList = Object.keys(GS.attachments || {}).sort();
+    const slotList = (GS.slots || []).map(function (x) { return x.id; });
+    const gi = gunList.indexOf(gunId);
+    if (gi < 0) return "WZG1-" + utf8ToB64(JSON.stringify({ v: 1, g: gunId, a: atts || {}, n: note || "" }));
+    let body = gi.toString(36) + "-";
+    slotList.forEach(function (slot) {
+      const id = atts && atts[slot];
+      const ai = attList.indexOf(id);
+      if (ai >= 0) body += slotList.indexOf(slot).toString(36) + ai.toString(36).padStart(2, "0");
+    });
+    return "WZG2-" + body;
   }
   function decodeBuildCode(code) {
     const text = String(code || "").trim();
+    if (text.indexOf("WZG2-") === 0) {
+      const gunList = Object.keys(GS.guns || {}).sort();
+      const attList = Object.keys(GS.attachments || {}).sort();
+      const slotList = (GS.slots || []).map(function (x) { return x.id; });
+      const parts = text.slice(5).split("-");
+      const gunId = gunList[parseInt(parts[0], 36)];
+      if (!gunId) return null;
+      const attachments = {};
+      const body = parts[1] || "";
+      for (let i = 0; i + 3 <= body.length; i += 3) {
+        const slot = slotList[parseInt(body[i], 36)];
+        const att = attList[parseInt(body.slice(i + 1, i + 3), 36)];
+        if (slot && att) attachments[slot] = att;
+      }
+      const gs = gunData(gunId) || {};
+      const gd = guideGun(gunId) || {};
+      return { gunId: gunId, gunName: gd.name || gs.name || gunId, attachments: attachments, note: "" };
+    }
     if (text.indexOf("WZG1-") !== 0) return null;
     let b64 = text.slice(5).replace(/-/g, "+").replace(/_/g, "/");
     while (b64.length % 4) b64 += "=";
@@ -730,7 +758,7 @@
     openModal(
       '<div class="gs-sheet-head"><div><div class="gs-sheet-kicker">改枪台</div><div class="gs-sheet-title">分享方案</div></div>' +
       '<button class="gs-sheet-close" data-gs-action="close-modal" aria-label="关闭">' + icon("close", 18) + '</button></div>' +
-      '<div class="field"><label>方案分享码</label><textarea id="gs-share-text" class="mono" rows="4" readonly>' + esc(code) + '</textarea></div>' +
+      '<div class="field"><label>方案分享码</label><textarea id="gs-share-text" class="mono" rows="2" readonly>' + esc(code) + '</textarea></div>' +
       '<div class="gs-note">已包含 ' + count + ' 个配件。把这段代码发给朋友，对方在改枪台「导入码」粘贴即可还原方案。</div>' +
       '<div class="gs-actions"><button class="gs-btn primary" data-gs-action="copy-share-code">复制分享码</button>' +
       '<button class="gs-btn" data-gs-action="close-modal">关闭</button></div>'
@@ -741,7 +769,7 @@
     openModal(
       '<div class="gs-sheet-head"><div><div class="gs-sheet-kicker">改枪台</div><div class="gs-sheet-title">导入分享码</div></div>' +
       '<button class="gs-sheet-close" data-gs-action="close-modal" aria-label="关闭">' + icon("close", 18) + '</button></div>' +
-      '<div class="field"><label>粘贴 WZG1- 开头的分享码</label><textarea id="gs-import-text" class="mono" rows="4" placeholder="WZG1-..."></textarea></div>' +
+      '<div class="field"><label>粘贴 WZG1- 开头的分享码</label><textarea id="gs-import-text" class="mono" rows="2" placeholder="WZG2-..."></textarea></div>' +
       '<div class="gs-note">导入后会自动保存为当前枪械方案，并打开改枪台。</div>' +
       '<div class="gs-actions"><button class="gs-btn primary" data-gs-action="do-import-code">导入方案</button>' +
       '<button class="gs-btn" data-gs-action="close-modal">取消</button></div>'
