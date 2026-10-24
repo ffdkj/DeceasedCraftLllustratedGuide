@@ -2308,7 +2308,7 @@
         const itemCount = f.containers.reduce(function (a, c) { return a + c.items.length; }, 0);
         const containers = f.containers.map(function (c, ci) {
           const hit = targetHits.filter(function (h) { return h.p === x.i && h.f === floorIndex && h.c === ci; })[0];
-          return '<div class="container-block' + (hit ? " has-target" : "") + '" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '"' +
+          return '<div class="container-block' + (hit ? " target-hit" : "") + '" data-fi="' + floorIndex + '" data-ci="' + ci + '" data-part="' + x.i + '"' +
             (hit ? ' data-target-item="' + esc(targetItem) + '" data-target-nbt="' + esc(targetNbt) + '"' : "") + '>' +
             '<button class="container-head" data-action="toggle-container">' +
               '<span class="container-name">' + esc(c.name) + '</span><span class="container-count">' + c.items.length + " 项</span>" + icon("chevron", 16) +
@@ -2348,6 +2348,16 @@
     ui.currentPartIndex = shown.length === 1 ? shown[0].i : null;
     q("view").insertAdjacentHTML("beforeend", commentsHTML("building", building.id)); mountPageComments("building", building.id);
 
+    if (targetHits.length) {
+      setTimeout(function () {
+        const h = targetHits[0];
+        const block = document.querySelector('.container-block[data-part="' + h.p + '"][data-fi="' + h.f + '"][data-ci="' + h.c + '"]');
+        if (block) {
+          const head = block.querySelector('.container-head');
+          if (head) head.click();
+        }
+      }, 160);
+    }
   }
 
   function itemRowHTML(it, showStar) {
@@ -3530,7 +3540,11 @@
             setTimeout(function () {
               const rows = Array.from(block.querySelectorAll('.item-row[data-item-id]'));
               const nbt = String(block.dataset.targetNbt || '').replace(/\n/g, ' ').trim();
-              const row = rows.find(function (r) { return r.dataset.itemId === targetId && (!nbt || r.textContent.indexOf(nbt) >= 0); }) || rows.find(function (r) { return r.dataset.itemId === targetId; });
+              const row = rows.find(function (r) {
+                if (r.dataset.itemId !== targetId) return false;
+                if (!nbt) return true;
+                return r.textContent.replace(/\s+/g, ' ').indexOf(nbt.replace(/\s+/g, ' ')) >= 0;
+              });
               if (row) { row.classList.add('flash-item'); row.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
             }, 60);
           }
