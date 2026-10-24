@@ -144,34 +144,13 @@ community.use('*', async (_c, next) => {
 });
 
 community.get('/health', (c) => c.json({ ok: true, service: 'wzsj-community' }));
-community.get('/config', (c) => c.json({ ready: true, provider: 'email' }));
+community.get('/config', (c) => c.json({ ready: true, provider: 'email', userLogin: false }));
 // 管理员会话是独立 cookie（wz_admin），与社区账号会话互不影响
-community.get('/me', (c) => c.json({ user: publicUser(currentUser(c)), admin: adminName(c) }));
+community.get('/me', (c) => c.json({ user: null, admin: adminName(c), userLogin: false }));
 
-community.post('/auth/register', async (c) => {
-  const body = await c.req.json().catch(() => null) as any;
-  const email = String(body?.email || '').trim().toLowerCase();
-  const password = String(body?.password || '');
-  const name = String(body?.name || '').trim().slice(0, 24) || email.split('@')[0];
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: '邮箱格式不正确' }, 400);
-  if (password.length < 8) return c.json({ error: '密码至少 8 位' }, 400);
-  if (store.users.some((u) => u.email === email)) return c.json({ error: '邮箱已注册' }, 409);
-  const { salt, hash } = hashPassword(password);
-  const user: User = { id: randomBytes(12).toString('hex'), email, name, salt, hash, createdAt: Date.now() };
-  store.users.push(user); await save();
-  setSession(c, user.id);
-  return c.json({ user: publicUser(user) });
-});
+community.post('/auth/register', (c) => c.json({ error: '普通用户注册暂未开放' }, 403));
 
-community.post('/auth/login', async (c) => {
-  const body = await c.req.json().catch(() => null) as any;
-  const email = String(body?.email || '').trim().toLowerCase();
-  const password = String(body?.password || '');
-  const user = store.users.find((u) => u.email === email);
-  if (!user || !verify(user, password)) return c.json({ error: '邮箱或密码不正确' }, 401);
-  setSession(c, user.id);
-  return c.json({ user: publicUser(user) });
-});
+community.post('/auth/login', (c) => c.json({ error: '普通用户登录暂未开放' }, 403));
 
 community.post('/auth/logout', (c) => { clearSession(c); return c.json({ ok: true }); });
 
