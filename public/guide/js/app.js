@@ -302,7 +302,8 @@
     favTab: "items",
     itemBack: "#/loot",
     showAllSources: false,
-    installPrompt: null
+    installPrompt: null,
+    lang: localStorage.getItem("wz_lang") || "zh"
   };
 
   /* ---------------- 数据索引 ---------------- */
@@ -1422,7 +1423,7 @@
     input.addEventListener("focus", function () { input.blur(); openGlobalSearch(); });
     bar.addEventListener("click", function (e) { if (e.target !== input) openGlobalSearch(); });
   }
-  new MutationObserver(function () { setTimeout(installPageSearch, 0); setTimeout(installArmorAnalysisEntry, 0); setTimeout(installNpcTradeEntry, 0); }).observe(document.getElementById("view"), { childList: true });
+  new MutationObserver(function () { setTimeout(installPageSearch, 0); setTimeout(installArmorAnalysisEntry, 0); setTimeout(installNpcTradeEntry, 0); setTimeout(applyLang, 0); }).observe(document.getElementById("view"), { childList: true });
 
 
   function armorAnalyze(set) {
@@ -1774,6 +1775,47 @@
       setTimeout(function () { wheelLock = false; }, 720);
     }, { passive: false });
   }
+
+  const LANG_DICT = {
+    "区域战利品": "Loot", "生物": "Creatures", "装备": "Gear", "世界": "World", "社区": "Community",
+    "返回": "Back", "我的": "Me", "搜索": "Search", "关闭": "Close", "取消": "Cancel", "保存": "Save",
+    "上一页": "Prev", "下一页": "Next", "当前": "Total", "容器": "Containers", "掉落": "Drops", "掉率": "Drop rate",
+    "按楼层查看": "View by floor", "套装部件": "Set pieces", "套装效果": "Set bonuses", "适用枪械": "Compatible guns",
+    "区域建筑来源": "Building sources", "使用弹药": "Ammo", "查看弹药": "View ammo", "查看枪械": "View gun",
+    "全站搜索": "Global search", "搜索结果": "Results", "附魔词条": "Enchantments", "点此查看": "Open",
+    "最佳来源": "Best sources", "变体 / NBT": "Variants / NBT", "按 T 级浏览": "Browse by tier", "快速查找": "Quick search",
+    "套装评分与推荐": "Armor rating", "计算套装评分与配套武器": "Compute armor score & weapon picks",
+    "打开完整交易清单": "Open full trade list", "交易清单": "Trade list", "打开": "Open", "装备图鉴": "Gear guide",
+    "护甲套装": "Armor sets", "枪械库": "Guns", "弹药库": "Ammo", "近战兵器库": "Melee", "饰品收藏": "Trinkets",
+    "改枪台": "Gunsmith", "搜索物品名或 ID": "Search item name or ID", "输入关键词开始搜索": "Type to search",
+    "没有找到": "No results for", "使用弹药：": "Ammo: ", "护甲评分与套装推荐": "Armor rating & recommendations",
+    "评分公式": "Formula", "有效减伤": "Effective DR", "防御": "Defense", "近战": "Melee", "远程": "Ranged",
+    "负面": "Negative", "推荐近战": "Melee pick", "推荐远程": "Ranged pick", "综合最佳": "Best overall",
+    "近战最佳": "Best melee", "远程最佳": "Best ranged", "防御最佳": "Best defense", "库存": "Stock", "无限": "Unlimited"
+  };
+  function applyLang() {
+    if (ui.lang !== "en") { document.documentElement.lang = "zh-CN"; return; }
+    document.documentElement.lang = "en";
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function (node) {
+      const raw = node.nodeValue || ""; const key = raw.trim();
+      if (LANG_DICT[key]) node.nodeValue = raw.replace(key, LANG_DICT[key]);
+      else {
+        for (const k in LANG_DICT) {
+          if (key.indexOf(k) === 0 && key.length > k.length) { node.nodeValue = raw.replace(k, LANG_DICT[k]); break; }
+        }
+      }
+    });
+    document.querySelectorAll("[placeholder],[title],[aria-label]").forEach(function (el) {
+      ["placeholder", "title", "aria-label"].forEach(function (attr) {
+        const v = el.getAttribute(attr); if (!v) return;
+        for (const k in LANG_DICT) if (v.indexOf(k) >= 0) { el.setAttribute(attr, v.split(k).join(LANG_DICT[k])); break; }
+      });
+    });
+  }
+
   function route() {
     const nextHash = currentHash();
     rememberScroll();
@@ -1890,7 +1932,8 @@
       (theme === "light" ? "深色" : "浅色") + '背景">' + icon(theme === "light" ? "moon" : "sun") + "</button>";
     const viewBtn = '<button class="icon-btn" data-action="toggle-view" aria-label="切换电脑/手机版">' + icon(viewMode() === "pc" ? "mobile" : "monitor") + "</button>";
     const searchBtn = '<button class="icon-btn" data-action="global-search" aria-label="全站搜索">' + icon("search", 19) + '</button>';
-    const actions = searchBtn + (opts.actions || []).join("") + viewBtn + themeBtn;
+    const langBtn = '<button class="icon-btn lang-btn" data-action="toggle-lang" aria-label="Switch language">' + (ui.lang === 'en' ? '中' : 'EN') + '</button>';
+    const actions = searchBtn + langBtn + (opts.actions || []).join("") + viewBtn + themeBtn;
     q("topbar").innerHTML = '<div class="topbar-inner">' + left + '<div class="topbar-center">' + center + '</div>' + '<div class="top-actions">' + actions + "</div></div>";
   }
 
@@ -3758,6 +3801,7 @@
       case "admin-login": openCommunityAuth("admin"); break;
       case "admin-panel": renderAdminPanel(); break;
       case "global-search": openGlobalSearch(); break;
+      case "toggle-lang": ui.lang = ui.lang === "en" ? "zh" : "en"; try { localStorage.setItem("wz_lang", ui.lang); } catch (e) {} route(); break;
       case "armor-analysis": openArmorAnalysis(); break;
       case "npc-trade-list": openNpcTradeList(); break;
       case "cms-text": cmsStart("text"); break;
