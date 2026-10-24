@@ -2420,7 +2420,7 @@
       const p = clampPct(s.it[4]);
       const region = s.r, b = s.b, f = s.f, c = s.c, it = s.it;
       const partLabel = s.p && s.p.part != null ? " · 区块 " + s.p.part : "";
-      return '<button class="source-card" style="width:100%;text-align:left" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '?item=' + encodeURIComponent(it[0]) + '&nbt=' + encodeURIComponent(it[7] || '') + '">' +
+      return '<button class="source-card" style="width:100%;text-align:left" data-nbt="' + esc(it[7] || '') + '" data-go="#/loot/building/' + encodeURIComponent(region.id) + "/" + encodeURIComponent(b.id) + '?item=' + encodeURIComponent(it[0]) + '&nbt=' + encodeURIComponent(it[7] || '') + '">' +
         '<div class="source-top"><div class="source-name">' + esc(b.name) + '<div class="tiny dim" style="font-weight:400;margin-top:2px">' + esc(region.name) + partLabel + "</div></div>" +
           '<div class="source-prob"><b>' + fmtPct(it[4]) + '</b><span>实际掉率</span><div class="prob-bar ' + (p >= 50 ? "high" : "") + '" style="width:64px;margin-left:auto"><i style="width:' + Math.max(3, p) + '%"></i></div></div>' +
         "</div>" +
@@ -3794,6 +3794,9 @@
     const q = String(e.target.value || '').trim().toLowerCase();
     const section = e.target.closest('.section');
     if (!section) return;
+    const cards = Array.from(document.querySelectorAll('.source-card'));
+    const hasNbtMatch = !!q && cards.some(function (card) { return (card.dataset.nbt || '').toLowerCase().indexOf(q) >= 0; });
+    cards.forEach(function (card) { card.style.display = (!hasNbtMatch || (card.dataset.nbt || '').toLowerCase().indexOf(q) >= 0) ? '' : 'none'; });
     let first = null;
     section.querySelectorAll('.chip-row .chip').forEach(function (chip) {
       const hit = !q || chip.textContent.toLowerCase().indexOf(q) >= 0;
