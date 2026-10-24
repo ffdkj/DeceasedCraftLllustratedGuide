@@ -3319,3 +3319,12 @@ body.page-community .view { background: #050706 !important; }
 .comment-text { margin-top:4px; font-size:13px; line-height:1.6; white-space:pre-wrap; }
 .comment-form { display:flex; gap:8px; }
 .comment-form input { flex:1; }
+
+/* 管理员面板 */
+.admin-list { display:flex; flex-direction:column; gap:6px; }
+.admin-row { display:flex; align-items:flex-start; gap:10px; border:1px solid var(--line); background:var(--panel); border-radius:8px; padding:8px 10px; }
+.admin-main { flex:1; min-width:0; }
+.admin-text { font-size:12px; color:var(--muted); margin-top:3px; word-break:break-word; }
+.admin-mini { border:1px solid var(--line); background:transparent; color:var(--text); border-radius:4px; padding:3px 7px; font-size:11px; cursor:pointer; }
+.admin-mini.danger { color:#e07a5f; border-color:rgba(224,122,95,.4); }
+.admin-thumb { width:44px; height:44px; object-fit:cover; border-radius:6px; }
