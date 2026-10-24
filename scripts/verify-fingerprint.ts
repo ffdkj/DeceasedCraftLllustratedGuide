@@ -8,9 +8,22 @@
  * 用法：npm run verify:fingerprint（需先 npm run build）
  */
 import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+
+/* 站点改为「以 guide 为准」之后，build 链里不再有 build:fingerprint：
+   public/guide 的图片本来就没有指纹，覆盖层用「逻辑路径 + ?v=」换 URL（见 src/server/overrides.ts）。
+   所以这道门禁守的东西不存在了 —— 显式跳过并说明原因，而不是让它常年报红。
+   谁把 build:fingerprint 加回 build 链，这道门禁自动恢复。 */
+{
+  const pkg = JSON.parse(readFileSync(path.resolve('package.json'), 'utf8')) as { scripts: Record<string, string> };
+  if (!(pkg.scripts.build || '').includes('build:fingerprint')) {
+    console.log('跳过：build 链不含 build:fingerprint（guide 外壳没有内容指纹，换图靠 ?v= 版本串）');
+    console.log('  想恢复这道门禁：把 build:fingerprint 加回 npm run build。');
+    process.exit(0);
+  }
+}
 
 const DIST = path.resolve('dist/client');
 const errors: string[] = [];

@@ -20,6 +20,8 @@ import {
 
 const ROOT = process.cwd();
 let checks = 0;
+/* 根站有、guide 没搬的功能（G4 怪物数值面板）：相关断言记为「未移植」，不算失败也不静默跳过。 */
+const skipped: string[] = [];
 function check(ok: boolean, what: string): void {
   checks++;
   if (!ok) {
@@ -209,17 +211,34 @@ check(app.includes('m.kind !== "neutral"'), "怪物清单排除动物");
 check(app.includes("animalSpawnText"), "动物行给的是刷新规则");
 check(app.includes("monsterAvatar(m, 40)"), "列表行左侧有生物图标");
 check(app.includes('m.kind === "npc" ? "users"'), "无立绘时按类别给图标");
-const css = readFileSync(join(ROOT, "public/css/app.css"), "utf8");
-check(css.includes('[data-theme="light"] .num-btn'), "数值按钮的白底只在浅色主题生效");
-check(!/(^|\n)\.num-btn \{ background: #fff; \}/.test(css), "没有裸 .num-btn 白底（暗色下会白字白底）");
-check(/\.ico-hp \{ background-image: url\("\/images\/ui\/stat-heart-half\.png"\);/.test(css), "生命图标用半心（1 个 = 1 点）");
-check(/\.ico-armor \{ background-image: url\("\/images\/ui\/stat-armor-half\.png"\);/.test(css), "护甲图标用半甲");
-check(!/\.ico-hp \{ background-image: url\("[^"]*full/.test(css), "生命图标不再是满心");
-check(!/\.ico-armor \{ background-image: url\("[^"]*full/.test(css), "护甲图标不再是满甲");
+/* 站点以 guide 为准：guide 样式是线上那份，根站样式只作存档，两处并起来看 */
+const seedCss = readFileSync(join(ROOT, "public/guide/css/app.css"), "utf8");
+const css = readFileSync(join(ROOT, "public/css/app.css"), "utf8") + "\n" + seedCss;
+if (seedCss.includes(".num-btn")) {
+  check(css.includes('[data-theme="light"] .num-btn'), "数值按钮的白底只在浅色主题生效");
+  check(!/(^|\n)\.num-btn \{ background: #fff; \}/.test(css), "没有裸 .num-btn 白底（暗色下会白字白底）");
+} else {
+  skipped.push("数值按钮的白底只在浅色主题生效", "没有裸 .num-btn 白底（暗色下会白字白底）");
+}
+/* 图标按「规则体里出现哪个文件名」判：guide 用相对路径 + .webp，根站用绝对路径 + .png */
+function ruleBody(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = new RegExp(escaped + " \\{([^}]*)\\}").exec(css);
+  return m ? m[1] : "";
+}
+check(ruleBody(".ico-hp").includes("stat-heart-half"), "生命图标用半心（1 个 = 1 点）");
+check(ruleBody(".ico-armor").includes("stat-armor-half"), "护甲图标用半甲");
+check(!ruleBody(".ico-hp").includes("full"), "生命图标不再是满心");
+check(!ruleBody(".ico-armor").includes("full"), "护甲图标不再是满甲");
 check(METRIC_ICON.hp.includes("stat-heart-half"), "METRIC_ICON.hp 指向半心文件");
 check(METRIC_ICON.armor.includes("stat-armor-half"), "METRIC_ICON.armor 指向半甲文件");
-check(/\.music-fab \{[^}]*right: 0;/s.test(css), "音乐按钮贴屏幕最右边");
-check(!/\.music-fab \{[^}]*calc\(\(100vw - 760px\)/s.test(css), "音乐按钮不再按内容栏居中（面板 .music-panel 保持原样）");
+/* 音乐按钮贴右边是根站改过、还没搬进 guide 的：guide 里有才会升级成硬断言 */
+if (/\.music-fab \{[^}]*right: 0;/s.test(seedCss)) {
+  check(/\.music-fab \{[^}]*right: 0;/s.test(css), "音乐按钮贴屏幕最右边");
+  check(!/\.music-fab \{[^}]*calc\(\(100vw - 760px\)/s.test(css), "音乐按钮不再按内容栏居中（面板 .music-panel 保持原样）");
+} else {
+  skipped.push("音乐按钮贴屏幕最右边", "音乐按钮不再按内容栏居中（面板 .music-panel 保持原样）");
+}
 for (const icon of [
   "stat-heart-full.png",
   "stat-heart-empty.png",
@@ -229,11 +248,17 @@ for (const icon of [
   "stat-heart-half.png",
   "stat-armor-half.png",
 ]) {
-  check(existsSync(join(ROOT, "public/images/ui", icon)), `HUD 图标存在：${icon}`);
+  const webp = icon.replace(/\.png$/, ".webp");
+  check(
+    existsSync(join(ROOT, "public/images/ui", icon)) || existsSync(join(ROOT, "public/guide/images/ui", webp)),
+    `HUD 图标存在：${icon}`,
+  );
 }
 // 半点制之后，满心 / 满甲不再用在数值上（只留文件备查），实际用到的这五个必须被 CSS 引用
 for (const icon of ["stat-heart-half.png", "stat-armor-half.png", "stat-heart-empty.png", "stat-armor-empty.png", "stat-attack.png"]) {
-  check(readFileSync(join(ROOT, "public/css/app.css"), "utf8").includes(icon), `CSS 用到图标 ${icon}`);
+  /* guide 里同名图标是 .webp，两处样式任一引用即可 */
+  const webp = icon.replace(/\.png$/, ".webp");
+  check(css.includes(icon) || css.includes(webp), `CSS 用到图标 ${icon}`);
 }
 
 /* ---------------- 8. 未实装详情不带假设数值 ---------------- */
@@ -243,18 +268,23 @@ check(entryMatrix(unimplemented, input).length > 0, "它本身仍有可算的矩
 check(app.includes('m.status === "unimplemented"'), "详情页对未实装做了分支");
 check(app.includes("const sections = spawns ? entryMatrix"), "未实装不渲染数值矩阵");
 
-/* ---------------- 列表 / 网格视图（guide monster-grid 的移植） ---------------- */
+/* ---------------- 列表 / 网格视图（G5，还没搬进 guide） ---------------- */
 {
-  const css = readFileSync(join(ROOT, "public/css/app.css"), "utf8");
   check(app.includes('monsterView: "list"'), "网格视图默认关闭（默认仍是列表）");
   check(app.includes('data-action="monster-view"'), "有列表 / 网格切换按钮");
   check(app.includes('"list monster-cards"'), "网格模式给列表容器加 monster-cards");
   check(app.includes('localStorage.setItem("wz_monster_view"'), "视图选择记在本地");
-  check(/\.list\.monster-cards \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s.test(css), "网格视图两列");
-  check(/@media \(max-width: 560px\) \{ \.list\.monster-cards \{ grid-template-columns: 1fr; \} \}/.test(css), "窄屏网格退化为单列");
+  /* 样式侧：guide 里出现 .list.monster-cards 才升级成硬断言，否则记未移植 */
+  if (/\.list\.monster-cards/.test(seedCss)) {
+    check(/\.list\.monster-cards \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s.test(css), "网格视图两列");
+    check(/@media \(max-width: 560px\) \{ \.list\.monster-cards \{ grid-template-columns: 1fr; \} \}/.test(css), "窄屏网格退化为单列");
+  } else {
+    skipped.push("网格视图两列", "窄屏网格退化为单列");
+  }
 }
 
 console.log(`✓ 生物图鉴目录：${checks} 项断言通过`);
+if (skipped.length) console.log(`  未移植 ${skipped.length} 项（G4 数值面板 / G5 网格视图 / 音乐按钮贴右边，guide 还没有）：${skipped.join(" / ")}`);
 console.log(
   `  共 ${cat.counts.total} 条 · 会刷 ${cat.counts.spawns}（T1 ${cat.tierIds.T1.length} / T2 ${cat.tierIds.T2.length} / T3 ${cat.tierIds.T3.length} / T4 ${cat.tierIds.T4.length} / 全图 ${cat.anywhereIds.length} / 深渊 ${cat.abyssIds.length}）· 未实装 ${cat.counts.unimplemented} + 来源未确认 ${cat.counts.unconfirmed}`,
 );

@@ -243,3 +243,15 @@
   - Files: `public/guide/js/app.js`、`public/guide/js/gunsmith.js`、`public/guide/css/app.css`、
     `scripts/verify-guide.ts`、`scripts/verify-gunsmith.ts`、`scripts/verify-community.ts`、
     `docs/merge-conflicts-remote.md`
+
+- [x] T37 把其余门禁掰回 guide 方向（不再守根站时代的结论）
+  - Acceptance: 现存 `verify:*` 要么对着线上产物断言，要么明确说「未移植」并说明原因；
+    没有常年报红却没人跑的门禁
+  - Result: `verify:tiers` 读 guide 样式，11 条 G1（梯度缩写）断言标为未移植（guide 出现
+    `.gs-tier-mini` 即自动变硬）；`verify:monsterguide` 图标断言改成认 `.webp` / 相对路径，
+    6 条 G4/G5 + 音乐按钮贴右边的断言标为未移植；`verify:fingerprint` 显式跳过并打印原因
+    （build 链已不含 build:fingerprint，谁加回来自动恢复）
+  - 现状：recipes 486 · tiers 1463(+11 未移植) · monsters 13502 · spawntiers 460 ·
+    hordebuildings 969 · monsterguide 389(+6 未移植) · downloads 17 · compat · gunsmith 35 ·
+    community 42 · admin 95 · guide 64 —— 全绿
+  - Files: `scripts/verify-tiers.ts`、`scripts/verify-monster-guide.ts`、`scripts/verify-fingerprint.ts`
