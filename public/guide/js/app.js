@@ -2133,7 +2133,9 @@
     { tier: "T4", code: "T4", title: "荒地", desc: "高辐射区域", ids: ["wasteland"], sections: [{ title: "炎热 / 辐射 / 极热", ids: ["wasteland"] }] }
   ];
   function lootRegionById(id) { return (DATA.regions || []).filter(function (r) { return r.id === id; })[0]; }
+  const REGION_COVER_OVERRIDES = { hotel: "./images/guides/region_hotel.webp" };
   function lootRegionImage(r) {
+    if (r && REGION_COVER_OVERRIDES[r.id]) return REGION_COVER_OVERRIDES[r.id];
     if (r.cover) return r.cover;
     const all = GUIDE.buildings || {};
     for (const k in all) { const g = all[k]; if (g && g.region === r.name && g.image) return g.image; }
