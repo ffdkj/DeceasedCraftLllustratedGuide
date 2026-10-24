@@ -3341,3 +3341,5 @@ body.page-community .view { background: #050706 !important; }
 .comment-like { margin-left:auto; background:transparent; border:1px solid var(--line); color:var(--muted); border-radius:4px; padding:2px 7px; cursor:pointer; font-size:11px; }
 .comment-like.liked { color:#e07a5f; border-color:rgba(224,122,95,.5); }
 .comment-like + .comment-del { margin-left:4px; }
+
+.variant-search { width:100%; margin:6px 0 10px; padding:9px 11px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--text); font-size:13px; }
