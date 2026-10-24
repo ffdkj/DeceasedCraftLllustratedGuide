@@ -3372,3 +3372,7 @@ body.page-community .view { background: #050706 !important; }
 .global-result:hover { border-color:rgba(224,169,74,.7); background:rgba(224,169,74,.08); }
 .global-result b { font-size:13px; }
 .global-result span { font-size:10.5px; color:var(--muted); }
+
+.page-search { display:flex; align-items:center; gap:6px; margin:10px 0 4px; padding:0 4px; }
+.page-search input { flex:1; min-width:0; padding:9px 11px; border:1px solid rgba(224,169,74,.35); border-radius:6px; background:var(--panel); color:var(--text); font-size:13px; cursor:pointer; }
+.page-search span { color:#e0a94a; font-size:12px; }
