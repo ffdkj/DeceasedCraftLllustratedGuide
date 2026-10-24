@@ -1408,7 +1408,7 @@
     input.addEventListener("focus", function () { input.blur(); openGlobalSearch(); });
     bar.addEventListener("click", function (e) { if (e.target !== input) openGlobalSearch(); });
   }
-  new MutationObserver(function () { setTimeout(installPageSearch, 0); setTimeout(installArmorAnalysisEntry, 0); }).observe(document.getElementById("view"), { childList: true });
+  new MutationObserver(function () { setTimeout(installPageSearch, 0); setTimeout(installArmorAnalysisEntry, 0); setTimeout(installNpcTradeEntry, 0); }).observe(document.getElementById("view"), { childList: true });
 
 
   function armorAnalyze(set) {
@@ -1490,6 +1490,37 @@
     }).join("") + "</div>";
     return html;
   }
+
+  function npcTradeListHTML() {
+    const shops = (GUIDE.npcs || []).filter(function (n) { return n.trade && (n.trade.items || []).length; });
+    let total = 0; shops.forEach(function (n) { total += n.trade.items.length; });
+    let html = '<div class="text-block"><div class="section-head"><div class="section-title">NPC 交易清单</div><div class="section-note">' + shops.length + ' 家 · ' + total + ' 条</div></div><div class="tiny dim">按 NPC 展开查看完整买卖清单、价格与库存。</div></div>';
+    html += shops.map(function (n, idx) {
+      const t = n.trade;
+      return '<details class="trade-shop"' + (idx < 2 ? " open" : "") + '><summary><b>' + esc(n.name) + '</b><span>' + esc(t.title || "商店") + ' · ' + t.items.length + ' 项</span><em>' + esc(t.currencyName || "货币") + '</em></summary><div class="trade-list">' +
+        t.items.map(function (it) {
+          return '<div class="trade-list-row">' + tradeIconHTML(it, 26) +
+            '<div class="trade-list-main"><b>' + esc(it.name || it.id) + '</b><span>' + esc(it.id) + '</span></div>' +
+            '<div class="trade-list-num">×' + esc(fmtNum(it.count)) + '</div>' +
+            '<div class="trade-list-price">' + esc(fmtNum(it.price)) + ' <span>' + esc(it.currencyName || t.currencyName || "货币") + '</span></div>' +
+            '<div class="trade-list-stock">' + (Number(it.stock) < 0 ? "无限" : "库存 " + esc(fmtNum(it.stock))) + '</div></div>';
+        }).join("") + "</div></details>";
+    }).join("");
+    return html;
+  }
+  function openNpcTradeList() {
+    openSheet({ title: "NPC 交易清单", body: npcTradeListHTML(), foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>' });
+  }
+  function installNpcTradeEntry() {
+    if (location.hash !== "#/creatures/npcs") return;
+    const view = q("view");
+    if (!view || view.querySelector(".npc-trade-entry")) return;
+    const el = document.createElement("div");
+    el.className = "section npc-trade-entry";
+    el.innerHTML = '<div class="section-head"><div class="section-title">NPC 交易</div><div class="section-note">价格 / 库存</div></div><button class="row-card" data-action="npc-trade-list"><div class="row-main"><div class="row-title">打开完整交易清单</div><div class="row-sub">所有 NPC 商店、买卖物品、价格与库存</div></div><div class="row-right"><span class="badge">打开</span></div></button>';
+    view.insertBefore(el, view.firstChild);
+  }
+
   function openArmorAnalysis() {
     openSheet({ title: "护甲评分与套装推荐", body: armorReportHTML(), foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>' });
   }
@@ -3714,6 +3745,7 @@
       case "admin-panel": renderAdminPanel(); break;
       case "global-search": openGlobalSearch(); break;
       case "armor-analysis": openArmorAnalysis(); break;
+      case "npc-trade-list": openNpcTradeList(); break;
       case "cms-text": cmsStart("text"); break;
       case "cms-image": cmsStart("image"); break;
       case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
