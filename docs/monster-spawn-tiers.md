@@ -1,13 +1,13 @@
 # 每只怪物的刷怪梯度（生成物，勿手改）
 
-- 生成：`tsx scripts/gen-monster-spawn-tiers.ts`，2026-10-22；机读数据 `public/data/monster-spawn-tiers.js`
+- 生成：`tsx scripts/gen-monster-spawn-tiers.ts`，2026-10-24；机读数据 `public/data/monster-spawn-tiers.js`
 - 区域列 = `config/incontrol/spawner.json` 里带区域标签的规则（城市内），数字是「每秒触发概率」之和
 - 尸潮列 = 15 天一波的天数尸潮表号（表号 = 该档起始世界天数）
 - 建筑列 = 尸潮建筑（LostSouls）名单；`自然` = 模组自带 `forge:add_spawns`，任何群系都能刷
 
 共 153 个实体条目：区域刷怪 T1 6 / T2 11 / T3 18 / T4 34；天数尸潮 31 只；建筑尸潮 32 只；**未实装 60 只**（四个来源都没有）。
 
-相关文档：`docs/monster-scaling-logic.md`（强化逻辑）、`docs/horde-buildings.md`（逐建筑尸潮）、`docs/monster-difficulty-analysis.md`（推导与实测校核）。
+相关文档：`docs/monster-handbook.md`（属性 / 结算 / 刷怪 / 尸潮单篇）、`docs/horde-buildings.md`（逐建筑尸潮）、`docs/monster-difficulty-table.md`（场景抽样与尸潮天数档）。
 
 ## 1. 梯度总览
 

@@ -54,6 +54,12 @@ T4 分组从 34 降到 15、全图分组从 30 降到 28。动物不分组、不
 `T1 T2 T3 T4` 四个点是固定槽位，实心＝该梯度会刷，色阶只用一种红色从 0.45 到 0.92 的浓淡表示危险递进；
 不挑区域的标「全图」，只在深渊维度刷的标「深渊」，未实装的两档不画点阵、右侧写「无梯度」。右侧数字是 `attribute.js` 原值（基础生命 / 护甲 / 攻击），场景化的数字走「具体数值」按钮。
 
+长列表不再一次塞进 DOM：怪物 200 条、枪械 177 条、载具 118 条都走 `src/client/lazy.ts` 的滚动加载
+（先渲 40 条，滚到哨兵再追加 40 条；行直接插进 `.list` 容器，不加包裹层，所以 flex/grid 的 gap 与两列网格不变；
+浏览器不支持 `IntersectionObserver` 时退回一次全渲染）。怪物页「未实装」两档、图鉴通用列表都是同一个实现。
+
+NPC 详情页的交易清单超过 8 条时默认只显示前 8 条，底部一个「展开全部 N 项 / 收起」，按钮复用 `.quote-toggle`。
+
 URL 参数可直接分享筛好的视图：`#/creatures/monsters?t=T1&th=灾厄`、`#/creatures/monsters/unimplemented?th=真菌`；
 梯度 chip 的取值是 `T1`–`T4` / `全图` / `深渊`。
 
@@ -82,10 +88,43 @@ HUD 指标图标（`public/images/ui/stat-*.png`）与像素字是同一套视�
 - **音乐按钮**（`#musicFab`）从「按内容栏居中」改成 `right: 0` 贴屏幕右边缘，纵向位置不变；
   音乐面板 `.music-panel` 仍按内容栏居中，两者不再共用同一套定位。
 
+## 8. 怪物数值手册（`#/creatures/monsters/stats`）
+
+指南版有整页「怪物数值手册」，合并时连数据一起丢了（`GUIDE.monsterStats` / `monsterHandbook` 在当前
+`public/data/guides.js` 里 0 处）。现在按同一信息密度重建，但不再另造数据：
+
+| 块 | 来源 |
+|---|---|
+| 四格统计（实体 / 最高生命 / 最高护甲 / 最高攻击） | `monsters-difficulty.js` 的 `entities` 现算 |
+| 速查 5 条、倍率层 9 行、区域标签 4 行 | 编辑内容，以 `docs/monster-handbook.md` §0 / §3.2 为准 |
+| 133 行实体表（11 列、可搜可排序） | `entities[*].base` + `wild.easy/hard.toPlayer`，刷怪列取梯度数据的 `status` |
+
+- 口径说明写在 hero 里：页面目录 200 条 = 会刷 93 + 未实装 60 + 来源未确认 47，本表只覆盖 133 条实体。
+- 「简单 / 困难」两列是**怪打向裸装玩家**的伤害，不是血量倍率 —— 页面上明写了这一句，避免和矩阵混读。
+- 不新增视觉：统计借用 `.stat-grid/.stat-box`，速查借用 `.handbook-rule`，表格借用 `.data-table`；
+  只补了排序按钮 `.ms-sort` 与 11 列宽表 `.ms-entities`。
+
 ## 7. 断言与回归
 
-`npm run verify:monsterguide`（383 项）锁住：合并总数与三档互斥、三条 id 拼写修正、梯度计数 6/11/18/34、全图 30 / 深渊 5、
+`npm run verify:monsterguide`（415 项）锁住：合并总数与三档互斥、三条 id 拼写修正、梯度计数 6/11/18/34、全图 30 / 深渊 5、
 动物 21 / 怪物 72、怪物页 T4 15 与全图 28（扣掉动物后）、动物清单全中立且 6 种有数值、
 未实装不带任何刷怪来源、威胁等级取值合法、僵尸与菌械重炮的矩阵锚点（含深渊与深渊尸潮推算）、派出所僵尸 50/5.63、
 `index.html` 与 SW 的接线、两个字体文件与 OFL 许可证存在且被 CSS / SW 引用、HUD 图标文件存在、详情页对未实装不给矩阵、
 行首图标存在与按类别回退、数值按钮白底只在浅色主题生效、音乐按钮贴右边缘。
+
+`npm run verify:monsterguide` 现在还守长列表与折叠：滚动加载每块 40 条、哨兵提前 600px、行不加包裹层、
+不支持时降级、渲染完移除哨兵、怪物与图鉴列表都用同一实现、NPC 交易默认 8 条且能展开。
+
+`npm run verify:monsterstats`（52 项）单独锁数值手册：133 条实体且 `source.entities` 一致、每条的刷怪状态都查得到、
+132 条有 `base`、11 列齐全、倍率层与区域标签的行数和手册表格一致、路由与入口按钮接线、入口不写死 132、
+只复用既有组件（`.stat-grid` / `.handbook-rule` / `.data-table`）。
+
+## 9. CSS 里没有死样式
+
+合并时把指南版 `app.css` 整份当成基座，于是分页、展示柜、海报弹层这些**当前页面不会产生 DOM** 的规则也留了下来。
+B9 一轮清掉 76 个规则块（3549 → 3449 行）：`page-bar` / `page-btn` / `showcase-*` 全族 / `monster-level` /
+`poster-view` / `poster-modal*`。保留 `quote-toggle`（NPC 折叠在用）与 `poster-thumb*`、`poster-side`、`poster-layout`（建筑页在用）。
+`verify:monsterguide` 里 4 条断言守着它们不再回潮。
+
+已知未清：`body.page-monsters …` 那 24 条放大规则同样没有 DOM 产生（客户端从不设置这个 body class），留待后续确认。
+

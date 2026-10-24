@@ -1,8 +1,8 @@
 # 怪物难度数据表（生成物，勿手改）
 
-- 生成：`tsx scripts/gen-monster-difficulty.ts`，生成时间 2026-10-22
+- 生成：`tsx scripts/gen-monster-difficulty.ts`，生成时间 2026-10-24
 - 数据源：`kubejs/startup_scripts/entity/attribute.js`（基础属性）、`config/incontrol/spawn.json`（区域/难度倍率）、`config/hordes/data/hordes/horde_data/{tables,scripts}`、`config/hordes-common.toml`
-- 机读数据：`public/data/monsters-difficulty.js`（`window.WZ_MONSTER_DIFF`，132 个实体；未接入站点）
+- 机读数据：`public/data/monsters-difficulty.js`（`window.WZ_MONSTER_DIFF`，133 个实体；未接入站点）
 
 ## 1. 口径
 

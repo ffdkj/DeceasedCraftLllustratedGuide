@@ -507,7 +507,8 @@ function main() {
       regional: "config/incontrol/spawn.json",
       horde: "config/hordes/data/hordes/horde_data/{tables,scripts}",
       hordeConfig: "config/hordes-common.toml",
-      entities: base.size,
+      // 实体口径统一用总数（含 base 缺失的 night_hunter），避免文档/数据/手册三个数
+      entities: Object.keys(entities).length,
     },
     rules: {
       vanillaDifficulty: VANILLA_LABEL,

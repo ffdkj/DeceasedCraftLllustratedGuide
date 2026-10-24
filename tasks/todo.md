@@ -187,3 +187,45 @@
     `src/client/main.ts`、`src/client/app.ts`、`src/client/tiers.ts`、`index.html`、`public/css/app.css`、
     `scripts/verify-admin.ts`、`scripts/build-sw.ts`、`scripts/check-assets.ts`、`scripts/verify-fingerprint.ts`、
     `docs/admin-image-editor.md`、`.env.example`、`package.json`
+
+- [x] T32 重建「怪物数值手册」页（指南版整页在合并时丢失）
+  - Acceptance: 怪物页能进到数值手册，一页看到 133 条实体的基础属性、速查、倍率层与区域标签；
+    数据只来自生成物，不新造产物；口径（页面 200 vs 实体 133）写在页面上
+  - Result: 路由沿用指南版 `#/creatures/monsters/stats`，入口按钮在怪物页底部（实体数取自生成物）；
+    数据直读 `monsters-difficulty.js`（133 条）+ 梯度数据的 `status` 作刷怪列；速查/倍率层/区域标签按
+    `docs/monster-handbook.md` §0/§3.2 写进 `src/client/monster-stats.ts`，断言的层数与手册表格行数同步；
+    11 列可搜可排序，默认按生命降序；复用 `.stat-grid` / `.handbook-rule` / `.data-table`，只新增 `.ms-sort`
+    与 `.ms-entities` 宽表规则；`verify:monsterstats` 52 项进 `npm run verify`；DOM 桩实测 19 项全绿
+  - Files: `src/client/monster-stats.ts`、`src/client/app.ts`、`src/client/main.ts`、
+    `src/client/types/data.d.ts`、`public/css/app.css`、`scripts/verify-monster-stats.ts`、`package.json`、
+    `docs/monster-guide-ui.md`、`docs/merge-conflicts.md`、`CONTEXT.md`
+
+- [x] T33 长列表滚动加载 + NPC 交易折叠（B3/B5）
+  - Acceptance: 怪物 / 枪械 / 载具这类长列表不再一次塞进 DOM，滚到才继续渲染；NPC 交易超过 8 条默认折叠
+  - Result: 新增 `src/client/lazy.ts`（每块 40 条 + 哨兵 + `rootMargin: 600px`，渲染完移除哨兵并 `disconnect`，
+    不支持 `IntersectionObserver` 时退回全量；行直接插进容器不加包裹层，`.list` 的 gap 与两列网格不变）；
+    怪物列表（含未实装两档）与图鉴通用列表共用；NPC 交易默认 8 条 + 「展开全部 N 项」，复用 `.quote-toggle`
+    与 `npc-trade-toggle` 动作；`verify:monsterguide` 395 → 411 项，DOM 桩实测 lazy 12 项
+  - Files: `src/client/lazy.ts`、`src/client/app.ts`、`scripts/verify-monster-guide.ts`、
+    `docs/monster-guide-ui.md`、`docs/merge-conflicts.md`
+
+- [x] T34 清掉合并遗留的死样式（B9）
+  - Acceptance: 只在指南版存在、当前页面不产生 DOM 的规则从 `app.css` 删掉，且不影响在用的样式
+  - Result: 按选择器删了 76 个规则块（含 `@media` 嵌套与共享选择器列表），CSS 3549 → 3449 行；
+    清除 `page-bar` / `page-btn` / `showcase-*` 全族 / `monster-level` / `poster-view` / `poster-modal*`；
+    保留 `quote-toggle`（NPC 折叠）、`poster-thumb*` / `poster-side` / `poster-layout`（建筑页）；
+    两条被压长行的字体选择器列表重新折行；`verify:monsterguide` 411 → 415 项（4 条防回潮断言）
+  - Files: `public/css/app.css`、`scripts/verify-monster-guide.ts`、`docs/monster-guide-ui.md`、`docs/merge-conflicts.md`
+
+- [x] T35 把 T31/T32 的文档成果重放到新基线（guide 为准之后）
+  - Acceptance: 新基线（`origin/main` = guide 覆盖根站）上仍有完整怪物手册，两篇已合并的叙述文档不复活，
+    三张数据表的表头口径与实际数据一致
+  - Result: `monster-handbook.md` 入库；`monster-difficulty-analysis.md` / `monster-scaling-logic.md` 删除（历史可查）；
+    `gen-monster-difficulty.ts` 的实体口径从 `base.size` 改为 `Object.keys(entities).length`
+    （`night_hunter` 不在 base 里，所以旧值恒为 132 而实际 133）；重跑两个生成器，表头变 `2026-10-24` / 133 实体，
+    数据文件只有 `generated` 与 `meta.entities` 两处差异；`verify:monsters`（133 实体 / 1584 单元格）、
+    `verify:spawntiers`（153 实体）通过。两份 merge 清单补了结案状态头，`wip/root-first` 作存档分支保留
+  - Files: `docs/monster-handbook.md`、`docs/monster-difficulty-table.md`、`docs/monster-spawn-tiers.md`、
+    `docs/merge-conflicts.md`、`docs/merge-conflicts-remote.md`、`scripts/gen-monster-difficulty.ts`、
+    `public/data/monsters-difficulty.js`、`public/data/monster-spawn-tiers.js`、`CONTEXT.md`
+
