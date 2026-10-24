@@ -8,6 +8,7 @@
   const RECORD_KEY = "wz_gunsmith_records_v1";
   const MAX_RECORDS = 30;
   const UI = function () { return window.WZ_APP_UI || {}; };
+  const TIERS = function () { return window.WZ_TIERS_UI || null; };
 
   const SLOT_ORDER = ["scope", "muzzle", "stock", "grip", "laser", "extended_mag"];
   const SLOT_NAMES = { scope: "瞄具", muzzle: "枪口", stock: "枪托", grip: "握把", laser: "激光", extended_mag: "弹匣 / 弹药" };
@@ -382,10 +383,12 @@
   function gunCard(g) {
     const gs = gunData(g.id);
     const modes = gs ? (fireText(gs) || g.type || "枪械") : (g.type || "枪械");
+    const T = TIERS();
+    const tierMinis = T && T.available() ? '<span class="gs-tier-minis">' + T.mini(g.id) + '</span>' : "";
     return '<button class="gs-gun-card" data-gs-action="open" data-gun-id="' + esc(g.id) + '">' +
       '<div class="gs-gun-thumb">' + gunImg(g, gs, 76) + '</div>' +
       '<div class="gs-gun-body"><div class="gs-gun-name">' + esc(g.name || (gs && gs.name) || g.id) + '</div>' +
-      '<div class="gs-gun-sub">' + esc((gs && gs.type) || g.type || "枪械") + ' · ' + esc(modes) + '</div>' +
+      '<div class="gs-gun-sub"><span class="gs-sub-text">' + esc((gs && gs.type) || g.type || "枪械") + ' · ' + esc(modes) + '</span>' + tierMinis + '</div>' +
       '<div class="gs-gun-stats"><span>伤害 <b>' + fmt(gs ? gs.damage : g.damage, 1) + '</b></span><span>RPM <b>' + fmt(gs ? gs.rpm : g.rpm, 0) + '</b></span><span>弹容 <b>' + ((gs && gs.magLabel) ? esc(gs.magLabel) : fmt(gs ? gs.mag : g.mag, 0)) + '</b></span></div></div>' +
       '<span class="gs-gun-arrow">' + icon("chevron", 16) + '</span></button>';
   }
@@ -440,9 +443,14 @@
 
   function slotCard(gun, slot, att) {
     const a = att ? mergedAtt(gun, att) : null;
+    /* 槽位一行一个：修正值用 chip 全列出来（最多 6 条），不再截成「a · b · c」 */
+    const mods = a ? (a.mods || []).slice(0, 6) : [];
+    const modsHTML = mods.length
+      ? '<div class="gs-slot-mods">' + mods.map(function (m) { return '<span class="gs-slot-mod">' + esc(m) + '</span>'; }).join("") + '</div>'
+      : (a ? '<div class="gs-slot-mods none">无数值修正</div>' : "");
     return '<button class="gs-slot ' + (a ? "filled" : "") + '" data-gs-action="slot" data-slot="' + esc(slot) + '">' +
       '<div class="gs-slot-head"><span>' + esc(SLOT_NAMES[slot] || slot) + '</span><span class="gs-slot-plus">' + (a ? "更换" : "+ 安装") + '</span></div>' +
-      '<div class="gs-slot-main">' + (a ? attIcon(a, 46) + '<div><div class="gs-slot-name">' + esc(a.name) + '</div><div class="gs-slot-mods">' + esc((a.mods || []).slice(0, 3).join(" · ") || "无数值修正") + '</div></div>' : '<div class="gs-slot-empty">' + SLOT_ICONS[slot] + ' 未安装</div>') + '</div>' +
+      '<div class="gs-slot-main">' + (a ? attIcon(a, 46) + '<div><div class="gs-slot-name">' + esc(a.name) + '</div>' + modsHTML + '</div>' : '<div class="gs-slot-empty">' + SLOT_ICONS[slot] + ' 未安装</div>') + '</div>' +
       '</button>';
   }
 
@@ -478,8 +486,8 @@
       '<div class="gs-head">' +
         '<div class="gs-head-icon">' + gunImg(item, gs, 92) + '</div>' +
         '<div class="gs-head-body"><div class="gs-kicker">' + esc((gs && gs.type) || item.type || "枪械") + '</div><h1>' + esc(item.name || gunId) + '</h1>' +
-        '<div class="gs-badges">' + modes + '</div>' +
-        '<div class="gs-head-ammo">' + esc(item.ammo || (gs && gs.ammoName) || "—") + (gs && gs.bulletAmount > 1 ? " · " + gs.bulletAmount + " 弹丸" : "") + '</div></div>' +
+        '<div class="gs-badges">' + modes + ((TIERS() && TIERS().available()) ? '<span class="gs-tier-minis">' + TIERS().mini(gunId, true) + '</span>' : "") + '</div>' +
+        '<div class="gs-head-ammo">' + esc((gs && gs.ammoName) || item.ammo || "—") + (gs && gs.bulletAmount > 1 ? " · " + gs.bulletAmount + " 弹丸" : "") + '</div></div>' +
         '<button class="gs-switch" data-gs-action="gun-picker">换枪</button>' +
       '</div>' +
       '<div class="gs-actions"><button class="gs-btn" data-gs-action="reset">' + icon("trash", 16) + ' 清空配件</button>' +

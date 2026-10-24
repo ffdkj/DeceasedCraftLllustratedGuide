@@ -67,9 +67,10 @@ check(/\.gs-stat-bar \{[^}]*height: 4px/s.test(css), "数值条 4px（3px 时绿
 check(/\.gs-stat-bar \{[^}]*overflow: hidden/s.test(css), "条两端裁圆角");
 check(/\.gs-stat-bar i \{[^}]*position: absolute/s.test(css), "各段绝对定位并排");
 check(
-  /\.gs-stat-bar i \{[^}]*linear-gradient\(90deg, var\(--amber\), var\(--amber-2\)\)/s.test(css),
-  "底座段用主题主色",
+  /\.gs-stat-bar i \{[^}]*background: var\(--amber\);/s.test(css),
+  "底座段用主题主色（实色，不再用渐变）",
 );
+check(!/\.gs-stat-bar i \{[^}]*linear-gradient/s.test(css), "底座段不再出现渐变（渐变在 4px 上读起来像脏色）");
 check(/\.gs-stat-bar i\.good \{ background: var\(--green\); \}/.test(css), "变化段绿色 = 改善");
 check(/\.gs-stat-bar i\.bad \{ background: var\(--red\); \}/.test(css), "变化段红色 = 变差");
 

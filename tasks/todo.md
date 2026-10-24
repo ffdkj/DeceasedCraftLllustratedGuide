@@ -255,3 +255,39 @@
     hordebuildings 969 · monsterguide 389(+6 未移植) · downloads 17 · compat · gunsmith 35 ·
     community 42 · admin 95 · guide 64 —— 全绿
   - Files: `scripts/verify-tiers.ts`、`scripts/verify-monster-guide.ts`、`scripts/verify-fingerprint.ts`
+
+## 第五轮（改枪台梯度归档 + 数值条 + 槽位 + 主题 / 电脑端）
+
+- [x] T38 梯度缩写（G1）搬进 guide
+  - Acceptance: 枪械卡片副标题与工作台头部徽章行都出现「图标 + T2枪械 / T1子弹」；头部可点跳到元件 / 模具页；
+    无模具 / 无弹药不显示那一枚；`verify:tiers` 的 11 条「未移植」转硬断言后仍全绿
+  - Result: `public/guide/js/tiers.js`（WZ_TIERS_UI.mini，图标复用 `WZ_APP_UI.itemIcon` / `ammoTexture`）+
+    `public/guide/data/tiers.js`（生成物副本，178 把枪 / 24 口径全覆盖）+ 入口与 SW 接线 + 四档配色（含浅色覆盖）。
+    头部 `mini(gunId, true)` 是 `<button data-go>`，卡片里是 `<span>`（卡片整体已是按钮）
+  - Files: `public/guide/js/tiers.js`、`public/guide/data/tiers.js`、`public/guide/js/gunsmith.js`、
+    `public/guide/js/app.js`、`public/guide/index.html`、`public/guide/sw.js`、`public/guide/css/app.css`、
+    `scripts/verify-tiers.ts`、`scripts/verify-guide.ts`
+
+- [x] T39 数值条去掉渐变 + 配件槽位改一行一个
+  - Acceptance: `.gs-stat-bar > i` 是实色主题主色；槽位在 620px 以上也是一行一个，修正值不再被截成「a · b · c」
+  - Result: 底座段 `background: var(--amber)`（4px 高的渐变读起来像脏色）；槽位固定单列，
+    修正值改成 chip（最多 6 条）完整列出；`verify:gunsmith` 的「底座段用渐变」断言改成实色 + 反向断言
+  - Files: `public/guide/css/app.css`、`public/guide/js/gunsmith.js`、`scripts/verify-gunsmith.ts`
+
+- [x] T40 深浅主题对齐
+  - Acceptance: 顶栏 / 底栏不再在两套主题里都是黑；同一主题只有一个主色；图片底页在浅色主题下能被文字压住
+  - Result: 引入 `--nav-*`（bg / line / text / muted / hover）与 `--page-veil`（整版背景蒙版，深浅各一套），
+    顶栏底栏换掉 6 处写死的 `#0b0b0b`；浅色主题残留的蓝（`--amber-2` / brand-mark / fab / music-* / mat-count）
+    统一成绿；`--dim` 深色 8c8c8c、浅色 6b6b6b（原来 777/888 都到不了 4.5:1）；
+    芯片从透明底改成 `var(--panel)`（图片背景上等于没字）；`.detail-hero` 的 hero 文案跟主题走（浅色下 #d0d0d0 隐形）；
+    对比度审计从 30+ 处降到只剩装饰水印
+  - Files: `public/guide/css/app.css`、`CONTEXT.md`
+
+- [x] T41 电脑端布局
+  - Acceptance: ≥1024px 时内容吃满 1240 壳、列数变多、字号有一套固定比例；手机上不再横向滚动
+  - Result: 删掉三层 zoom（`body .78 / .82 / .view 1.5`，它们正是 390px 下横向滚动的根因），
+    新增 ≥1024 布局段：壳 1240 + 28 留白，正文 16 / 行标题 17 / 板块标题 22 / hero 17，
+    枪械与怪物网格 3 列、hub 自适应、`stat-grid` 4 列；怪物图鉴的大字版只在窄屏保留；
+    音乐/返回顶部/操作胶囊三枚悬浮件在右侧排成一条（原来叠在搜索条与卡片上）；
+    `.gs-gun-card` 补 `min-width: 0`（grid item 的 min-content 会撑破列宽）
+  - Files: `public/guide/css/app.css`

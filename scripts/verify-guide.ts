@@ -130,6 +130,14 @@ function check(cond: boolean, message: string): void {
   check(app.includes('if (type === "guns") return "#/gear/gunsmith/'), '枪械详情链接改指改枪台（入链不留死链）');
   check(gunsmith.includes('#/gear/guntable'), '数据表入口搬到改枪台（仍然可达）');
   check(gunsmith.includes('gunInfoSections'), '工作台接管了枪械资料区');
+
+  /* 梯度缩写（G1）：卡片副标题 + 工作台头部，数据与脚本都由 guide 自己加载 */
+  check(has('public/guide/js/tiers.js'), 'guide 自带梯度脚本');
+  check(has('public/guide/data/tiers.js'), 'guide 自带梯度数据');
+  check(html.includes('./data/tiers.js') && html.includes('./js/tiers.js'), 'guide 入口加载梯度数据与脚本');
+  check(gunsmith.includes('TIERS()'), '改枪台接了梯度缩写');
+  check(gunsmith.includes('gs-tier-minis'), '梯度缩写包在 .gs-tier-minis 里');
+  check(css.includes('.gs-tier-mini.tier-T1') && css.includes('[data-theme="light"] .gs-tier-mini.tier-T1'), '梯度缩写四档配色 + 浅色覆盖');
   check(gunsmith.includes('recipeSection') && gunsmith.includes('lootSourcesSection'), '合成材料与来源复用 app.js 的分区，没有第二份实现');
   check(app.includes('recipeSection: recipeSection'), 'app.js 把分区渲染导出给改枪台');
   check(app.includes('lazyList(box, list'), '图鉴通用长列表仍然接在滚动加载上');

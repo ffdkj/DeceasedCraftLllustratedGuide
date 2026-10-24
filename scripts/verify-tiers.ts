@@ -307,7 +307,7 @@ check(Object.prototype.hasOwnProperty.call(textureItems, "tacz:ammo"), "无模�
   ui(/\.gs-tier-minis \{[^}]*display: inline-flex/s.test(css), "缩写组是 inline-flex（同排）");
   ui(/\.tier-ico \.item-ico[\s\S]{0,220}border: 0/.test(css), "梯度图标去掉 1px 边框（否则 border-box 下图案被裁偏）");
   ui(/\.gs-head-body \{ padding-right: 0; \}/.test(css), "窄屏头部不再给整块留 40px，梯度标签能用满宽度");
-  ui(/\.tier-tag \.tier-ico \.item-ico \{ width: 16px; height: 16px; \}/.test(css), "详情页满标签的图标仍是 16px");
+  ui(/\.gs-tier-mini \.tier-ico \.item-ico,[\s\S]{0,60}|\.tier-ico \.item-ico \{[^}]*width: 14px; height: 14px/s.test(css), "缩写图标 14px（头部徽章行同尺寸）");
   check(gsSrc.includes('class="gs-sub-text"'), "副标题文本单独包一层，超长只截文本");
   for (const t of ["T1", "T2", "T3", "T4"]) {
     ui(css.includes(`.gs-tier-mini.tier-${t}`), `卡片梯度缩写配色 ${t}`);
@@ -322,6 +322,27 @@ check(Object.prototype.hasOwnProperty.call(textureItems, "tacz:ammo"), "无模�
   check(/href: b\.mold \? "#\/item\/" \+ encodeURIComponent\(b\.mold\)/.test(tiersSrc), "点击落地页仍是模具页");
   ui(/\.tier-ico \.item-ico\.ammo-ico \{/.test(css), "子弹图标有独立样式（缩放到 14/16px）");
   ui(/image-rendering: pixelated/.test(css.slice(css.indexOf(".item-ico.ammo-ico"), css.indexOf(".item-ico.ammo-ico") + 300)), "子弹图标保持像素边缘");
+}
+
+/* ---------------- guide 站点接线（站点以 public/guide 为准） ---------------- */
+{
+  const { readFileSync: readG, existsSync: hasG } = await import("node:fs");
+  const { join: joinG } = await import("node:path");
+  const root = process.cwd();
+  const gTiers = readG(joinG(root, "public/guide/js/tiers.js"), "utf8");
+  const gGs = readG(joinG(root, "public/guide/js/gunsmith.js"), "utf8");
+  const gHtml = readG(joinG(root, "public/guide/index.html"), "utf8");
+  const gSw = readG(joinG(root, "public/guide/sw.js"), "utf8");
+  check(hasG(joinG(root, "public/guide/data/tiers.js")), "guide 自带 data/tiers.js");
+  check(!hasG(joinG(root, "public/guide/js/tiers.ts")), "guide 里没有第二份 TS 实现");
+  check(gHtml.includes("./data/tiers.js"), "guide 入口加载梯度数据");
+  check(gHtml.indexOf("./js/tiers.js") > 0 && gHtml.indexOf("./js/tiers.js") < gHtml.indexOf("./js/gunsmith.js"), "梯度脚本先于改枪台加载");
+  check(gTiers.includes("window.WZ_TIERS_UI"), "guide 暴露 WZ_TIERS_UI");
+  check(gTiers.includes("mini: mini,"), "guide 的 WZ_TIERS_UI 暴露 mini()");
+  check(gGs.includes("T.mini(g.id)"), "枪械卡片副标题用 mini()");
+  check(gGs.includes("TIERS().mini(gunId, true)"), "工作台头部用可点的 mini()");
+  check(gGs.includes('class="gs-tier-minis"'), "头部缩写包在 .gs-tier-minis 里（两枚同排）");
+  check(gSw.includes("./data/tiers.js") && gSw.includes("./js/tiers.js"), "SW 预缓存梯度数据与脚本");
 }
 
 /* ---------------- 生成器自检干净 ---------------- */

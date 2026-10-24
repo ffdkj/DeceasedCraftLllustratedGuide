@@ -4114,6 +4114,8 @@
        复用这里的实现，别再写一份 */
     recipeSection: recipeSection, effectSection: effectSection,
     lootSourcesSection: lootSourcesSection,
+    /* 梯度标签要复用同一套贴图解析：元件走图集、子弹走弹药槽贴图 */
+    itemIcon: itemIcon, ammoTexture: ammoTexture,
     commentsHTML: commentsHTML, mountPageComments: mountPageComments
   };
   function installWatermark() {

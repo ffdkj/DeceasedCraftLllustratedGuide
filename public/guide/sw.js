@@ -1,5 +1,5 @@
 /* 亡者世界图鉴 · 离线缓存 */
-const CACHE = "wz-guide-v3.9.3-admin";
+const CACHE = "wz-guide-v3.10.0-tiers";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const ASSETS = [
   "./js/app.js",
   "./js/music.js",
   "./js/seed.js",
+  "./js/tiers.js",
   "./js/gunsmith.js",
   "./audio/search.m4a",
   "./audio/hope.m4a",
@@ -19,6 +20,7 @@ const ASSETS = [
   "./data/textures.js",
   "./data/guides.js",
   "./data/gunsmith.js",
+  "./data/tiers.js",
   "./textures/atlas.webp",
   "./manifest.webmanifest",
   "./icons/icon.svg",

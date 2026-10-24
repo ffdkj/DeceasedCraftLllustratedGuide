@@ -54,3 +54,6 @@ __pycache__/
 .cache/
 
 .data/
+
+# local playwright scratch (screenshots / chromium)
+.pw/
