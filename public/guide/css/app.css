@@ -3392,3 +3392,5 @@ body.page-community .view { background: #050706 !important; }
 .source-thumb-empty { display:inline-flex; align-items:center; justify-content:center; color:var(--muted); font-weight:700; }
 .source-card .source-top { align-items:flex-start; gap:10px; }
 .source-card .source-name { flex:1; min-width:0; }
+
+.container-ico .item-ico, .container-ico img, .container-ico .ico { width:24px !important; height:24px !important; }
