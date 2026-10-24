@@ -1385,6 +1385,17 @@
 
 
 
+
+  function installArmorAnalysisEntry() {
+    if (location.hash !== "#/gear/armor") return;
+    const view = q("view");
+    if (!view || view.querySelector(".armor-analysis-entry")) return;
+    const el = document.createElement("div");
+    el.className = "section armor-analysis-entry";
+    el.innerHTML = '<div class="section-head"><div class="section-title">套装评分与推荐</div><div class="section-note">护甲 / 近战 / 远程</div></div><button class="row-card" data-action="armor-analysis"><div class="row-main"><div class="row-title">计算套装评分与配套武器</div><div class="row-sub">原版护甲减伤公式 · 套装词条 · 负面权重 · 近战/远程适配</div></div><div class="row-right"><span class="badge">打开</span></div></button>';
+    view.insertBefore(el, view.firstChild);
+  }
+
   function installPageSearch() {
     const view = q("view");
     if (!view || view.querySelector(".page-search")) return;
@@ -1397,7 +1408,91 @@
     input.addEventListener("focus", function () { input.blur(); openGlobalSearch(); });
     bar.addEventListener("click", function (e) { if (e.target !== input) openGlobalSearch(); });
   }
-  new MutationObserver(function () { setTimeout(installPageSearch, 0); }).observe(document.getElementById("view"), { childList: true });
+  new MutationObserver(function () { setTimeout(installPageSearch, 0); setTimeout(installArmorAnalysisEntry, 0); }).observe(document.getElementById("view"), { childList: true });
+
+
+  function armorAnalyze(set) {
+    const pieces = set.pieces || [];
+    let armor = 0, tough = 0, dura = 0;
+    pieces.forEach(function (x) { armor += Number(x.armor || 0); tough += Number(x.toughness || 0); dura += Number(x.durability || 0); });
+    const incoming = 10;
+    const raw = Math.min(20, Math.max(armor / 5, armor - incoming / (2 + tough / 4)));
+    const vanillaDR = Math.max(0, raw / 25);
+    let resistance = 0, dmg = 0, speed = 0, ranged = 0, shred = 0, move = 0, health = 0, luck = 0, negative = 0;
+    const effects = [];
+    (set.bonuses || []).forEach(function (b) {
+      const v = Number(b.value || 0);
+      const name = String(b.name || "").toLowerCase();
+      const desc = String(b.description || "");
+      const factor = b.type && b.type.indexOf("部分") >= 0 ? 0.6 : 1;
+      if (name.indexOf("resistance") >= 0 || desc.indexOf("伤害减免") >= 0) resistance += Math.min(0.8, Math.abs(v) * 0.2);
+      else if (name.indexOf("attack_damage") >= 0) dmg += v * factor;
+      else if (name.indexOf("attack_speed") >= 0) speed += v * factor;
+      else if (name.indexOf("ranged_damage") >= 0) ranged += v * factor;
+      else if (name.indexOf("armor_shred") >= 0) shred += v * factor;
+      else if (name.indexOf("movement_speed") >= 0) move += v * factor;
+      else if (name.indexOf("max_health") >= 0 || name.indexOf("health") >= 0) health += v * factor;
+      else if (name.indexOf("luck") >= 0) luck += v * factor;
+      if (v < 0) negative += Math.abs(v) * factor;
+      if (/slowness|weakness|poison|wither|blindness|nausea|hunger|mining_fatigue|levitation|unluck/.test(name)) negative += Math.abs(v) * 1.5;
+      if (b.description) effects.push(b.description);
+    });
+    const dr = 1 - (1 - vanillaDR) * (1 - resistance);
+    let defense = Math.round(dr * 150 + tough * 3 + Math.min(30, dura / 40));
+    let melee = Math.round(dmg * 120 + speed * 80 + shred * 50 + defense * 0.25);
+    let rangedScore = Math.round(ranged * 120 + defense * 0.3 + move * 20);
+    let utility = Math.round(move * 100 + health * 20 + luck * 40);
+    const negPenalty = Math.min(30, Math.round(negative * 100));
+    function clamp(x) { return Math.max(0, Math.min(100, x)); }
+    defense = clamp(defense); melee = clamp(melee); rangedScore = clamp(rangedScore); utility = clamp(utility);
+    const total = clamp(Math.round(defense * 0.45 + Math.max(melee, rangedScore) * 0.35 + utility * 0.20 - negPenalty));
+    const role = melee - rangedScore >= 8 ? "近战" : rangedScore - melee >= 8 ? "远程" : "均衡";
+    return { set: set, armor: armor, tough: tough, dura: dura, vanillaDR: vanillaDR, resistance: resistance, dr: dr, defense: defense, melee: melee, ranged: rangedScore, utility: utility, negative: negPenalty, total: total, role: role, effects: effects };
+  }
+  function armorWeaponPicks() {
+    const melee = (GUIDE.melee || []).filter(function (x) { return Number(x.damageValue) > 0; }).map(function (x) {
+      return { item: x, score: Number(x.damageValue || 0) * (Number(x.speedValue) || 1) + (String(x.tier || "").indexOf("T4") >= 0 ? 8 : 0) };
+    }).sort(function (a, b) { return b.score - a.score; }).slice(0, 2);
+    const gsmap = (window.WZ_GUNSMITH || {}).guns || {};
+    const guns = (GUIDE.guns || []).map(function (g) {
+      const gs = gsmap[g.id] || {};
+      const damage = Number(gs.damage != null ? gs.damage : g.damage) || 0;
+      const rpm = Number(gs.rpm != null ? gs.rpm : g.rpm) || 0;
+      return { item: g, dps: damage * rpm / 60 };
+    }).filter(function (x) { return x.dps > 0; }).sort(function (a, b) { return b.dps - a.dps; }).slice(0, 2);
+    return { melee: melee, guns: guns };
+  }
+  function armorReportHTML() {
+    const list = (GUIDE.armor || []).map(armorAnalyze);
+    const best = list.slice().sort(function (a, b) { return b.total - a.total; });
+    const meleeBest = list.slice().sort(function (a, b) { return b.melee - a.melee; })[0];
+    const rangedBest = list.slice().sort(function (a, b) { return b.ranged - a.ranged; })[0];
+    const defenseBest = list.slice().sort(function (a, b) { return b.defense - a.defense; })[0];
+    const picks = armorWeaponPicks();
+    const chosen = [];
+    [best[0], meleeBest, rangedBest, defenseBest].forEach(function (x) {
+      if (x && !chosen.some(function (y) { return y.set.id === x.set.id; })) chosen.push(x);
+    });
+    function weaponButtons(which) {
+      const rows = which === "melee" ? picks.melee.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/melee/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.weaponType || "近战") + ' · ' + esc(x.item.tier || "") + '</span></button>'; }) : picks.guns.map(function (x) { return '<button class="armor-weapon" data-go="#/gear/gun/' + encodeURIComponent(x.item.id) + '"><b>' + esc(x.item.name) + '</b><span>' + esc(x.item.type || "枪械") + ' · DPS ' + Math.round(x.dps) + '</span></button>'; });
+      return rows.join("");
+    }
+    let html = '<div class="text-block armor-formula"><div class="section-head"><div class="section-title">评分公式</div><div class="section-note">原版护甲模型</div></div>' +
+      '<div class="armor-formula-line">原版减伤 = min(20, max(护甲/5, 护甲 − 10/(2+韧性/4))) / 25</div>' +
+      '<div class="armor-formula-line">有效减伤 = 1 − (1 − 原版减伤) × (1 − 抗性)</div>' +
+      '<div class="armor-formula-line">综合 = 防御×45% + max(近战,远程)×35% + 功能×20% − 负面权重</div>' +
+      '<div class="tiny dim">固定按 10 点 incoming 伤害计算；部分套装按 60% 计入，负面词条单独扣分。</div></div>';
+    html += '<div class="armor-report-grid">' + chosen.map(function (x) {
+      return '<div class="armor-report-card"><div class="armor-report-head"><div><b>' + esc(x.set.name) + '</b><span>' + esc(x.set.tier || "") + ' · ' + x.role + '</span></div><div class="armor-total">' + x.total + '</div></div>' +
+        '<div class="armor-metrics"><div><b>' + Math.round(x.dr * 100) + '%</b><span>有效减伤</span></div><div><b>' + x.defense + '</b><span>防御</span></div><div><b>' + x.melee + '</b><span>近战</span></div><div><b>' + x.ranged + '</b><span>远程</span></div><div><b>−' + x.negative + '</b><span>负面</span></div></div>' +
+        '<div class="armor-effects">' + (x.effects.length ? x.effects.map(function (e) { return '<span>' + esc(e) + '</span>'; }).join("") : '<span>无套装词条</span>') + '</div>' +
+        '<div class="armor-weapons"><div class="armor-weapons-title">推荐近战</div>' + weaponButtons("melee") + '<div class="armor-weapons-title">推荐远程</div>' + weaponButtons("guns") + '</div></div>';
+    }).join("") + "</div>";
+    return html;
+  }
+  function openArmorAnalysis() {
+    openSheet({ title: "护甲评分与套装推荐", body: armorReportHTML(), foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>' });
+  }
 
   function openGlobalSearch() {
     openSheet({
@@ -3618,6 +3713,7 @@
       case "admin-login": openCommunityAuth("admin"); break;
       case "admin-panel": renderAdminPanel(); break;
       case "global-search": openGlobalSearch(); break;
+      case "armor-analysis": openArmorAnalysis(); break;
       case "cms-text": cmsStart("text"); break;
       case "cms-image": cmsStart("image"); break;
       case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
