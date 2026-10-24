@@ -1240,7 +1240,7 @@
         const gm = {};
         (GUIDE.guns || []).forEach(function (x) { gm[x.id] = x.name; });
         h += '<div class="section"><div class="section-head"><div class="section-title">适用枪械</div><div class="section-note">' + item.guns.length + ' 把</div></div><div class="chip-row">' +
-          item.guns.map(function (id) { return '<button class="chip" data-go="' + guideDetailHref("guns", id) + '">' + esc(gm[id] || id) + "</button>"; }).join("") + "</div></div>";
+          item.guns.map(function (id) { return '<button class="chip ammo-gun-chip" data-go="' + guideDetailHref("guns", id) + '">' + esc(gm[id] || id) + "</button>"; }).join("") + "</div></div>";
       }
       if ((item.sources || []).length) {
         h += '<div class="section"><div class="section-head"><div class="section-title">区域建筑来源</div><div class="section-note">按掉率</div></div><div class="list">' +
