@@ -3309,3 +3309,13 @@ body.page-community .view { background: #050706 !important; }
 
 /* 列表渲染优化：屏幕外卡片跳过绘制 */
 .tier-card, .region-card, .hub-card { content-visibility: auto; contain-intrinsic-size: 320px; }
+
+/* 详情页评论 */
+.comment-list { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.comment-row { border:1px solid var(--line); background:var(--panel); border-radius:8px; padding:8px 10px; }
+.comment-head { display:flex; gap:10px; align-items:center; font-size:11px; color:var(--muted); }
+.comment-head b { color:var(--text); font-size:13px; }
+.comment-del { margin-left:auto; background:transparent; border:1px solid var(--line); color:#e07a5f; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px; }
+.comment-text { margin-top:4px; font-size:13px; line-height:1.6; white-space:pre-wrap; }
+.comment-form { display:flex; gap:8px; }
+.comment-form input { flex:1; }
