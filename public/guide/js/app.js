@@ -1338,8 +1338,17 @@
         q("comment-count").textContent = comments.length + " 条";
         list.innerHTML = comments.length ? comments.slice().reverse().map(function (c) {
           return '<div class="comment-row"><div class="comment-head"><b>' + esc(c.user) + '</b><span>' + new Date(c.ts).toLocaleString() + '</span>' +
+            '<button class="comment-like' + (c.liked ? ' liked' : '') + '" data-like-id="' + esc(c.id) + '">♥ ' + (c.likes || 0) + '</button>' +
             (admin ? '<button class="comment-del" data-comment-id="' + esc(c.id) + '">删除</button>' : '') + '</div><div class="comment-text">' + esc(c.text) + '</div></div>';
         }).join("") : '<div class="tiny dim">还没有评论，登录后发第一条。</div>';
+        list.querySelectorAll('.comment-like').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            fetch('/api/comments/' + encodeURIComponent(btn.dataset.likeId) + '/like', { method: 'POST' })
+              .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+              .then(function (x) { if (!x.ok) throw new Error(x.d.error || '操作失败'); load(); })
+              .catch(function (err) { toast(err.message || '操作失败'); });
+          });
+        });
         list.querySelectorAll('.comment-del').forEach(function (btn) {
           btn.addEventListener('click', function () {
             fetch('/api/admin/comments/' + encodeURIComponent(btn.dataset.commentId), { method: 'DELETE' }).then(function () { load(); });
