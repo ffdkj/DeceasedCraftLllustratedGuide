@@ -3387,3 +3387,8 @@ body.page-community .view { background: #050706 !important; }
 .container-ico.drawer { color:#b09acb; background:rgba(176,154,203,.12); }
 .container-ico.crate { color:#7fc79a; background:rgba(127,199,154,.12); }
 .container-head { gap:8px; }
+
+.source-thumb { width:56px; height:56px; flex:0 0 auto; border-radius:8px; object-fit:cover; background:var(--panel-2); }
+.source-thumb-empty { display:inline-flex; align-items:center; justify-content:center; color:var(--muted); font-weight:700; }
+.source-card .source-top { align-items:flex-start; gap:10px; }
+.source-card .source-name { flex:1; min-width:0; }
