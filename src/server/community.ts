@@ -310,6 +310,11 @@ community.post('/comments', async (c) => {
   return c.json({ comment });
 });
 
+community.get('/admin/comments', (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  return c.json({ comments: store.comments.slice(-200).reverse() });
+});
+
 community.delete('/admin/comments/:id', async (c) => {
   if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
   const id = c.req.param('id');
