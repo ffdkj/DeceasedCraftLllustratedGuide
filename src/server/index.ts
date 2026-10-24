@@ -24,9 +24,16 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 function resolveStaticRoot(): string {
   if (process.env.STATIC_ROOT) return path.resolve(process.env.STATIC_ROOT);
+  const guideCandidates = [
+    path.resolve(process.cwd(), 'public/guide'),
+    path.resolve(here, '../client/guide'),
+    path.resolve(here, '../../public/guide')
+  ];
+  const guide = guideCandidates.find((p) => existsSync(path.join(p, 'index.html')));
+  if (guide) return guide;
   const candidates = [
-    path.resolve(here, '../client'), // dist/server -> dist/client
-    path.resolve(here, '../../public'), // src/server -> public (dev)
+    path.resolve(here, '../client'),
+    path.resolve(here, '../../public'),
     path.resolve(process.cwd(), 'public')
   ];
   return candidates.find((p) => existsSync(p)) ?? path.resolve(process.cwd(), 'public');
@@ -52,8 +59,8 @@ async function indexHtml(): Promise<string> {
   return html;
 }
 
-app.get('/', (c) => c.redirect('/guide/'));
-app.get('/index.html', (c) => c.redirect('/guide/'));
+app.get('/', serveIndex);
+app.get('/index.html', serveIndex);
 
 async function serveIndex(c: Context) {
   const html = await indexHtml();
