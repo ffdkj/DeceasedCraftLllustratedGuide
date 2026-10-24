@@ -1534,8 +1534,8 @@
     if (root === "creatures" || root === "monsters" || root === "monster" || root === "npc") tab = "creatures";
     else if (root === "gear" || root === "armor" || root === "gun" || root === "melee" || root === "trinket") tab = "gear";
     else if (root === "world" || root === "machines" || root === "machine") tab = "world";
-    else if (root === "community") tab = "me";
-    else if (root === "me" || root === "settings") tab = "me";
+    else if (root === "community") tab = "community";
+    else if (root === "me" || root === "settings") tab = "community";
     document.body.className = document.body.className.replace(/\bpage-[a-z-]+\b/g, "").replace(/\s+/g, " ").trim();
     if (root) document.body.classList.add("page-" + root);
     document.body.classList.toggle("page-monsters", root === "creatures" && p[1] === "monsters");
@@ -1595,7 +1595,7 @@
     } else if (root === "machines") {
       renderMachines();
     } else if (root === "community") {
-      renderMe();
+      renderCommunity();
     } else if (root === "settings") {
       renderSettings();
     } else if (root === "monsters") {
@@ -1604,7 +1604,7 @@
       renderMonster(p[1]);
     } else if (root === "me") {
       if (p[1] === "favorites") renderFavorites();
-      else renderMe();
+      else renderCommunity();
     } else {
       renderLootHome("");
     }
@@ -1617,13 +1617,15 @@
     opts = opts || {};
     document.body.classList.toggle("has-back", !!opts.back);
     document.body.classList.remove("community-page");
+    const brand = '<div class="brand"><div class="brand-mark"><img src="./images/brand/deceasedcraft_icon.png" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
     let left;
-    if (opts.back) {
+    if (opts.logo) {
+      left = brand;
+    } else if (opts.back) {
       left = '<button class="back-btn" data-go="' + esc(opts.back) + '">' + icon("back", 18) + "<span>返回</span></button>";
     } else {
       left = '<button class="me-btn" data-action="open-me" aria-label="我的">' + icon("user", 21) + '<span class="me-btn-label">我的</span></button>';
     }
-    const brand = '<div class="brand"><div class="brand-mark"><img src="/images/brand/deceasedcraft_icon.png" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
     let center = "";
     if (opts.title) {
       center = '<div style="flex:1;min-width:0;text-align:center"><div class="page-title" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(opts.title) + "</div>" + (opts.sub ? '<div class="page-sub">' + esc(opts.sub) + "</div>" : "") + "</div>";
@@ -1644,7 +1646,7 @@
       { id: "creatures", label: "生物", icon: "skull", href: "#/creatures" },
       { id: "gear", label: "装备", icon: "shield", href: "#/gear" },
       { id: "world", label: "世界", icon: "globe", href: "#/world" },
-      { id: "me", label: "我的", icon: "user", href: "#/me" }
+      { id: "community", label: "社区", icon: "user", href: "#/community" }
     ];
     q("tabbar").innerHTML = '<div class="tabbar-inner">' + tabs.map(function (t) {
       return '<button class="tab ' + (t.id === active ? "active" : "") + '" data-go="' + t.href + '" aria-label="' + t.label + '"' + (t.id === active ? ' aria-current="page"' : "") + ">" + icon(t.icon, 21) + "<span>" + t.label + "</span></button>";
@@ -2878,7 +2880,7 @@
   }
 
   function renderCommunity() {
-    renderTopbar({ title: "社区", sub: "我的 · 在线功能" });
+    renderTopbar({ title: "社区", sub: "我的 · 在线功能", logo: true });
     document.body.classList.add("community-page");
     document.title = "社区 · 亡者世界图鉴";
     q("view").innerHTML = '<div id="community-root"><div class="empty">' + icon("globe", 28) + '<div class="em-title">正在连接社区服务器…</div><div class="em-sub">离线单文件不会联网；社区版需要先启动服务器。</div></div></div>';
@@ -2958,7 +2960,7 @@
   }
 
   function renderSettings() {
-    renderTopbar({ back: "#/me", title: "设置" });
+    renderTopbar({ back: "#/community", title: "设置" });
     document.title = "设置 · 亡者世界图鉴";
     const isPc = viewMode() === "pc";
     q("view").innerHTML =
@@ -2984,7 +2986,7 @@
   }
 
   function renderFavorites() {
-    renderTopbar({ back: "#/me", title: "我的收藏" });
+    renderTopbar({ back: "#/community", title: "我的收藏" });
     document.title = "我的收藏 · 亡者世界图鉴";
     if (ui.favTab === "machines") ui.favTab = "items";
     const tabs = [
