@@ -52,8 +52,8 @@ async function indexHtml(): Promise<string> {
   return html;
 }
 
-app.get('/', serveIndex);
-app.get('/index.html', serveIndex);
+app.get('/', (c) => c.redirect('/guide/'));
+app.get('/index.html', (c) => c.redirect('/guide/'));
 
 async function serveIndex(c: Context) {
   const html = await indexHtml();
