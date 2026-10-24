@@ -2214,31 +2214,30 @@
       '<section class="section"><button class="btn ghost block" data-go="#/loot">返回 T1–T4 总览</button></section>';
   }
   const SITE_CHANGELOG = {
-    "version": "0.1.0-beta",
-    "date": "2026-10-23",
-    "title": "网站 0.1.0-beta 更新日志",
+    "version": "0.2.0-beta",
+    "date": "2026-10-25",
+    "title": "《亡者世界 5.11.19 图鉴》0.2.0-beta 版本更新",
     "items": [
-        "全站沿用像素字体与深色界面，优化字号、对比度和清晰度。",
-        "保留加载渐显浮动动画、每页返回顶部按钮和桌面音乐播放器。",
-        "顶部导航恢复为「区域战利品 / 生物 / 装备 / 世界 / 我的」。",
-        "无社区版：移除登录、聊天、照片墙、图片上传和社区服务端入口。",
-        "完整接入静态图鉴内容：105 种怪物、104 座建筑、13,330 条战利品、2,116 件物品。",
-        "补齐怪物实拍图、属性图标、物品图标、品牌 Logo 和背景图。",
-        "修复 /guide/ 子目录部署时的图片、字体、纹理相对路径。",
-        "修复更新日志弹窗无法使用鼠标滚轮滚动的问题。",
-      "按 Better Combat 双持参数校准单持/双持对比：攻速 ×1.2，主副手伤害 ×1.0。",
-      "盔甲套装补齐护甲、韧性、耐久数值，并改用图标数值条显示。",
-      "夜猎者、幽灵体、僵尸熊调整为一阶小头目；怪物板块背景更换为无 watermark 实拍图。",
-        "版本更新为 0.1.0-beta。"
+      "搜索升级：物品、附魔词条、建筑、NPC、枪械和护甲均可直接搜索，子板块内也能直接搜索",
+      "建筑定位：进入建筑后定位包含目标物品的容器，点击容器只高亮对应物品",
+      "NPC 页面新增完整交易清单，包含价格、库存与货币",
+      "护甲页面新增套装评分、近战 / 远程适配与套装武器推荐",
+      "改枪分享码缩短为更易传递的 WZG2 格式",
+      "补全 TACZ 弹药图标、建筑缩略图和容器贴图",
+      "更新摩天酒店区封面与世界难度数据",
+      "感谢老大 TqLxQuanZ 提供整合包数据与画廊照片",
+      "感谢 花生之鸠子生花、无敌萝卜王、雨幕之下 授权图片与整理数据",
+      "感谢 一只老女人吖 提供站点，感谢（ '▿ ' ） 一起制作图鉴",
+      "数据仅为个人游玩搜索得出，具体以官方整合包为准"
     ]
-};
+  };
   function openSiteChangelog() {
     const c = SITE_CHANGELOG;
     openSheet({
       title: "网站更新日志",
       body: '<div class="text-block"><b>' + esc(c.title) + '</b>\n版本：' + esc(c.version) + ' · ' + esc(c.date) + '\n\n' +
         '<ul class="site-log-list">' + c.items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' +
-        '<div class="dim" style="margin-top:10px">本版本为 0.1.0-beta，后续内容会继续补充与校正。</div></div>',
+        '<div class="dim" style="margin-top:10px">本版本为 0.2.0-beta，后续内容会继续补充与校正。</div></div>',
       foot: '<button class="btn primary block" data-action="close-sheet">知道了</button>'
     });
   }
@@ -2286,9 +2285,9 @@
           '<div class="hero-stat"><div class="v">' + m.entries.toLocaleString() + '</div><div class="k">掉落条目</div></div>' +
           '<div class="hero-stat"><div class="v">' + m.items.toLocaleString() + '</div><div class="k">物品</div></div>' +
         "</div>" +
-      '<div class="loot-update-entry in-hero"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
+      '<div class="loot-update-entry in-hero"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.2.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
       "</section>" +
-      '<div class="loot-update-entry outside"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.1.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
+      '<div class="loot-update-entry outside"><button class="loot-update-btn" data-action="open-site-changelog"><span class="loot-update-dot"></span><span class="loot-update-label">网站更新日志</span><span class="loot-update-ver">0.2.0-beta</span><span class="loot-update-arrow">查看 ›</span></button></div>' +
       '<div class="quick-search"><div class="searchbar">' + icon("search") +
         '<input id="loot-search" type="search" placeholder="搜物品名或 ID，例如：铁锭 / minecraft:iron_ingot" value="' + esc(initialQuery || ui.lootQuery) + '" autocomplete="off" autocapitalize="off" spellcheck="false">' +
         '<button class="search-clear" data-action="clear-loot-search" aria-label="清空" hidden>' + icon("close", 15) + "</button>" +
