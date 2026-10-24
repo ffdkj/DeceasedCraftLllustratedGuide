@@ -664,9 +664,32 @@
     renderTopbar({back:"#/world", title:"世界难度", sub:(GUIDE.worldDifficulty||{}).basis||""});
     document.title="世界难度 · 亡者世界";
     const wd=GUIDE.worldDifficulty||{levels:[]};
+    const DIFF_OVERRIDE = {
+      easy: {
+        summary: "降低敌人生成与强度，同时提高容器战利品量。",
+        penalties: ["全局敌人生成减少 50%", "敌人生命值和伤害减少 50%"],
+        rewards: ["所有容器的战利品量增加 25%", "适合前期熟悉地图、枪械与建造"]
+      },
+      normal: {
+        summary: "属于本整合包的标准难度。",
+        penalties: ["无额外属性修正"],
+        rewards: ["标准敌人强度与掉落", "标准尸潮、感染、辐射与温度机制", "完整体验整合包内容"]
+      },
+      hard: {
+        summary: "重新平衡的高压难度：敌人更强，资源更少，死亡惩罚更重。",
+        penalties: [
+          "经过重新平衡，所有区域的敌人都更难对付",
+          "所有容器的战利品量减少 50%",
+          "死亡将扣除通过进食获取的额外生命值上限，需重新进食以恢复",
+          "尸潮会更持久、更频繁且更强大"
+        ],
+        rewards: ["高风险区域与尸潮的挑战体验", "更紧张的资源管理与成长节奏"]
+      }
+    };
+    const levels = (wd.levels || []).map(function (l) { return Object.assign({}, l, DIFF_OVERRIDE[l.id] || {}); });
     q("view").innerHTML=
-      '<div class="detail-hero' + heroClass("world") + '"' + heroStyle("world") + '><h1>世界难度</h1><div class="meta"><span class="badge">生存压力</span><span class="badge custom">尸潮 / 感染 / 辐射</span></div><div class="hero-desc" style="margin-top:10px">'+esc(wd.basis||"")+'。下表按原版四级难度、整合包机制与需指令开启的末日难度整理，具体数值以游戏内为准。</div></div>'+
-      '<div class="section"><div class="difficulty-grid">'+ (wd.levels||[]).map(function(l){
+      '<div class="detail-hero' + heroClass("world") + '"' + heroStyle("world") + '><h1>世界难度</h1><div class="meta"><span class="badge">生存压力</span><span class="badge custom">尸潮 / 感染 / 辐射</span></div><div class="hero-desc" style="margin-top:10px">'+esc(wd.basis||"")+'。数值来自整合包游戏内难度选择界面；末日难度为需指令开启的额外叠加机制。</div></div>'+
+      '<div class="section"><div class="difficulty-grid">'+ levels.map(function(l){
         return '<div class="difficulty-card '+esc(l.color||"")+'"><div class="difficulty-name">'+esc(l.name)+(l.requiresCommand?' <span class="badge custom">需指令</span>':'')+'</div><div class="difficulty-sum">'+esc(l.summary)+'</div>'+
           (l.requiresCommand?'<div class="difficulty-command">开启指令：'+esc(l.command||"待补全")+'</div>':'')+
           '<div class="difficulty-block"><b>惩罚 / 限制</b><ul>'+l.penalties.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul></div>'+
