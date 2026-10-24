@@ -3250,3 +3250,60 @@ body.page-gear .showcase-visual {
   background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important;
 }
 body.page-gear .showcase-visual .showcase-icon { opacity: 0 !important; }
+
+/* 社区页固定深色，避免浅色主题下看不清 */
+body.page-community {
+  --bg: #090c0b; --panel: #141a17; --panel-2: #0f1512; --panel-3: #1a231e;
+  --line: #2a352e; --line-strong: #3c4a40; --text: #ece8dd; --muted: #9aa39b;
+  --dim: #7c867d; --amber: #e0a94a; --amber-2: #f2c56b;
+  background: #090c0b !important;
+  color: var(--text);
+  color-scheme: dark;
+}
+body.page-community .tabbar { background: rgba(9,12,11,.96) !important; border-bottom: 1px solid var(--line) !important; }
+body.page-community .tab { color: #98a09a !important; }
+body.page-community .tab.active { color: #ffffff !important; }
+body.page-community .menu-item { background: var(--panel) !important; color: var(--text) !important; border-color: var(--line) !important; }
+body.page-community .menu-title { color: var(--text) !important; }
+body.page-community .menu-sub { color: var(--muted) !important; }
+body.page-community .section-title { color: #ffffff !important; }
+body.page-community .profile-card { background: #141a17 !important; }
+body.page-community .community-chat, body.page-community .community-photo { border-color: var(--line) !important; }
+
+/* 社区页显示顶部品牌栏 */
+body.page-community .topbar { display: flex !important; height: 56px !important; background: #080c09 !important; border-bottom: 1px solid var(--line) !important; }
+body.page-community .tabbar { top: 56px !important; }
+body.page-community .view { padding-top: 112px !important; }
+
+body.page-community .topbar .brand { position: static !important; left: auto !important; transform: none !important; flex: 0 0 auto !important; margin-right: auto !important; }
+body.page-community .topbar .brand-text { display: none !important; }
+
+/* 社区浅色主题：外层黑边，中间白底 */
+body.page-community .view { background: #050706 !important; }
+:root[data-theme="light"] body.page-community {
+  --bg: #f4f7fb; --panel: #ffffff; --panel-2: #f7f9fc; --panel-3: #eef2f7;
+  --line: #d9dfe7; --line-strong: #b9c2cd; --text: #18202a; --muted: #5c6672;
+  --dim: #7a8490; --amber: #d99a2b; --amber-2: #b87912;
+  background: #050706 !important; color: #18202a; color-scheme: light;
+}
+:root[data-theme="light"] body.page-community #community-root {
+  max-width: 1100px; margin: 14px auto; padding: 18px;
+  background: #ffffff; color: #18202a;
+  border: 2px solid #050706; border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.38);
+}
+:root[data-theme="light"] body.page-community .menu-item,
+:root[data-theme="light"] body.page-community .profile-card { background:#fff !important; color:#18202a !important; border-color:#d9dfe7 !important; }
+:root[data-theme="light"] body.page-community .menu-title,
+:root[data-theme="light"] body.page-community .section-title,
+:root[data-theme="light"] body.page-community .profile-name { color:#111820 !important; }
+:root[data-theme="light"] body.page-community .menu-sub,
+:root[data-theme="light"] body.page-community .section-note,
+:root[data-theme="light"] body.page-community .profile-sub { color:#5c6672 !important; }
+:root[data-theme="light"] body.page-community .community-chat { background:#f7f9fc !important; border-color:#d9dfe7 !important; }
+:root[data-theme="light"] body.page-community .chat-row { background:#fff !important; border-color:#e2e7ed !important; color:#18202a !important; }
+:root[data-theme="light"] body.page-community .chat-row b { color:#111820 !important; }
+:root[data-theme="light"] body.page-community .community-photo { background:#fff !important; border-color:#d9dfe7 !important; }
+
+:root[data-theme="light"] body.page-community .topbar .page-title { color: #ffffff !important; }
+:root[data-theme="light"] body.page-community .topbar .page-sub { color: #aab3ac !important; }
