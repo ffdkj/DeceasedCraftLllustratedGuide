@@ -3545,7 +3545,7 @@
       if (ov && !ov.hidden) { closeSheet(); return; }
       const back = document.querySelector(".back-btn");
       if (back) { back.click(); return; }
-      if (location.hash && location.hash !== "#/") { history.back(); }
+      if (location.hash && location.hash !== "#/loot" && location.hash !== "#/") { go("#/loot"); }
       return;
     }
     if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-item-id]")) {
