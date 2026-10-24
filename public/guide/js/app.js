@@ -1368,6 +1368,40 @@
     });
   }
 
+
+  function openGlobalSearch() {
+    openSheet({
+      title: "全站搜索",
+      body: '<div class="text-block"><input id="global-search" class="variant-search" placeholder="搜索怪物、建筑、枪械、物品、护甲、近战…" autocomplete="off"><div id="global-results" class="global-results"><div class="tiny dim">输入关键词开始搜索</div></div></div>',
+      foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>'
+    });
+    setTimeout(function () {
+      const input = q("global-search"); const box = q("global-results");
+      if (!input || !box) return;
+      function norm(x) { return String(x || "").replace(/\s+/g, " ").trim().toLowerCase(); }
+      function row(label, sub, href) { return '<button class="global-result" data-global-go="' + esc(href) + '"><b>' + esc(label) + '</b><span>' + esc(sub) + '</span></button>'; }
+      function run() {
+        const query = norm(input.value); if (!query) { box.innerHTML = '<div class="tiny dim">输入关键词开始搜索</div>'; return; }
+        const out = [];
+        (GUIDE.monsters || []).forEach(function (m) { if (norm(m.name + " " + m.en).indexOf(query) >= 0) out.push(row(m.name, "怪物 · " + (m.category || ""), "#/monster/" + encodeURIComponent(m.id))); });
+        (DATA.regions || []).forEach(function (r) { (r.buildings || []).forEach(function (b) { if (norm(b.name + " " + b.id).indexOf(query) >= 0) out.push(row(b.name, "建筑 · " + r.name, "#/loot/building/" + encodeURIComponent(r.id) + "/" + encodeURIComponent(b.id))); }); });
+        ["guns", "armor", "melee", "trinkets"].forEach(function (type) {
+          const cfg = GUIDE_TYPES[type]; if (!cfg) return;
+          (cfg.data || []).forEach(function (x) { if (norm(x.name + " " + x.id).indexOf(query) >= 0) {
+            const href = type === "guns" ? "#/gear/gun/" + encodeURIComponent(x.id) : "#/gear/" + type + "/" + encodeURIComponent(x.id);
+            out.push(row(x.name, cfg.title, href));
+          } });
+        });
+        itemIndex.forEach(function (rec) { if (norm(rec.name + " " + rec.id + " " + Array.from(rec.nbts || []).join(" ")).indexOf(query) >= 0) out.push(row(rec.name, "物品 · " + rec.id, "#/item/" + encodeURIComponent(rec.id))); });
+        const seen = {}; const unique = out.filter(function (html) { if (seen[html]) return false; seen[html] = true; return true; }).slice(0, 60);
+        box.innerHTML = unique.length ? unique.join("") : '<div class="tiny dim">没有找到「' + esc(input.value) + '」</div>';
+      }
+      input.addEventListener('input', run);
+      box.addEventListener('click', function (e) { const b = e.target.closest('[data-global-go]'); if (!b) return; closeSheet(); go(b.dataset.globalGo); });
+      input.focus();
+    }, 0);
+  }
+
   function renderGuideDetail(type, id) {
     const cfg = GUIDE_TYPES[type];
     const item = (cfg.data || []).filter(function (x) { return x.id === id; })[0];
@@ -1685,7 +1719,8 @@
     const themeBtn = '<button class="icon-btn theme-btn" data-action="toggle-theme" aria-label="切换' +
       (theme === "light" ? "深色" : "浅色") + '背景">' + icon(theme === "light" ? "moon" : "sun") + "</button>";
     const viewBtn = '<button class="icon-btn" data-action="toggle-view" aria-label="切换电脑/手机版">' + icon(viewMode() === "pc" ? "mobile" : "monitor") + "</button>";
-    const actions = (opts.actions || []).join("") + viewBtn + themeBtn;
+    const searchBtn = '<button class="icon-btn" data-action="global-search" aria-label="全站搜索">' + icon("search", 19) + '</button>';
+    const actions = searchBtn + (opts.actions || []).join("") + viewBtn + themeBtn;
     q("topbar").innerHTML = '<div class="topbar-inner">' + left + '<div class="topbar-center">' + center + '</div>' + '<div class="top-actions">' + actions + "</div></div>";
   }
 
@@ -3526,6 +3561,7 @@
       case "community-register": openCommunityAuth("register"); break;
       case "admin-login": openCommunityAuth("admin"); break;
       case "admin-panel": renderAdminPanel(); break;
+      case "global-search": openGlobalSearch(); break;
       case "cms-text": cmsStart("text"); break;
       case "cms-image": cmsStart("image"); break;
       case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
