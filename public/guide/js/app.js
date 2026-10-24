@@ -2895,17 +2895,14 @@
   }
   function openCommunityAuth(mode) {
     const isReg = mode === "register";
-    const isAdmin = mode === "admin";
     openSheet({
-      title: isAdmin ? "管理员登录" : (isReg ? "注册邮箱账号" : "邮箱登录"),
+      title: isReg ? "注册邮箱账号" : "邮箱登录",
       body: '<div class="text-block"><form id="community-auth-form" class="community-auth-form">' +
-        (isAdmin
-          ? '<label>管理员账号<input id="auth-user" required autocomplete="username" maxlength="80" placeholder="管理员账号"></label>'
-          : '<label>邮箱<input id="auth-email" type="email" required autocomplete="email" placeholder="you@example.com"></label>') +
-        '<label>密码<input id="auth-password" type="password" required minlength="' + (isAdmin ? "1" : "8") + '" autocomplete="' + (isAdmin ? "current-password" : (isReg ? "new-password" : "current-password")) + '" placeholder="' + (isAdmin ? "管理员密码" : "至少 8 位") + '"></label>' +
+        '<label>邮箱<input id="auth-email" type="email" required autocomplete="email" placeholder="you@example.com"></label>' +
+        '<label>密码<input id="auth-password" type="password" required minlength="8" autocomplete="' + (isReg ? "new-password" : "current-password") + '" placeholder="至少 8 位"></label>' +
         (isReg ? '<label>昵称<input id="auth-name" maxlength="24" placeholder="聊天显示名（可选）"></label>' : "") +
-        '<button class="btn primary block" type="submit">' + (isAdmin ? "登录管理后台" : (isReg ? "注册并登录" : "登录")) + '</button></form>' +
-        '<div class="tiny dim" style="margin-top:10px">' + (isAdmin ? "管理员账号用于图片替换与内容管理，使用独立会话。" : "账号只用于本站聊天；不会上传游戏数据。") + '</div></div>',
+        '<button class="btn primary block" type="submit">' + (isReg ? "注册并登录" : "登录") + '</button></form>' +
+        '<div class="tiny dim" style="margin-top:10px">账号只用于本站聊天；不会上传游戏数据。</div></div>',
       foot: '<button class="btn ghost block" data-action="close-sheet">取消</button>'
     });
     setTimeout(function () {
@@ -2913,18 +2910,11 @@
       if (!f) return;
       f.addEventListener("submit", function (e) {
         e.preventDefault();
-        let url, body;
-        if (isAdmin) {
-          url = "/api/admin/login";
-          body = { user: q("auth-user").value, password: q("auth-password").value };
-        } else {
-          url = isReg ? "/api/auth/register" : "/api/auth/login";
-          body = { email: q("auth-email").value, password: q("auth-password").value };
-          if (isReg) body.name = q("auth-name").value;
-        }
-        fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        const body = { email: q("auth-email").value, password: q("auth-password").value };
+        if (isReg) body.name = q("auth-name").value;
+        fetch(isReg ? "/api/auth/register" : "/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "失败"); closeSheet(); loadCommunity(); if (isAdmin) toast("管理员已登录"); })
+          .then(function (x) { if (!x.ok) throw new Error(x.d.error || "失败"); closeSheet(); loadCommunity(); })
           .catch(function (err) { toast(err.message || "登录失败"); });
       });
     }, 0);
@@ -2942,17 +2932,8 @@
     ]).then(function (arr) {
       const me = arr[0] || {}, cfg = arr[1] || {}, posts = (arr[2] || {}).posts || [], photos = (arr[3] || {}).photos || [], explored = (arr[4] || {}).explored || [];
       const user = me.user || null;
-      const admin = me.admin || null;
-      let profileActions;
-      if (admin) {
-        profileActions = '<button class="btn ghost" data-action="admin-logout">退出管理员</button>' + (user ? '<button class="btn ghost" data-action="community-logout">退出账号</button>' : '');
-      } else if (user) {
-        profileActions = '<button class="btn ghost" data-action="community-logout">退出</button>';
-      } else {
-        profileActions = '<button class="btn primary" data-action="community-login">邮箱登录</button><button class="btn ghost" data-action="community-register">注册</button><button class="btn ghost" data-action="admin-login">管理员登录</button>';
-      }
-      let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(admin ? ("管理员 · " + admin) : (user ? user.name : "未登录")) + (admin ? ' <span class="admin-badge">ADMIN</span>' : '') + '</div><div class="profile-sub">' + (admin ? "管理员已登录 · 拥有管理权限" : (user ? "邮箱账号已登录" : "邮箱登录 / 注册后参与聊天")) + '</div></div>' +
-        profileActions + "</div></div>";
+      let h = '<div class="section"><div class="card profile-card"><div class="profile-avatar">' + icon("user", 26) + '</div><div style="flex:1;min-width:0"><div class="profile-name">' + esc(user ? user.name : "未登录") + '</div><div class="profile-sub">' + (user ? "邮箱账号已登录" : "邮箱登录 / 注册后参与聊天") + '</div></div>' +
+        (user ? '<button class="btn ghost" data-action="community-logout">退出</button>' : '<button class="btn primary" data-action="community-login">邮箱登录</button><button class="btn ghost" data-action="community-register">注册</button>') + "</div></div>";
       h += '<div class="section"><div class="section-head"><div class="section-title">我的</div><div class="section-note">账号与收藏</div></div><div class="menu-list">' +
         '<button class="menu-item" data-go="#/me/favorites"><span class="menu-ico">' + icon("star", 17) + '</span><span class="menu-main"><span class="menu-title">我的收藏</span><span class="menu-sub">物品与怪物</span></span>' + icon("chevron", 17) + "</button>" +
         '<button class="menu-item" data-go="#/settings"><span class="menu-ico">' + icon("settings", 17) + '</span><span class="menu-main"><span class="menu-title">设置</span><span class="menu-sub">主题、导出、安装</span></span>' + icon("chevron", 17) + "</button>" +
@@ -3339,8 +3320,6 @@
     switch (action) {
       case "community-login": openCommunityAuth("login"); break;
       case "community-register": openCommunityAuth("register"); break;
-      case "admin-login": openCommunityAuth("admin"); break;
-      case "admin-logout": fetch("/api/admin/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "community-logout": fetch("/api/auth/logout", { method: "POST" }).then(function () { loadCommunity(); }).catch(function () { toast("退出失败"); }); break;
       case "toggle-theme": {
         const next = (document.documentElement.dataset.theme === "light") ? "dark" : "light";
