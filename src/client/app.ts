@@ -361,7 +361,7 @@ import {
   }
   function radiationBanner(region) {
     if (!region || climateClass(region) !== "climate-rad") return "";
-    return '<div class="rad-banner"><span class="rad-banner-tag">辐射</span> 高辐射区域 · 请穿戴防护服并携带抗辐射药剂</div>';
+    return '<div class="rad-banner"><span class="rad-banner-tag">辐射</span> 高辐射区域 · 请佩戴防毒面具或穿戴防护服</div>';
   }
   function buildingSizeBadges(b) {
     const kinds = { small: ["szdot gray", 1], medium: ["szdot blue", 2], large: ["szdot gold", 3] };

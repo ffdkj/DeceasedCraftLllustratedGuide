@@ -67,8 +67,13 @@ check(/\.gs-stat-bar \{[^}]*height: 4px/s.test(css), "数值条 4px（3px 时绿
 check(/\.gs-stat-bar \{[^}]*overflow: hidden/s.test(css), "条两端裁圆角");
 check(/\.gs-stat-bar i \{[^}]*position: absolute/s.test(css), "各段绝对定位并排");
 check(
-  /\.gs-stat-bar i \{[^}]*background: var\(--amber\);/s.test(css),
-  "底座段用主题主色（实色，不再用渐变）",
+  /\.gs-stat-bar i \{[^}]*background: var\(--stat-fill\);/s.test(css),
+  "底座段用白灰 --stat-fill（实色，不再用渐变）",
+);
+check(
+  /html\[data-theme="light"\] \{[^}]*--stat-fill: #8d959b/s.test(css) &&
+    /:root, html\[data-theme="dark"\] \{[^}]*--stat-fill: #d2d6d3/s.test(css),
+  "白灰两套主题各有一档（浅色主题下不能沿用近白）",
 );
 check(!/\.gs-stat-bar i \{[^}]*linear-gradient/s.test(css), "底座段不再出现渐变（渐变在 4px 上读起来像脏色）");
 check(/\.gs-stat-bar i\.good \{ background: var\(--green\); \}/.test(css), "变化段绿色 = 改善");

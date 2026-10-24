@@ -1331,7 +1331,7 @@ body.music-open .music-fab { opacity: 0; pointer-events: none; transform: scale(
    left/width 都由 JS 给，所以这里必须绝对定位 —— 否则第二段会被挤到第二行、被 overflow 裁掉。 */
 .gs-stat-bar i {
   position: absolute; top: 0; bottom: 0; left: 0; border-radius: 3px;
-  background: var(--amber);
+  background: var(--stat-fill);
 }
 .gs-stat-bar i.good { background: var(--green); }
 .gs-stat-bar i.bad { background: var(--red); }
@@ -2312,6 +2312,8 @@ body.view-pc .poster-carousel { height: min(62vh, 560px) !important; aspect-rati
   --amber-soft: rgba(108, 195, 73, 0.14) !important;
   --accent: #6cc349 !important;
   --on-accent: #0d1a06 !important;
+  /* 数值条底座段：「当前值」用白灰，别和改善段的绿抢注意力 */
+  --stat-fill: #d2d6d3;
   /* 顶栏 / 底栏：深浅两套主题共用同一组令牌，别再写死 #0b0b0b */
   --nav-bg: #0b0b0b !important;
   --nav-line: #262626 !important;
@@ -2336,6 +2338,7 @@ html[data-theme="light"] {
   --amber-soft: #eaf4e3 !important;
   --accent: #3c8527 !important;
   --on-accent: #ffffff !important;
+  --stat-fill: #8d959b;
   --green: #1f7f55 !important;
   --red: #bf463f !important;
   --nav-bg: #ffffff !important;
