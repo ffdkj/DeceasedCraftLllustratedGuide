@@ -364,4 +364,26 @@ community.delete('/admin/mute/:userId', async (c) => {
   return c.json({ ok: true });
 });
 
+community.get('/content', (c) => c.json({ texts: store.texts, images: store.images }));
+community.post('/admin/text', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const body = await c.req.json().catch(() => null) as any;
+  const key = String(body?.key || '').slice(0, 300);
+  const value = String(body?.value ?? '').slice(0, 5000);
+  if (!key) return c.json({ error: 'key 不能为空' }, 400);
+  store.texts[key] = value; await save(); return c.json({ ok: true });
+});
+community.post('/admin/image', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const body = await c.req.json().catch(() => null) as any;
+  const key = String(body?.key || '').slice(0, 500);
+  const value = String(body?.value || '').slice(0, 500);
+  if (!key || !value) return c.json({ error: '参数不完整' }, 400);
+  store.images[key] = value; await save(); return c.json({ ok: true });
+});
+community.delete('/admin/content/:key', async (c) => {
+  if (!adminName(c)) return c.json({ error: '需要管理员' }, 401);
+  const key = decodeURIComponent(c.req.param('key'));
+  delete store.texts[key]; delete store.images[key]; await save(); return c.json({ ok: true });
+});
 community.get('/explored', (c) => c.json({ explored: [] }));
