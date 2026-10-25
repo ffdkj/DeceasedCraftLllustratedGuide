@@ -86,6 +86,8 @@ export function openDb(): DatabaseSync {
   db.exec('PRAGMA journal_mode = WAL');
   db.exec('PRAGMA busy_timeout = 3000');
   db.exec(SCHEMA);
+  db.exec('CREATE TABLE IF NOT EXISTS page_views (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, day TEXT NOT NULL, path TEXT NOT NULL, visitor TEXT NOT NULL, ip TEXT NOT NULL DEFAULT \'\', ua TEXT NOT NULL DEFAULT \'\'); CREATE INDEX IF NOT EXISTS idx_page_views_day ON page_views(day, ts);');
+
   handle = db;
   return db;
 }
