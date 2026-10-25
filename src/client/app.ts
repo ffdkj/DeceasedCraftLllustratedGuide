@@ -1194,6 +1194,45 @@ import {
     });
   }
 
+  function trackPageHit(hash) {
+    try {
+      let visitor = localStorage.getItem('wz_visitor');
+      if (!visitor) {
+        visitor = 'v_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('wz_visitor', visitor);
+      }
+      fetch('/api/analytics/hit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: hash || '#/loot', visitor: visitor })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function openAdminAnalytics() {
+    fetch('/api/admin/analytics', { cache: 'no-store' })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (out) {
+        if (!out.ok) { toast(String(out.d.error || '读取失败')); return; }
+        const d = out.d;
+        const rows = (d.daily || []).map(function (x) {
+          return '<div class="armor-weapon" style="cursor:default"><b>' + esc(x.day) + '</b><span>' + esc(x.views) + ' 次 · ' + esc(x.visitors) + ' 人</span></div>';
+        }).join('');
+        openSheet({
+          title: '站点数据',
+          body: '<div class="text-block"><div class="stat-grid">' +
+            '<div class="stat-box"><b>' + esc(d.online) + '</b><span>当前在线（5 分钟）</span></div>' +
+            '<div class="stat-box"><b>' + esc(d.today ? d.today.views : 0) + '</b><span>今日查阅</span></div>' +
+            '<div class="stat-box"><b>' + esc(d.today ? d.today.visitors : 0) + '</b><span>今日访客</span></div>' +
+            '<div class="stat-box"><b>' + esc(d.total) + '</b><span>历史查阅</span></div></div>' +
+            '<div class="section-head" style="margin-top:14px"><div class="section-title">最近 14 天</div><div class="section-note">每日查阅 / 访客</div></div>' +
+            (rows || '<div class="tiny dim">暂无数据</div>') + '</div>',
+          foot: '<button class="btn primary block" data-action="admin-analytics">刷新</button><button class="btn ghost block" data-action="close-sheet">关闭</button>'
+        });
+      })
+      .catch(function () { toast('站点数据读取失败'); });
+  }
+
   function route() {
     const nextHash = currentHash();
     rememberScroll();
@@ -1268,6 +1307,7 @@ import {
       renderLootHome("");
     }
     activeRoute = nextHash;
+    trackPageHit(nextHash);
     restoreScroll(nextHash);
   }
 
