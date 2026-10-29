@@ -3596,3 +3596,22 @@ body.page-community .view { background: #050706 !important; }
 @media (max-width: 700px) {
   .variant-grid { grid-template-columns: 1fr; max-height: 300px; }
 }
+
+
+/* ===== 变体出现位置弹层 ===== */
+.vloc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 11px; border: 1px solid rgba(224,169,74,.28); background: rgba(224,169,74,.06); border-radius: 8px; margin-bottom: 8px; }
+.vloc-tag { font: 700 13px/1.2 ui-monospace, Menlo, monospace; color: #f0d28a; }
+.vloc-count { font-size: 10.5px; color: var(--muted); }
+.vloc-list { display: flex; flex-direction: column; gap: 5px; max-height: 55vh; overflow: auto; }
+.vloc-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; }
+.vloc-row:hover { border-color: rgba(224,169,74,.6); background: rgba(224,169,74,.07); }
+.vloc-main { flex: 1; min-width: 0; }
+.vloc-building { font-size: 13px; font-weight: 700; }
+.vloc-meta { font-size: 10.5px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.vloc-right { flex: 0 0 auto; text-align: right; }
+.vloc-right b { display: block; font-size: 14px; color: #e0a94a; }
+.vloc-right span { display: block; font-size: 9px; color: var(--muted); }
+.vloc-arrow { flex: 0 0 auto; display: flex; opacity: .45; }
+.vloc-row:hover .vloc-arrow { opacity: .9; color: var(--amber); }
+
+.item-variant-title { font-size: .55em; font-weight: 600; color: #c9a45a; letter-spacing: .01em; }
