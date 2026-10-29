@@ -197,6 +197,11 @@
     if (!rec || !rec.nbts || !rec.nbts.size) return null;
     return Array.from(rec.nbts)[0];
   }
+  function nbtLabel(nbt) {
+    return String(nbt || "").split("\n").map(function (line) {
+      return line.replace(/^附魔:\s*/, "").replace(/^[\s·-]+/, "").trim();
+    }).filter(Boolean).join(" · ");
+  }
   function monsterAvatar(m, size) {
     const img = m.thumb || m.image;
     if (img) {
@@ -1081,7 +1086,7 @@
     const list = (cfg.data || []).filter(function (item) {
       if (group !== "全部" && guideGroupOf(type, item) !== group) return false;
       if (!query) return true;
-      return [item.name, item.effect, item.description, item.text, item.location, item.group, item.type, item.faction, item.region, item.source, item.weaponType, item.damageBand, item.speedBand].join(" ").toLowerCase().indexOf(query) >= 0;
+      return searchHit(query, [item.name, item.effect, item.description, item.text, item.location, item.group, item.type, item.faction, item.region, item.source, item.weaponType, item.damageBand, item.speedBand].join(" "));
     });
     if (type === "defense") { renderDefenseTree(type, list); return; }
     box.innerHTML = list.length ? list.map(function (item) {
@@ -1581,32 +1586,40 @@
   function openGlobalSearch() {
     openSheet({
       title: "全站搜索",
-      body: '<div class="text-block"><input id="global-search" class="variant-search" placeholder="搜索怪物、建筑、枪械、物品、护甲、近战…" autocomplete="off"><div id="global-results" class="global-results"><div class="tiny dim">输入关键词开始搜索</div></div></div>',
+      body: '<div class="text-block"><input id="global-search" class="variant-search" placeholder="搜索怪物、建筑、枪械、物品、护甲、近战…（支持拼音 / 首字母 / 容错）" autocomplete="off"><div id="global-hot" class="hot-chips global-hot">' + searchHotChips("data-global-hot", true) + '</div><div id="global-results" class="global-results"><div class="tiny dim">输入关键词开始搜索</div></div></div>',
       foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>'
     });
     setTimeout(function () {
-      const input = q("global-search"); const box = q("global-results");
+      const input = q("global-search"); const box = q("global-results"); const hot = q("global-hot");
       if (!input || !box) return;
-      function norm(x) { return String(x || "").replace(/\s+/g, " ").trim().toLowerCase(); }
       function row(label, sub, href) { return '<button class="global-result" data-global-go="' + esc(href) + '"><b>' + esc(label) + '</b><span>' + esc(sub) + '</span></button>'; }
+      function renderHot() {
+        if (!hot) return;
+        hot.innerHTML = searchHotChips("data-global-hot", true);
+        hot.hidden = !!input.value.trim();
+      }
       function run() {
-        const query = norm(input.value); if (!query) { box.innerHTML = '<div class="tiny dim">输入关键词开始搜索</div>'; return; }
+        const query = input.value.trim();
+        if (!query) { box.innerHTML = '<div class="tiny dim">输入关键词开始搜索</div>'; renderHot(); return; }
+        if (hot) hot.hidden = true;
         const out = [];
-        (GUIDE.monsters || []).forEach(function (m) { if (norm(m.name + " " + m.en).indexOf(query) >= 0) out.push(row(m.name, "怪物 · " + (m.category || ""), "#/monster/" + encodeURIComponent(m.id))); });
-        (DATA.regions || []).forEach(function (r) { (r.buildings || []).forEach(function (b) { if (norm(b.name + " " + b.id).indexOf(query) >= 0) out.push(row(b.name, "建筑 · " + r.name, "#/loot/building/" + encodeURIComponent(r.id) + "/" + encodeURIComponent(b.id))); }); });
+        (GUIDE.monsters || []).forEach(function (m) { if (searchHit(query, m.name + " " + (m.en || ""))) out.push(row(m.name, "怪物 · " + (m.category || ""), "#/monster/" + encodeURIComponent(m.id))); });
+        (DATA.regions || []).forEach(function (r) { (r.buildings || []).forEach(function (b) { if (searchHit(query, b.name + " " + b.id)) out.push(row(b.name, "建筑 · " + r.name, "#/loot/building/" + encodeURIComponent(r.id) + "/" + encodeURIComponent(b.id))); }); });
         ["guns", "armor", "melee", "trinkets"].forEach(function (type) {
           const cfg = GUIDE_TYPES[type]; if (!cfg) return;
-          (cfg.data || []).forEach(function (x) { if (norm(x.name + " " + x.id).indexOf(query) >= 0) {
+          (cfg.data || []).forEach(function (x) { if (searchHit(query, x.name + " " + x.id)) {
             const href = type === "guns" ? "#/gear/gun/" + encodeURIComponent(x.id) : "#/gear/" + type + "/" + encodeURIComponent(x.id);
             out.push(row(x.name, cfg.title, href));
           } });
         });
-        itemIndex.forEach(function (rec) { if (norm(rec.name + " " + rec.id + " " + Array.from(rec.nbts || []).join(" ")).indexOf(query) >= 0) out.push(row(rec.name, "物品 · " + rec.id, "#/item/" + encodeURIComponent(rec.id))); });
+        itemIndex.forEach(function (rec) { if (searchHit(query, rec.name + " " + rec.id + " " + Array.from(rec.nbts || []).join(" "))) out.push(row(rec.name, "物品 · " + rec.id, "#/item/" + encodeURIComponent(rec.id))); });
         const seen = {}; const unique = out.filter(function (html) { if (seen[html]) return false; seen[html] = true; return true; }).slice(0, 60);
         box.innerHTML = unique.length ? unique.join("") : '<div class="tiny dim">没有找到「' + esc(input.value) + '」</div>';
       }
+      if (hot) hot.addEventListener('click', function (e) { const b = e.target.closest('[data-global-hot]'); if (!b) return; input.value = b.dataset.globalHot; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); });
       input.addEventListener('input', run);
-      box.addEventListener('click', function (e) { const b = e.target.closest('[data-global-go]'); if (!b) return; closeSheet(); go(b.dataset.globalGo); });
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addSearchHistory(input.value); renderHot(); run(); } });
+      box.addEventListener('click', function (e) { const b = e.target.closest('[data-global-go]'); if (!b) return; addSearchHistory(input.value); closeSheet(); go(b.dataset.globalGo); });
       input.focus();
     }, 0);
   }
@@ -1677,7 +1690,7 @@
     const rows = buildingList.filter(function (x) {
       if (region !== "全部" && x.region.name !== region) return false;
       if (!query) return true;
-      return (x.building.name + " " + x.building.id).toLowerCase().indexOf(query) >= 0;
+      return searchHit(query, x.building.name + " " + x.building.id);
     });
     box.innerHTML = rows.length ? rows.map(function (x) {
       const b = x.building, g = buildingGuide(b.id);
@@ -2260,20 +2273,22 @@
       }
       return null;
     }
-    const tierCards = LOOT_TIERS.map(function (t) {
+    const TIER_ACCENTS = { T1: "#7ecb96", T2: "#7fb8e8", T3: "#c6a0e8", T4: "#e0886f" };
+    const TIER_RANKS = { T1: "低危", T2: "中危", T3: "高危", T4: "极危" };
+    const tierCards = LOOT_TIERS.map(function (t, ti) {
       const regions = t.ids.map(lootRegionById).filter(Boolean);
       const count = regions.reduce(function (a, r) { return a + r.buildings.length; }, 0);
       const img = lootTierImage(t);
-      return '<button class="tier-card' + (img ? " has-img" : "") + '" data-go="#/loot/tier/' + encodeURIComponent(t.tier) + '">' +
+      const accent = TIER_ACCENTS[t.tier] || "#e0a94a";
+      return '<button class="tier-card premium' + (img ? " has-img" : "") + '" style="--tier-accent:' + accent + '" data-go="#/loot/tier/' + encodeURIComponent(t.tier) + '">' +
         (img ? '<img class="tier-bg" src="' + esc(img) + '" alt="" loading="lazy"><span class="poster-view" data-action="view-poster" data-img="' + esc(img) + '" role="button" tabindex="0" title="查看海报">⤢</span>' : "") +
-        '<div class="tier-top"><span class="tier-dots tier-dots-lg">' + ["T1", "T2", "T3", "T4"].map(function (x) { return '<span class="tier-dot' + (x === t.tier ? " on" : "") + '" data-tier="' + x + '">' + x + '</span>'; }).join("") + '</span>' + icon("chevron", 20) + '</div>' +
-        '<div class="tier-body"><h2>' + esc(t.title) + '</h2><p>' + esc(t.desc) + '</p><div class="tier-meta">' + regions.length + ' 区域 · ' + count + ' 建筑</div></div></button>';
+        '<div class="tier-watermark">0' + (ti + 1) + '</div>' +
+        '<div class="tier-top"><span class="tier-badge">TIER 0' + (ti + 1) + '</span><span class="tier-rank">' + TIER_RANKS[t.tier] + '</span></div>' +
+        '<div class="tier-body"><h2>' + esc(t.title) + '</h2><p>' + esc(t.desc) + '</p>' +
+        '<div class="tier-foot"><span class="tier-meta">' + regions.length + ' 区域 · ' + count + ' 建筑</span><span class="tier-open">进入 ' + icon("chevron", 15) + '</span></div></div></button>';
     }).join("");
 
-    const hot = ["铁锭", "钢锭", "金苹果", "弹药", "绷带", "罐头", "汽油", "钻石"];
-    const hotChips = hot.map(function (x) {
-      return '<button class="hot-chip" data-hot="' + esc(x) + '">' + esc(x) + "</button>";
-    }).join("");
+    const hotChips = searchHotChips("data-hot", true);
 
     q("view").innerHTML =
       '<section class="hero' + heroClass("home") + '"' + heroStyle("home") + '>' +
@@ -2296,7 +2311,7 @@
       "</div></div>" +
       '<div id="loot-results" hidden></div>' +
       '<div id="loot-home">' +
-        '<section class="section" id="loot-tiers"><div class="section-head"><div class="section-title">按 T 级浏览</div><div class="section-note">点击进入气候分区</div></div><div class="tier-grid">' + tierCards + "</div></section>" +
+        '<section class="section" id="loot-tiers"><div class="section-head"><div class="section-title">按 T 级浏览</div><div class="section-note">4 个阶段 · 由浅入深</div></div><div class="tier-grid">' + tierCards + "</div></section>" +
         '<section class="section"><div class="section-head"><div class="section-title">快速查找</div></div><div class="hot-chips">' + hotChips + "</div></section>" +
         '<section class="section"><div class="guide-note">' + icon("info", 18) + "<div>战利品数据来自 <b>" + esc(m.version) + " 建筑物战利品表</b>，共 " + m.entries.toLocaleString() + " 条。物品行显示的是表内「实际掉落概率」，数量为该次生成的数量范围。多体建筑按区块拆分，可切换区块查看。</div></div></section>" +
       "</div>";
@@ -2312,6 +2327,7 @@
     }, 120));
     input.addEventListener("search", function () {
       ui.lootQuery = input.value;
+      addSearchHistory(input.value);
       syncClear();
       applyLootSearch(input.value);
     });
@@ -2319,6 +2335,7 @@
       btn.addEventListener("click", function () {
         input.value = btn.dataset.hot;
         ui.lootQuery = btn.dataset.hot;
+        addSearchHistory(btn.dataset.hot);
         syncClear();
         applyLootSearch(btn.dataset.hot);
         input.focus();
@@ -2330,6 +2347,96 @@
       const box = q("loot-tiers");
       if (box) box.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  }
+
+
+  const SEARCH_PINYIN_CACHE = new Map();
+  function searchNorm(x) { return String(x || "").replace(/\s+/g, " ").trim().toLowerCase(); }
+  function searchPinyin(text) {
+    const key = String(text || "");
+    if (SEARCH_PINYIN_CACHE.has(key)) return SEARCH_PINYIN_CACHE.get(key);
+    let py = "", ini = "";
+    try {
+      if (window.pinyinPro) {
+        py = window.pinyinPro.pinyin(key, { toneType: "none" }).replace(/\s+/g, "").toLowerCase();
+        ini = window.pinyinPro.pinyin(key, { pattern: "first", toneType: "none" }).replace(/\s+/g, "").toLowerCase();
+      }
+    } catch (e) {}
+    const meta = { py: py, ini: ini };
+    SEARCH_PINYIN_CACHE.set(key, meta);
+    return meta;
+  }
+  function searchLev(a, b) {
+    a = String(a || ""); b = String(b || "");
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const prev = [];
+    for (let j = 0; j <= b.length; j++) prev[j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      let last = prev[0]; prev[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const old = prev[j];
+        prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, last + (a[i - 1] === b[j - 1] ? 0 : 1));
+        last = old;
+      }
+    }
+    return prev[b.length];
+  }
+  function searchScore(query, text) {
+    const q = searchNorm(query); const t = searchNorm(text);
+    if (!q || !t) return 0;
+    const qc = q.replace(/\s/g, ""); const tc = t.replace(/\s/g, "");
+    if (t === q) return 100;
+    if (tc === qc) return 98;
+    const meta = searchPinyin(text);
+    if (/^[a-z0-9]+$/.test(qc) && meta.py) {
+      if (meta.ini === qc) return 95;
+      if (meta.py === qc) return 94;
+    }
+    if (t.indexOf(q) === 0) return 90;
+    if (t.indexOf(q) >= 0) return 75;
+    if (/^[a-z0-9]+$/.test(qc) && meta.py) {
+      if (meta.py.indexOf(qc) === 0) return 86;
+      if (meta.py.indexOf(qc) >= 0) return 72;
+      if (meta.ini.indexOf(qc) === 0) return 66;
+    }
+    if (qc.length >= 2 && tc.length >= 2) {
+      if (Math.abs(tc.length - qc.length) <= 2 && searchLev(tc, qc) === 1) return 45;
+      if (qc.length >= 3 && searchLev(tc, qc) <= 2) return 30;
+    }
+    return 0;
+  }
+  function searchHit(query, text) { return searchScore(query, text) > 0; }
+  function searchBestScore(query, parts) {
+    let best = 0;
+    (parts || []).forEach(function (part) { best = Math.max(best, searchScore(query, part)); });
+    return best;
+  }
+  const SEARCH_HISTORY_KEY = "wz_search_history";
+  function getSearchHistory() {
+    try { const a = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]"); return Array.isArray(a) ? a.filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 8) : []; } catch (e) { return []; }
+  }
+  function addSearchHistory(term) {
+    const q = String(term || "").trim(); if (!q) return;
+    const list = getSearchHistory().filter(function (x) { return x.toLowerCase() !== q.toLowerCase(); });
+    list.unshift(q);
+    try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(list.slice(0, 8))); } catch (e) {}
+  }
+  const DEFAULT_HOT_SEARCHES = ["铁锭", "精准采集", "保险箱", "医疗包", "9mm 手枪弹", "军用防暴", "弹药", "食物"];
+  function getHotSearches() {
+    const out = [];
+    getSearchHistory().forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); });
+    DEFAULT_HOT_SEARCHES.forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); });
+    return out.slice(0, 10);
+  }
+  function searchHotChips(attr, includeHistory) {
+    const history = getSearchHistory();
+    const list = getHotSearches();
+    return list.map(function (x) {
+      const recent = includeHistory && history.indexOf(x) >= 0;
+      return '<button class="hot-chip' + (recent ? " recent" : "") + '" ' + attr + '="' + esc(x) + '">' + (recent ? "↺ " : "") + esc(x) + "</button>";
+    }).join("");
   }
 
   function applyLootSearch(query) {
@@ -2350,40 +2457,68 @@
 
   function searchResultsHTML(query) {
     const ql = query.toLowerCase();
+    const terms = String(query || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
     const items = [];
     for (let i = 0; i < itemList.length; i++) {
       const rec = itemList[i];
-      let score = 0;
-      const nameLower = rec.name.toLowerCase();
-      if (nameLower === ql) score = 100;
-      else if (rec.id.toLowerCase() === ql) score = 98;
-      else if (nameLower.indexOf(ql) === 0) score = 85;
-      else if (nameLower.indexOf(ql) >= 0) score = 70;
-      else if (rec.id.toLowerCase().indexOf(ql) >= 0) score = 55;
-      else if (rec.search.indexOf(ql) >= 0) score = 35;
-      if (score) items.push({ rec: rec, score: score });
+      const blob = rec.name + " " + rec.id + " " + rec.search;
+      if (!terms.length || !terms.every(function (t) { return searchHit(t, blob) || blob.indexOf(t) >= 0; })) continue;
+      const nbtTerms = terms.filter(function (t) { return !searchHit(t, rec.name + " " + rec.id) && (rec.name + " " + rec.id).indexOf(t) < 0; });
+      let matchedNbts = [];
+      if (nbtTerms.length) {
+        matchedNbts = Array.from(rec.nbts).filter(function (n) {
+          return nbtTerms.every(function (t) { return searchHit(t, n) || n.toLowerCase().indexOf(t) >= 0; });
+        });
+      }
+      items.push({ rec: rec, score: searchBestScore(query, [rec.name, rec.id, rec.search]) || 1, matchedNbt: matchedNbts[0] || "", matchedCount: matchedNbts.length });
     }
     items.sort(function (a, b) {
       return b.score - a.score || b.rec.bestDrop - a.rec.bestDrop || b.rec.sources.length - a.rec.sources.length;
     });
     const bMatches = buildingList.filter(function (x) {
-      return x.building.name.toLowerCase().indexOf(ql) >= 0 || x.building.id.toLowerCase().indexOf(ql) >= 0;
+      return terms.every(function (t) { return searchHit(t, x.building.name + " " + x.building.id); });
     }).slice(0, 8);
     const top = items.slice(0, 50);
     const variantRows = [];
     itemList.forEach(function (rec) {
+      const nbtTerms = terms.filter(function (t) { return !searchHit(t, rec.name + " " + rec.id) && (rec.name + " " + rec.id).indexOf(t) < 0; });
+      if (!nbtTerms.length) return;
       Array.from(rec.nbts).forEach(function (nbt) {
-        if (nbt.toLowerCase().indexOf(ql) >= 0) variantRows.push({ rec: rec, nbt: nbt, term: nbt.split('-').pop().trim() });
+        if (nbtTerms.every(function (t) { return searchHit(t, nbt) || nbt.toLowerCase().indexOf(t) >= 0; })) variantRows.push({ rec: rec, nbt: nbt, term: nbt.split('-').pop().trim(), matchedNbt: nbt });
       });
     });
 
+    const varLocMap = {};
+    variantRows.forEach(function (x) {
+      (x.rec.sources || []).forEach(function (s) {
+        if (!s.it || s.it[7] !== x.nbt) return;
+        const key = s.r.id + "|" + s.b.id;
+        if (!varLocMap[key]) varLocMap[key] = { s: s, drop: 0, count: 0, variants: {} };
+        const v = varLocMap[key];
+        v.drop = Math.max(v.drop, Number(s.it[4]) || 0);
+        v.count++;
+        v.variants[nbtLabel(x.nbt)] = 1;
+      });
+    });
+    const varLocs = Object.keys(varLocMap).map(function (k) { return varLocMap[k]; }).sort(function (a, b) { return b.drop - a.drop; });
     let html = '';
+    if (varLocs.length) {
+      html += '<section class="section"><div class="section-head"><div class="section-title">变体出现位置</div><div class="section-note">' + varLocs.length + ' 座建筑 · 按掉率排序</div></div><div class="list">' +
+        varLocs.slice(0, 40).map(function (v) {
+          const s = v.s;
+          const variantText = Object.keys(v.variants).join(" / ");
+          return '<button class="row-card variant-loc-row" data-go="#/loot/building/' + encodeURIComponent(s.r.id) + "/" + encodeURIComponent(s.b.id) + '?item=' + encodeURIComponent(s.it[0]) + '&nbt=' + encodeURIComponent(s.it[7] || '') + '">' +
+            '<div class="avatar">' + esc(initial(s.b.name)) + '</div>' +
+            '<div class="row-main"><div class="row-title">' + esc(s.b.name) + '</div><div class="row-sub">' + esc(s.r.name) + ' · ' + esc(s.f ? s.f.name : '') + ' · ' + esc(s.c ? s.c.name : '') + ' · ' + esc(variantText) + '</div></div>' +
+            '<div class="row-right"><div class="big">' + fmtPct(v.drop) + '</div><div class="cap">' + v.count + ' 个掉落点</div></div></button>';
+        }).join("") + '</div></section>';
+    }
     if (variantRows.length) {
-      html += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">附魔词条</div><div class="section-note">' + variantRows.length + ' 条</div></div><div class="list">' +
-        variantRows.slice(0, 60).map(function (x) {
-          return '<button class="row-card" data-item-id="' + esc(x.rec.id) + '" data-variant="' + esc(x.term) + '">' +
+      html += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">匹配变体</div><div class="section-note">' + variantRows.length + ' 条 · 点此直接筛选</div></div><div class="list">' +
+        variantRows.slice(0, 120).map(function (x) {
+          return '<button class="row-card" data-item-id="' + esc(x.rec.id) + '" data-variant="' + esc(x.nbt) + '">' +
             texIcon(x.rec.id, x.nbt, x.nbt, 'chip-ico', 28) +
-            '<div class="row-main"><div class="row-title">' + esc(x.rec.name) + '</div><div class="row-sub">' + esc(x.nbt.replace(/\n/g, ' ')) + '</div></div>' +
+            '<div class="row-main"><div class="row-title">' + esc(x.rec.name) + '</div><div class="row-sub">' + esc(nbtLabel(x.nbt)) + '</div></div>' +
             '<div class="row-right"><div class="cap">点此查看</div></div></button>';
         }).join("") + "</div></section>";
     }
@@ -2391,9 +2526,9 @@
     if (top.length) {
       html += '<div class="list">' + top.map(function (x) {
         const rec = x.rec;
-        return '<button class="row-card" data-item-id="' + esc(rec.id) + '">' +
+        return '<button class="row-card" data-item-id="' + esc(rec.id) + '"' + (x.matchedNbt ? ' data-variant="' + esc(x.matchedNbt) + '"' : '') + '>' +
           itemIcon(rec.id, rec.name, firstNbt(rec), 32) +
-          '<div class="row-main"><div class="row-title">' + esc(rec.name) + '</div><div class="row-sub mono">' + esc(rec.id) + (rec.nbts.size ? " · " + rec.nbts.size + " 个变体" : "") + "</div></div>" +
+          '<div class="row-main"><div class="row-title">' + esc(rec.name) + '</div><div class="row-sub mono">' + esc(rec.id) + (rec.nbts.size ? " · " + rec.nbts.size + " 个变体" : "") + (x.matchedCount ? " · 匹配 " + x.matchedCount + " 个" : "") + "</div></div>" +
           '<div class="row-right"><div class="big">' + fmtPct(rec.bestDrop) + '</div><div class="cap">最高掉率 · ' + rec.sources.length + " 处</div></div>" +
           "</button>";
       }).join("") + "</div>";
@@ -2583,7 +2718,7 @@
   function renderRegionList(region) {
     const query = (ui.regionQuery[region.id] || "").trim().toLowerCase();
     const list = region.buildings.filter(function (b) {
-      return !query || b.name.toLowerCase().indexOf(query) >= 0 || b.id.toLowerCase().indexOf(query) >= 0;
+      return !query || searchHit(query, b.name + " " + b.id);
     });
     const countEl = q("region-count");
     if (countEl) countEl.textContent = list.length + " / " + region.buildings.length + " 座";
@@ -2628,6 +2763,202 @@
   }
 
 
+
+
+  function building3DInfo(building) {
+    const parts = (building.parts || []).map(function (p, i) {
+      return { p: p, i: i, n: p.part == null ? i : Number(p.part) };
+    }).sort(function (a, b) { return a.n - b.n; });
+    const max = Math.max.apply(null, parts.map(function (x) { return x.n; })) + 1;
+    let best = { c: max, r: 1, score: 999 };
+    for (let c = 1; c <= max; c++) {
+      if (max % c !== 0) continue;
+      const r = max / c;
+      const score = Math.abs(c - r) + (c > r ? 0.25 : 0);
+      if (score < best.score) best = { c: c, r: r, score: score };
+    }
+    return { parts: parts, cols: best.c, rows: best.r, max: max, swap: false };
+  }
+
+
+
+
+  function openBuilding3D() {
+    const b = ui.currentBuilding;
+    if (!b) { toast("请先打开建筑"); return; }
+    const info = building3DInfo(b);
+    const colors = info.parts.map(function (x, i) { return "hsl(" + ((x.n * 47 + 18) % 360) + ",68%,56%)"; });
+    const legend = info.parts.map(function (x, i) {
+      const containers = (x.p.floors || []).reduce(function (a, f) { return a + (f.containers || []).length; }, 0);
+      return '<button class="b3d-legend-item" data-b3d-part="' + x.n + '"><span class="b3d-dot" style="background:' + colors[i] + '"></span><b>区块 ' + x.n + '</b><small>' + (x.p.floors || []).length + ' 层 · ' + containers + ' 容器</small></button>';
+    }).join("");
+    openSheet({
+      title: "3D 区块布局 · " + b.name,
+      body: '<div class="b3d-wrap"><div class="b3d-toolbar"><button class="btn ghost" data-b3d="reset">复位视角</button><button class="btn ghost" data-b3d="top">顶视图</button><button class="btn ghost" data-b3d="swap">交换行列</button><span class="b3d-hint">拖拽旋转 · 滚轮缩放 · 点击区块</span></div><div class="b3d-view"><canvas id="b3d-canvas"></canvas><canvas id="b3d-map"></canvas></div><div class="b3d-info" id="b3d-info">点击一个区块查看详情</div><div class="b3d-legend">' + legend + '</div></div>',
+      foot: '<button class="btn ghost block" data-action="close-sheet">关闭</button>'
+    });
+    setTimeout(function () { initBuilding3D(info, colors); }, 30);
+  }
+  function initBuilding3D(info, colors) {
+    const canvas = q("b3d-canvas"); if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const boxList = [];
+    let yaw = -0.62, zoom = 1, dragging = false, lastX = 0, selected = null;
+    function resize() {
+      const r = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(280, Math.floor(r.width * dpr));
+      canvas.height = Math.max(300, Math.floor(r.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function project(x, z, y) {
+      const cos = Math.cos(yaw), sin = Math.sin(yaw);
+      const rx = (x - info.cols / 2) * cos - (z - info.rows / 2) * sin;
+      const rz = (x - info.cols / 2) * sin + (z - info.rows / 2) * cos;
+      const scale = Math.min(canvas.clientWidth / Math.max(info.cols, info.rows + 2), 70) * zoom;
+      return { x: canvas.clientWidth / 2 + rx * scale, y: canvas.clientHeight / 2 + (rz * 0.52 - y * 0.9) * scale, s: scale };
+    }
+    function drawMap() {
+      const mc = q("b3d-map"); if (!mc) return;
+      const dpr = window.devicePixelRatio || 1;
+      const size = Math.max(120, Math.min(190, mc.clientWidth || 160));
+      mc.width = size * dpr; mc.height = size * dpr;
+      const m = mc.getContext("2d"); m.setTransform(dpr, 0, 0, dpr, 0, 0);
+      m.clearRect(0, 0, size, size);
+      const pad = 10, cw = (size - pad * 2) / info.cols, ch = (size - pad * 2) / info.rows;
+      m.fillStyle = "rgba(8,12,10,.9)"; m.fillRect(0, 0, size, size);
+      for (let z = 0; z < info.rows; z++) for (let x = 0; x < info.cols; x++) {
+        const idx = x * info.rows + z;
+        const part = info.parts.filter(function (p) { return p.n === idx; })[0];
+        m.fillStyle = part ? colors[info.parts.indexOf(part)] : "rgba(255,255,255,.05)";
+        m.globalAlpha = selected === idx ? 1 : 0.7;
+        m.fillRect(pad + x * cw + 1, pad + z * ch + 1, cw - 2, ch - 2);
+        m.globalAlpha = 1;
+        if (selected === idx) { m.strokeStyle = "#fff"; m.lineWidth = 2; m.strokeRect(pad + x * cw + 1, pad + z * ch + 1, cw - 2, ch - 2); }
+      }
+      m.fillStyle = "rgba(224,169,74,.8)"; m.font = "9px monospace"; m.textAlign = "center";
+      m.fillText("TOP // X→ Z↓", size / 2, 8);
+    }
+    function render() {
+      resize();
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "rgba(8,12,10,.96)"; ctx.fillRect(0, 0, W, H);
+      // grid floor
+      ctx.strokeStyle = "rgba(224,169,74,.12)"; ctx.lineWidth = 1;
+      for (let x = 0; x <= info.cols; x++) { const a = project(x, 0, 0), b = project(x, info.rows, 0); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+      for (let z = 0; z <= info.rows; z++) { const a = project(0, z, 0), b = project(info.cols, z, 0); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+      boxList.length = 0;
+      info.parts.forEach(function (x, i) {
+        const col = info.swap ? Math.floor(x.n / info.rows) : Math.floor(x.n / info.rows);
+        const row = x.n % info.rows;
+        // if swapped, transpose the grid coordinates
+        const gx = info.swap ? row : Math.floor(x.n / info.rows);
+        const gz = info.swap ? Math.floor(x.n / info.rows) : row;
+        if (gx >= info.cols || gz >= info.rows) return;
+        const floors = (x.p.floors || []).length || 1;
+        const h = 0.7 + Math.min(2.2, floors * 0.45);
+        const selectedPart = selected === x.n;
+        const base = project(gx + 0.5, gz + 0.5, 0);
+        const top = project(gx + 0.5, gz + 0.5, h);
+        const c = project(gx + 0.5, gz + 0.5, h * 0.55);
+        const s = base.s * 0.42;
+        const color = colors[i];
+        // body
+        ctx.fillStyle = color;
+        ctx.globalAlpha = selectedPart ? 0.98 : 0.78;
+        ctx.beginPath();
+        ctx.moveTo(base.x - s, base.y);
+        ctx.lineTo(base.x, base.y + s * 0.5);
+        ctx.lineTo(base.x, top.y + s * 0.5);
+        ctx.lineTo(base.x - s, top.y);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y + s * 0.5);
+        ctx.lineTo(base.x + s, base.y);
+        ctx.lineTo(base.x + s, top.y);
+        ctx.lineTo(base.x, top.y + s * 0.5);
+        ctx.closePath(); ctx.fill();
+        // top
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.moveTo(top.x, top.y - s * 0.5);
+        ctx.lineTo(top.x + s, top.y);
+        ctx.lineTo(top.x, top.y + s * 0.5);
+        ctx.lineTo(top.x - s, top.y);
+        ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+        ctx.strokeStyle = selectedPart ? "#fff" : "rgba(0,0,0,.35)"; ctx.lineWidth = selectedPart ? 2 : 1; ctx.stroke();
+        ctx.fillStyle = "#101410"; ctx.font = "700 10px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("P" + x.n, top.x, top.y - 5);
+        ctx.fillStyle = "rgba(8,12,10,.8)"; ctx.font = "8px monospace";
+        ctx.fillText("(" + gx + "," + gz + ")", top.x, top.y + 7);
+        boxList.push({ x: x, gx: gx, gz: gz, cx: top.x, cy: top.y, h: h });
+      });
+      ctx.globalAlpha = 1;
+      drawMap();
+      ctx.fillStyle = "rgba(224,169,74,.8)"; ctx.font = "11px monospace"; ctx.textAlign = "left";
+      ctx.fillText("GRID " + info.cols + " × " + info.rows, 12, 20);
+      ctx.fillText("BLOCKS " + info.parts.length + " / " + info.max, 12, 36);
+      ctx.fillStyle = "rgba(224,169,74,.72)"; ctx.font = "9px monospace"; ctx.textAlign = "center";
+      const nPt = project(info.cols / 2, 0, 0), sPt = project(info.cols / 2, info.rows, 0);
+      const wPt = project(0, info.rows / 2, 0), ePt = project(info.cols, info.rows / 2, 0);
+      ctx.fillText("北 Z-", nPt.x, nPt.y + 15); ctx.fillText("南 Z+", sPt.x, sPt.y + 15);
+      ctx.fillText("西 X-", wPt.x - 28, wPt.y); ctx.fillText("东 X+", ePt.x + 28, ePt.y);
+      const infoEl = q("b3d-info");
+      if (infoEl && !selected) infoEl.textContent = "拖拽旋转 · 滚轮缩放 · 点击区块查看详情";
+    }
+    function hit(e) {
+      const r = canvas.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top;
+      let best = null, bd = 999;
+      boxList.forEach(function (b) { const d = Math.hypot(b.cx - mx, b.cy - my - 12); if (d < bd && d < 34) { bd = d; best = b; } });
+      return best;
+    }
+    canvas.addEventListener("pointerdown", function (e) { dragging = true; lastX = e.clientX; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener("pointermove", function (e) {
+      if (dragging) { yaw += (e.clientX - lastX) * 0.008; lastX = e.clientX; render(); }
+    });
+    canvas.addEventListener("pointerup", function (e) {
+      dragging = false;
+      const b = hit(e);
+      if (b) {
+        selected = b.x.n;
+        const containers = (b.x.p.floors || []).reduce(function (a, f) { return a + (f.containers || []).length; }, 0);
+        const infoEl = q("b3d-info");
+        const cx = (info.cols + 1) / 2, cz = (info.rows + 1) / 2;
+        const dx = b.gx + 0.5 - cx, dz = b.gz + 0.5 - cz;
+        const dir = [dx < -0.5 ? "西" : dx > 0.5 ? "东" : "", dz < -0.5 ? "北" : dz > 0.5 ? "南" : ""].filter(Boolean).join("");
+        if (infoEl) infoEl.innerHTML = '<b>区块 P' + b.x.n + '</b> · 网格坐标 <span class="mono">x=' + b.gx + ', z=' + b.gz + '</span> · 位于建筑' + (dir ? " · " + dir + "方向" : "中心区域") + ' · ' + (b.x.p.floors || []).length + ' 层 · ' + containers + ' 个容器';
+        render();
+      }
+    });
+    canvas.addEventListener("wheel", function (e) { e.preventDefault(); zoom = Math.max(0.55, Math.min(1.8, zoom + (e.deltaY > 0 ? -0.08 : 0.08))); render(); }, { passive: false });
+    const wrap = canvas.closest(".b3d-wrap");
+    const mapCanvas = q("b3d-map");
+    if (mapCanvas) mapCanvas.addEventListener("click", function (e) {
+      const r = mapCanvas.getBoundingClientRect();
+      const x = Math.floor((e.clientX - r.left - 10) / ((r.width - 20) / info.cols));
+      const z = Math.floor((e.clientY - r.top - 10) / ((r.height - 20) / info.rows));
+      if (x < 0 || z < 0 || x >= info.cols || z >= info.rows) return;
+      const idx = x * info.rows + z;
+      const part = info.parts.filter(function (p) { return p.n === idx; })[0];
+      if (!part) return;
+      selected = idx;
+      const containers = (part.p.floors || []).reduce(function (a, f) { return a + (f.containers || []).length; }, 0);
+      const infoEl = q("b3d-info");
+      if (infoEl) infoEl.innerHTML = '<b>区块 P' + idx + '</b> · 网格坐标 <span class="mono">x=' + x + ', z=' + z + '</span> · ' + (part.p.floors || []).length + ' 层 · ' + containers + ' 个容器';
+      render();
+    });
+    if (wrap) wrap.addEventListener("click", function (e) {
+      const leg = e.target.closest("[data-b3d-part]"); if (leg) { selected = Number(leg.dataset.b3dPart); render(); return; }
+      const btn = e.target.closest("[data-b3d]"); if (!btn) return;
+      if (btn.dataset.b3d === "reset") { yaw = -0.62; zoom = 1; selected = null; }
+      if (btn.dataset.b3d === "top") { yaw = 0; zoom = 1; selected = null; }
+      if (btn.dataset.b3d === "swap") { info.swap = !info.swap; selected = null; }
+      render();
+    });
+    window.addEventListener("resize", render);
+    render();
+  }
 
   function renderBuilding(rid, bid) {
     const region = DATA.regions.filter(function (r) { return r.id === rid; })[0];
@@ -2713,11 +3044,14 @@
       (building.boss ? '<div class="section"><div class="callout red"><div class="callout-title">驻守头目 · ' + esc(building.boss) + '</div><div class="text-block">该建筑固定出现头目「' + esc(building.boss) + '」，建议先清尸潮、准备高伤枪械与医疗。</div>' + (building.bossId ? '<button class="btn ghost" data-go="#/monster/' + encodeURIComponent(building.bossId) + '">查看头目资料</button>' : "") + '</div></div>' : "") +
       buildingHordeSection(building) +
       partChips +
+      '<div class="section" style="margin-top:8px"><button class="btn ghost block" data-action="building-3d">' + icon("box", 17) + ' 3D 区块布局</button></div>' +
+      '<div class="section" style="margin-top:8px"><button class="btn ghost block" data-action="building-route">' + icon("list", 17) + ' 搜刮路线与容器优先级</button></div>' +
       '<div class="section" style="margin-top:14px"><div class="section-head"><div class="section-title">按楼层查看</div><div class="section-note">当前 ' + entriesShown.toLocaleString() + " 条</div></div>" + floorsHTML + "</div>" +
       '<div class="section tiny dim">点击容器展开物品；点击物品查看全图所有掉落来源。</div>';
 
     // 保存当前建筑供容器懒加载
     ui.currentBuilding = building;
+    ui.currentTarget = { item: targetItem, nbt: targetNbt };
     ui.currentPartIndex = shown.length === 1 ? shown[0].i : null;
     q("view").insertAdjacentHTML("beforeend", commentsHTML("building", building.id)); mountPageComments("building", building.id);
 
@@ -2805,7 +3139,7 @@
           '<span class="badge">数量 ' + esc(fmtNum(it[2])) + "</span>" +
           (it[5] != null ? '<span class="badge">权重 ' + esc(fmtPct(it[5])) + "</span>" : "") +
           (it[6] != null && Number(it[6]) < 100 ? '<span class="badge">条件 ' + esc(fmtPct(it[6])) + "</span>" : "") +
-          (it[7] ? '<span class="badge warm">' + esc(it[7].split("\n")[0]) + "</span>" : "") +
+          (it[7] ? '<span class="badge warm nbt-badge" title="' + esc(it[7]) + '">' + esc(nbtLabel(it[7])) + "</span>" : "") +
           (it[8] ? '<span class="badge">损坏 ' + esc(it[8]) + "</span>" : "") +
         "</div>" +
       "</button>";
@@ -2817,13 +3151,16 @@
       "</div></div>" +
       (rec.nbts.size ? (function () {
         const all = Array.from(rec.nbts);
-        const shown = all;
-        return '<div class="section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note">' + rec.nbts.size + " 种</div></div>" +
-          '<input class="variant-search" id="variant-search" placeholder="搜索变体 / 附魔，例如：精准采集">' +
-          '<div class="chip-row variant-row">' +
-          shown.map(function (n) { return '<button class="chip variant-chip" title="点击搜索这个变体">' + texIcon(rec.id, n, n, "chip-ico", 20) + esc(n.replace(/\n/g, " ")) + "</button>"; }).join("") +
-          (all.length > shown.length ? '<span class="chip" style="cursor:default">还有 ' + (all.length - shown.length) + " 种</span>" : "") +
-          "</div></div>";
+        return '<div class="section variant-section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note" id="variant-count">' + all.length + ' 种 · 可搜索</div></div>' +
+          '<div class="variant-toolbar"><input class="variant-search" id="variant-search" placeholder="搜索附魔、词条，例如：锋利 III / 精准采集" autocomplete="off"><button class="variant-clear" data-action="clear-variant">清除</button></div>' +
+          '<div class="variant-grid">' +
+          all.map(function (n) {
+            const text = nbtLabel(n);
+            return '<button class="variant-item" data-variant="' + esc(n) + '" data-search="' + esc(String(n).toLowerCase()) + '">' +
+              '<span class="variant-ico">' + texIcon(rec.id, n, n, 'chip-ico', 22) + '</span>' +
+              '<span class="variant-text">' + esc(text) + '</span>' +
+              '<span class="variant-arrow">' + icon("chevron", 13) + '</span></button>';
+          }).join("") + '</div></div>';
       })() : "") +
       (function () {
         const ammo = (GUIDE.ammo || []).filter(function (x) { return x.id === rec.id || x.itemId === rec.id; })[0];
@@ -3046,7 +3383,7 @@
       if (ui.monsterLevel && ui.monsterLevel !== "全部" && m.level !== ui.monsterLevel) return false;
 
       if (!query) return true;
-      return [m.name, m.en, m.aka, m.category, m.desc, m.behavior, m.spawn, m.strategy, m.drops].join(" ").toLowerCase().indexOf(query) >= 0;
+      return searchHit(query, [m.name, m.en, m.aka, m.category, m.desc, m.behavior, m.spawn, m.strategy, m.drops].join(" "));
     });
     const per = 8;
     const pages = Math.max(1, Math.ceil(all.length / per));
@@ -3230,7 +3567,7 @@
     const list = allMachines().filter(function (m) {
       if (ui.machineCat !== "全部" && m.category !== ui.machineCat) return false;
       if (!query) return true;
-      return [m.name, m.mod, m.category, m.stage, m.purpose, m.howToGet, m.tips].join(" ").toLowerCase().indexOf(query) >= 0;
+      return searchHit(query, [m.name, m.mod, m.category, m.stage, m.purpose, m.howToGet, m.tips].join(" "));
     });
     q("machine-list").innerHTML = list.length ? list.map(function (m) {
       return '<button class="row-card" data-go="#/machine/' + encodeURIComponent(m.id) + '">' +
@@ -3851,7 +4188,7 @@
     if (itemEl) {
       e.preventDefault();
       ui.itemBack = currentHash();
-      const variant = itemEl.dataset.variant || '';
+      const variant = itemEl.dataset.variant ? nbtLabel(itemEl.dataset.variant) : '';
       go("#/item/" + encodeURIComponent(itemEl.dataset.itemId));
       if (variant) setTimeout(function () {
         const input = document.getElementById('variant-search');
@@ -3942,6 +4279,8 @@
         }
         break;
       }
+      case "building-3d": openBuilding3D(); break;
+      case "building-route": openBuildingRoute(); break;
       case "building-part": {
         ui.buildingPart[el.dataset.key] = Number(el.dataset.part);
         const parsed = parseHash();
@@ -3951,7 +4290,8 @@
       case "fav-item": toggleFav("items", el.dataset.id); break;
       case "fav-monster": toggleFav("monsters", el.dataset.id); break;
       case "fav-machine": toggleFav("machines", el.dataset.id); break;
-      case "show-all-sources": ui.showAllSources = true; renderItem(parseHash().parts[1]); break;
+      case "clear-variant": { const vi = document.getElementById("variant-search"); if (vi) { vi.value = ""; vi.dispatchEvent(new Event("input", { bubbles: true })); } break; }
+    case "show-all-sources": ui.showAllSources = true; renderItem(parseHash().parts[1]); break;
       case "region-page": {
         if (!ui.regionPage) ui.regionPage = {};
         const rid = el.dataset.region || "";
@@ -4181,6 +4521,17 @@
 })();
 
   document.addEventListener('click', function (e) {
+    const vitem = e.target.closest('.variant-item');
+    if (vitem) {
+      const input = document.getElementById('variant-search');
+      if (input) {
+        input.value = nbtLabel(vitem.dataset.variant || '');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        document.querySelectorAll('.variant-item.active').forEach(function (x) { x.classList.remove('active'); });
+        vitem.classList.add('active');
+      }
+      return;
+    }
     const chip = e.target.closest('.variant-chip');
     if (!chip) return;
     const input = document.getElementById('variant-search');
@@ -4220,11 +4571,14 @@
     const hasNbtMatch = !!q && cards.some(function (card) { return (card.dataset.nbt || '').replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0; });
     cards.forEach(function (card) { card.style.display = (!hasNbtMatch || (card.dataset.nbt || '').replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0) ? '' : 'none'; });
     let first = null;
-    section.querySelectorAll('.chip-row .chip').forEach(function (chip) {
-      const hit = !q || chip.textContent.replace(/\s+/g, ' ').trim().toLowerCase().indexOf(q) >= 0;
-      chip.style.display = hit ? '' : 'none';
-      chip.classList.remove('flash');
-      if (hit && q) { first = first || chip; chip.classList.add('flash'); }
+    const vItems = Array.from(section.querySelectorAll('.variant-item'));
+    vItems.forEach(function (item) {
+      const hit = !q || (item.dataset.search || '').indexOf(q) >= 0;
+      item.style.display = hit ? '' : 'none';
+      item.classList.remove('flash');
+      if (hit && q) { first = first || item; item.classList.add('flash'); }
     });
+    const countEl = document.getElementById('variant-count');
+    if (countEl) countEl.textContent = (q ? vItems.filter(function (x) { return x.style.display !== 'none'; }).length + ' / ' : '') + vItems.length + ' 种' + (q ? ' · 已筛选' : ' · 可搜索');
     if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
