@@ -2501,9 +2501,9 @@
       });
     });
     const varLocs = Object.keys(varLocMap).map(function (k) { return varLocMap[k]; }).sort(function (a, b) { return b.drop - a.drop; });
-    let html = '';
+    let html = ''; let varLocsHtml = ''; let variantHtml = '';
     if (varLocs.length) {
-      html += '<section class="section"><div class="section-head"><div class="section-title">变体出现位置</div><div class="section-note">' + varLocs.length + ' 座建筑 · 按掉率排序</div></div><div class="list">' +
+      varLocsHtml += '<section class="section"><div class="section-head"><div class="section-title">变体出现位置</div><div class="section-note">' + varLocs.length + ' 座建筑 · 按掉率排序</div></div><div class="list">' +
         varLocs.slice(0, 40).map(function (v) {
           const s = v.s;
           const variantText = Object.keys(v.variants).join(" / ");
@@ -2514,7 +2514,7 @@
         }).join("") + '</div></section>';
     }
     if (variantRows.length) {
-      html += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">匹配变体</div><div class="section-note">' + variantRows.length + ' 条 · 点此直接筛选</div></div><div class="list">' +
+      variantHtml += '<section class="section" style="margin-top:18px"><div class="section-head"><div class="section-title">匹配变体</div><div class="section-note">' + variantRows.length + ' 条 · 点此直接筛选</div></div><div class="list">' +
         variantRows.slice(0, 120).map(function (x) {
           return '<button class="row-card" data-item-id="' + esc(x.rec.id) + '" data-variant="' + esc(x.nbt) + '">' +
             texIcon(x.rec.id, x.nbt, x.nbt, 'chip-ico', 28) +
@@ -2536,6 +2536,7 @@
       html += '<div class="empty">' + icon("search", 28) + '<div class="em-title">没有找到「' + esc(query) + '」</div><div class="em-sub">试试物品中文名、英文 ID，或更短的关键词</div></div>';
     }
     html += "</section>";
+    html = html + varLocsHtml + variantHtml;
     if (bMatches.length) {
       html += '<section class="section"><div class="section-head"><div class="section-title">相关建筑</div></div><div class="list">' + bMatches.map(function (x) {
         return '<button class="row-card building-row ' + climateClass(x.region) + '" data-go="#/loot/building/' + encodeURIComponent(x.region.id) + "/" + encodeURIComponent(x.building.id) + '">' +
@@ -3102,17 +3103,53 @@
   }
 
   /* ---------------- 物品详情 ---------------- */
+  function openVariantLocations(rec, nbt) {
+    if (!rec) return;
+    const label = nbtLabel(nbt);
+    const map = {};
+    (rec.sources || []).forEach(function (s) {
+      if (!s.it || !s.it[7] || nbtLabel(s.it[7]) !== label) return;
+      const key = s.r.id + "|" + s.b.id;
+      if (!map[key]) map[key] = { s: s, drop: 0, count: 0, floor: "", container: "" };
+      const v = map[key];
+      v.drop = Math.max(v.drop, Number(s.it[4]) || 0);
+      v.count++;
+      if (!v.floor) v.floor = s.f ? s.f.name : "";
+      if (!v.container) v.container = s.c ? s.c.name : "";
+    });
+    const list = Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) { return b.drop - a.drop; });
+    const body = '<div class="vloc-head"><span class="vloc-tag">' + esc(label) + '</span><span class="vloc-count">' + list.length + ' 座建筑 · ' + list.reduce(function (a, x) { return a + x.count; }, 0) + ' 个掉落点</span></div>' +
+      (list.length ? '<div class="vloc-list">' + list.map(function (v) {
+        const s = v.s;
+        const href = "#/loot/building/" + encodeURIComponent(s.r.id) + "/" + encodeURIComponent(s.b.id) + "?item=" + encodeURIComponent(s.it[0]) + "&nbt=" + encodeURIComponent(s.it[7] || '');
+        return '<button class="vloc-row" data-vloc="' + esc(href) + '"><div class="vloc-main"><div class="vloc-building">' + esc(s.b.name) + '</div><div class="vloc-meta">' + esc(s.r.name) + ' · ' + esc(v.floor) + ' · ' + esc(v.container) + '</div></div><div class="vloc-right"><b>' + fmtPct(v.drop) + '</b><span>' + v.count + ' 处</span></div><span class="vloc-arrow">' + icon("chevron", 15) + '</span></button>';
+      }).join('') + '</div>' : '<div class="empty"><div class="em-title">没有找到该变体的具体位置</div></div>');
+    openSheet({ title: label + ' · 出现位置', body: body, foot: '<button class="btn primary block" data-action="close-sheet">关闭</button>' });
+    setTimeout(function () {
+      document.querySelectorAll('[data-vloc]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const href = btn.dataset.vloc;
+          closeSheet();
+          if (href) go(href);
+        });
+      });
+    }, 0);
+  }
+
   function renderItem(id) {
     const rec = itemIndex.get(id);
+    ui.currentItemRec = rec || null;
     if (!rec) {
       renderTopbar({ back: ui.itemBack, title: "物品" });
       q("view").innerHTML = '<div class="empty">' + icon("alert", 30) + '<div class="em-title">没有这个物品</div><div class="em-sub">' + esc(id) + "</div></div>";
       return;
     }
     const back = ui.itemBack || "#/loot";
+    const initialNbt = new URLSearchParams((location.hash.split('?')[1] || '')).get('nbt') || '';
+    const initialNbtLabel = initialNbt ? nbtLabel(initialNbt) : '';
     renderTopbar({
       back: back,
-      title: rec.name,
+      title: rec.name + (initialNbtLabel ? " · " + initialNbtLabel : ""),
       sub: rec.sources.length + " 处掉落来源",
       actions: ['<button class="icon-btn ' + (isFav("items", rec.id) ? "accent" : "") + '" data-action="fav-item" data-id="' + esc(rec.id) + '" data-fav-type="items" data-fav-id="' + esc(rec.id) + '" aria-label="收藏" aria-pressed="' + (isFav("items", rec.id) ? "true" : "false") + '">' + (isFav("items", rec.id) ? iconStarFill : icon("star")) + "</button>"]
     });
@@ -3146,13 +3183,13 @@
     }
 
     q("view").innerHTML =
-      '<div class="card item-hero">' + itemIcon(rec.id, rec.name, firstNbt(rec), 52) + '<div style="flex:1;min-width:0"><h1>' + esc(rec.name) + "</h1><div class=\"id mono\">" + esc(rec.id) + "</div>" +
+      '<div class="card item-hero">' + itemIcon(rec.id, rec.name, initialNbt || firstNbt(rec), 52) + '<div style="flex:1;min-width:0"><h1>' + esc(rec.name) + (initialNbtLabel ? ' <span class="item-variant-title">· ' + esc(initialNbtLabel) + '</span>' : '') + "</h1><div class=\"id mono\">" + esc(rec.id) + "</div>" +
         (rec.names.size > 1 ? '<div class="tiny dim" style="margin-top:4px">另有名称：' + esc(Array.from(rec.names).slice(1).join(" / ")) + "</div>" : "") +
       "</div></div>" +
       (rec.nbts.size ? (function () {
         const all = Array.from(rec.nbts);
         return '<div class="section variant-section"><div class="section-head"><div class="section-title">变体 / NBT</div><div class="section-note" id="variant-count">' + all.length + ' 种 · 可搜索</div></div>' +
-          '<div class="variant-toolbar"><input class="variant-search" id="variant-search" placeholder="搜索附魔、词条，例如：锋利 III / 精准采集" autocomplete="off"><button class="variant-clear" data-action="clear-variant">清除</button></div>' +
+          '<div class="variant-toolbar"><input class="variant-search" id="variant-search" placeholder="搜索后点变体查看出现位置" autocomplete="off"><button class="variant-clear" data-action="clear-variant">清除</button></div>' +
           '<div class="variant-grid">' +
           all.map(function (n) {
             const text = nbtLabel(n);
@@ -3176,6 +3213,13 @@
       '<div class="section callout"><div class="callout-title">怎么看这些数字</div>「实际掉落概率」是表内计算后的结果；「权重」与「条件」是原始生成参数。数量为单次生成的范围。多体建筑的同一座建筑不同区块，掉落可能不同。</div>';
 
     ui.showAllSources = false;
+    if (initialNbt) setTimeout(function () {
+      const input = document.getElementById('variant-search');
+      if (input) {
+        input.value = nbtLabel(initialNbt);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }, 80);
   }
 
   /* ---------------- 怪物 ---------------- */
@@ -4188,11 +4232,12 @@
     if (itemEl) {
       e.preventDefault();
       ui.itemBack = currentHash();
-      const variant = itemEl.dataset.variant ? nbtLabel(itemEl.dataset.variant) : '';
-      go("#/item/" + encodeURIComponent(itemEl.dataset.itemId));
+      const rawVariant = itemEl.dataset.variant || '';
+      const variant = rawVariant ? nbtLabel(rawVariant) : '';
+      go("#/item/" + encodeURIComponent(itemEl.dataset.itemId) + (rawVariant ? "?nbt=" + encodeURIComponent(rawVariant) : ""));
       if (variant) setTimeout(function () {
         const input = document.getElementById('variant-search');
-        if (input) { input.value = variant; input.dispatchEvent(new Event('input', { bubbles: true })); input.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        if (input) { input.value = variant; input.dispatchEvent(new Event('input', { bubbles: true })); }
       }, 180);
       return;
     }
@@ -4517,6 +4562,7 @@
   loadBuildingContent();
   window.addEventListener("hashchange", route);
   applyTheme(getTheme());
+  window.WZ_VARIANT_HELPERS = { label: nbtLabel, open: openVariantLocations, currentRec: function () { return ui.currentItemRec; } };
   route();
 })();
 
@@ -4525,11 +4571,12 @@
     if (vitem) {
       const input = document.getElementById('variant-search');
       if (input) {
-        input.value = nbtLabel(vitem.dataset.variant || '');
+        const VH = window.WZ_VARIANT_HELPERS; if (!VH) return; input.value = VH.label(vitem.dataset.variant || '');
         input.dispatchEvent(new Event('input', { bubbles: true }));
         document.querySelectorAll('.variant-item.active').forEach(function (x) { x.classList.remove('active'); });
         vitem.classList.add('active');
       }
+      if (window.WZ_VARIANT_HELPERS) window.WZ_VARIANT_HELPERS.open(window.WZ_VARIANT_HELPERS.currentRec(), vitem.dataset.variant || '');
       return;
     }
     const chip = e.target.closest('.variant-chip');
