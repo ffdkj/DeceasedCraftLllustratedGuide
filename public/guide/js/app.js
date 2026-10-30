@@ -1943,6 +1943,7 @@
       else if (p[1] === "region" && p[2]) renderRegion(p[2]);
       else if (p[1] === "building" && p[2] && p[3]) renderBuilding(p[2], p[3]);
       else if (p[1] === "search") renderLootHome(parsed.query.get("q") || "");
+      else if (p[1] === "stats") renderLootStats();
       else renderLootHome("");
     } else if (root === "item" && p[1]) {
       renderItem(p[1]);
@@ -2312,6 +2313,7 @@
       '<div id="loot-results" hidden></div>' +
       '<div id="loot-home">' +
         '<section class="section" id="loot-tiers"><div class="section-head"><div class="section-title">按 T 级浏览</div><div class="section-note">4 个阶段 · 由浅入深</div></div><div class="tier-grid">' + tierCards + "</div></section>" +
+        '<section class="section stats-entry-section"><button class="stats-entry" data-go="#/loot/stats"><span class="stats-entry-ico">' + icon("box", 22) + '</span><span><b>数据总览</b><small>区域收益 · 建筑容器 · T 级构成</small></span><span class="stats-entry-arrow">查看 →</span></button></section>' +
         '<section class="section"><div class="section-head"><div class="section-title">快速查找</div></div><div class="hot-chips">' + hotChips + "</div></section>" +
         '<section class="section"><div class="guide-note">' + icon("info", 18) + "<div>战利品数据来自 <b>" + esc(m.version) + " 建筑物战利品表</b>，共 " + m.entries.toLocaleString() + " 条。物品行显示的是表内「实际掉落概率」，数量为该次生成的数量范围。多体建筑按区块拆分，可切换区块查看。</div></div></section>" +
       "</div>";
@@ -2547,6 +2549,89 @@
     }
     html += '<div class="section tiny dim">提示：搜索会同时匹配物品名、物品 ID 与 NBT 变体（弹药口径、附魔、药水效果等）。</div>';
     return html;
+  }
+
+  function lootStatsRows() {
+    var regions = (DATA.regions || []).map(function (r) {
+      var containers = 0, entries = 0;
+      (r.buildings || []).forEach(function (b) {
+        (b.parts || []).forEach(function (p) { (p.floors || []).forEach(function (f) { (f.containers || []).forEach(function (c) { containers++; entries += (c.items || []).length; }); }); });
+      });
+      return { r: r, buildings: (r.buildings || []).length, containers: containers, entries: entries, density: containers ? entries / containers : 0 };
+    });
+    var buildings = [];
+    (DATA.regions || []).forEach(function (r) {
+      (r.buildings || []).forEach(function (b) {
+        var containers = 0, entries = 0;
+        (b.parts || []).forEach(function (p) { (p.floors || []).forEach(function (f) { (f.containers || []).forEach(function (c) { containers++; entries += (c.items || []).length; }); }); });
+        buildings.push({ r: r, b: b, containers: containers, entries: entries });
+      });
+    });
+    return { regions: regions, buildings: buildings };
+  }
+  function renderLootStats() {
+    var rows = lootStatsRows();
+    var regions = rows.regions;
+    var buildings = rows.buildings;
+    var totalEntries = 0, totalContainers = 0;
+    regions.forEach(function (x) { totalEntries += x.entries; totalContainers += x.containers; });
+    var maxC = Math.max.apply(null, regions.map(function (x) { return x.containers; })) || 1;
+    var maxE = Math.max.apply(null, regions.map(function (x) { return x.entries; })) || 1;
+    var tierAgg = {};
+    regions.forEach(function (x) { var t = x.r.tier; if (!tierAgg[t]) tierAgg[t] = { entries: 0, regions: 0, buildings: 0 }; tierAgg[t].entries += x.entries; tierAgg[t].regions++; tierAgg[t].buildings += x.buildings; });
+    var climateAgg = {};
+    regions.forEach(function (x) { var c = x.r.climate || "未知"; climateAgg[c] = (climateAgg[c] || 0) + 1; });
+    var maxDensity = regions.slice().sort(function (a, b) { return b.density - a.density; })[0];
+    var topBuildings = buildings.slice().sort(function (a, b) { return b.entries - a.entries; }).slice(0, 12);
+    var W = 760, H = 340, padL = 46, padR = 96, padT = 30, padB = 34;
+    function sx(v) { return padL + (v / maxC) * (W - padL - padR); }
+    function sy(v) { return H - padB - (v / maxE) * (H - padT - padB); }
+    var scatter = '<svg class="stats-scatter" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="区域风险收益图">';
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + (H - padT - padB) * (g / 4);
+      var gx = padL + (W - padL - padR) * (g / 4);
+      scatter += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" class="stats-grid"/>';
+      scatter += '<line x1="' + gx + '" y1="' + padT + '" x2="' + gx + '" y2="' + (H - padB) + '" class="stats-grid"/>';
+    }
+    scatter += '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '" class="stats-axis"/><line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (H - padB) + '" class="stats-axis"/>';
+    scatter += '<text x="' + (W / 2) + '" y="' + (H - 8) + '" class="stats-axis-label" text-anchor="middle">容器数量 →</text>';
+    scatter += '<text x="14" y="' + (H / 2) + '" class="stats-axis-label" transform="rotate(-90 14 ' + (H / 2) + ')" text-anchor="middle">掉落条目 →</text>';
+    regions.forEach(function (x) {
+      var cx = sx(x.containers), cy = sy(x.entries), rr = 5 + Math.sqrt(x.buildings) * 2.2;
+      var labelRight = cx < W - padR - 20;
+      var labelX = labelRight ? cx + rr + 5 : cx - rr - 5;
+      scatter += '<a href="#/loot/region/' + encodeURIComponent(x.r.id) + '"><circle cx="' + cx + '" cy="' + cy + '" r="' + rr + '" fill="' + tierColor(x.r.tier) + '" fill-opacity=".82" stroke="' + tierColor(x.r.tier) + '"><title>' + esc(x.r.name) + ' · ' + x.containers + ' 容器 · ' + x.entries + ' 条目</title></circle>';
+      scatter += '<text x="' + labelX + '" y="' + (cy + 3) + '" class="stats-dot-label" text-anchor="' + (labelRight ? "start" : "end") + '">' + esc(x.r.name) + '</text></a>';
+    });
+    scatter += '</svg>';
+    var maxR = Math.max.apply(null, regions.map(function (x) { return x.entries; })) || 1;
+    var regionBars = regions.slice().sort(function (a, b) { return b.entries - a.entries; }).map(function (x) {
+      return '<button class="stats-bar-row" data-go="#/loot/region/' + encodeURIComponent(x.r.id) + '"><span class="stats-bar-name">' + esc(x.r.name) + '</span><span class="stats-bar-track"><i style="width:' + Math.max(2, x.entries / maxR * 100) + '%;background:' + tierColor(x.r.tier) + '"></i></span><span class="stats-bar-val">' + x.entries.toLocaleString() + '</span></button>';
+    }).join('');
+    var topBars = topBuildings.map(function (x) {
+      return '<button class="stats-bar-row compact" data-go="#/loot/building/' + encodeURIComponent(x.r.id) + '/' + encodeURIComponent(x.b.id) + '"><span class="stats-bar-name">' + esc(x.b.name) + '<small>' + esc(x.r.name) + '</small></span><span class="stats-bar-track"><i style="width:' + Math.max(2, x.entries / topBuildings[0].entries * 100) + '%;background:' + tierColor(x.r.tier) + '"></i></span><span class="stats-bar-val">' + x.entries.toLocaleString() + '</span></button>';
+    }).join('');
+    var tierColors = { T1: "#7ecb96", T2: "#7fb8e8", T3: "#c6a0e8", T4: "#e0886f" };
+    var tierOrder = Object.keys(tierAgg).sort();
+    var totalTierEntries = tierOrder.reduce(function (a, k) { return a + tierAgg[k].entries; }, 0) || 1;
+    var stops = [], acc = 0;
+    tierOrder.forEach(function (k) { var pct = tierAgg[k].entries / totalTierEntries * 100; stops.push((tierColors[k] || "#e0a94a") + " " + acc + "% " + (acc + pct) + "%"); acc += pct; });
+    var donut = '<div class="stats-donut" style="background:conic-gradient(' + stops.join(",") + ')"><span>' + totalEntries.toLocaleString() + '<small>总条目</small></span></div>';
+    var tierLegend = tierOrder.map(function (k) { return '<div class="stats-legend-row"><i style="background:' + (tierColors[k] || "#e0a94a") + '"></i><b>' + esc(k) + '</b><span>' + tierAgg[k].regions + ' 区域 · ' + tierAgg[k].buildings + ' 建筑</span><em>' + tierAgg[k].entries.toLocaleString() + '</em></div>'; }).join('');
+    var climateChips = Object.keys(climateAgg).sort().map(function (k) { return '<span class="stats-climate"><i class="' + climateClass({ climate: k, id: "" }) + '"></i>' + esc(k) + ' · ' + climateAgg[k] + '</span>'; }).join('');
+    renderTopbar({ back: "#/loot", title: "数据总览", sub: "区域 / 建筑 / 掉落结构可视化" });
+    document.title = "数据总览 · 亡者世界";
+    q("view").innerHTML =
+      '<div class="stats-hero"><div class="stats-hero-main"><div class="hero-kicker">LOOT INTELLIGENCE</div><h1>掉落数据总览</h1><p>把区域风险、建筑容器和掉落条目放在一张图上，决定今天去哪搜。</p></div>' +
+        '<div class="stats-kpis"><div><b>' + regions.length + '</b><span>区域</span></div><div><b>' + buildings.length + '</b><span>建筑</span></div><div><b>' + totalContainers.toLocaleString() + '</b><span>容器</span></div><div><b>' + totalEntries.toLocaleString() + '</b><span>条目</span></div></div></div>' +
+      '<div class="stats-insights"><span><b>掉落密度最高</b> ' + esc(maxDensity ? maxDensity.r.name : "—") + ' · ' + (maxDensity ? maxDensity.density.toFixed(1) : 0) + ' 条/容器</span><span><b>区域最多</b> ' + esc((regions.slice().sort(function (a, b) { return b.entries - a.entries; })[0] || { r: { name: "—" } }).r.name) + '</span><span><b>单建筑最高</b> ' + esc(topBuildings[0] ? topBuildings[0].b.name + ' · ' + topBuildings[0].entries + ' 条' : "—") + '</span></div>' +
+      '<section class="section stats-section"><div class="section-head"><div class="section-title">区域风险 × 收益</div><div class="section-note">横轴容器数 · 纵轴掉落条目 · 颜色 T 级</div></div><div class="stats-chart-card">' + scatter + '</div></section>' +
+      '<section class="section stats-section"><div class="section-head"><div class="section-title">区域掉落条目</div><div class="section-note">点击区域查看建筑</div></div><div class="stats-bars">' + regionBars + '</div></section>' +
+      '<div class="stats-two-col"><section class="section stats-section"><div class="section-head"><div class="section-title">T 级构成</div></div><div class="stats-donut-wrap">' + donut + '<div class="stats-legend">' + tierLegend + '</div></div></section>' +
+      '<section class="section stats-section"><div class="section-head"><div class="section-title">气候分布</div></div><div class="stats-climates">' + climateChips + '</div><div class="stats-note">气候会直接影响环境、怪物与搜刮节奏。</div></section></div>' +
+      '<section class="section stats-section"><div class="section-head"><div class="section-title">最富建筑 TOP 12</div><div class="section-note">按掉落条目数</div></div><div class="stats-bars">' + topBars + '</div></section>' +
+      '<div class="section"><button class="btn ghost block" data-go="#/loot">返回区域战利品</button></div>';
+    var cy = q("view"); if (cy) cy.classList.add("stats-page");
   }
 
   /* ---------------- 区域 ---------------- */
