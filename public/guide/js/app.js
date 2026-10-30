@@ -582,7 +582,7 @@
         hubCard({ href: "#/world/vehicles", image: (GUIDE.meta.banners||{}).vehicles, icon: "car", title: "载具", sub: "民用 / 军用 / 船只 / 飞机", count: GUIDE_TYPES.vehicles.data.length, unit: "种", accent: "#7ea8c9" }) +
         hubCard({ href: "#/world/story", image: (GUIDE.meta.banners||{}).story, icon: "book", title: "剧情故事", sub: "新闻 / 各区域笔记与录音", count: GUIDE_TYPES.story.data.length, unit: "篇", accent: "#e0a94a" }) +
         hubCard({ href: "#/world/difficulty", image: (GUIDE.meta.banners||{}).world, icon: "skull", title: "世界难度", sub: "和平 / 简单 / 普通 / 困难 / 末日", count: 5, unit: "级", accent: "#e07a5f" }) +
-        hubCard({ href: "#/world/tech", image: "./images/guides/bg_tech.webp", icon: "gear", title: "科技板块", sub: "机械动力生产线 / 火炮系统", count: allMachines().length, unit: "条", accent: "#e8c15a" }) +
+        hubCard({ href: "#/world/tech", image: "./images/guides/bg_tech.webp?v=20261030a", icon: "gear", title: "科技板块", sub: "机械动力生产线 / 火炮系统", count: allMachines().length, unit: "条", accent: "#e8c15a" }) +
         hubCard({ href: "#/world/defense", image: (GUIDE.meta.banners||{}).defense, icon: "shield", title: "防御工事", sub: "爆炸物 / 防御墙 / 电击 / 炮塔", count: GUIDE_TYPES.defense.data.length, unit: "条", accent: "#7fc79a" }) +
         hubCard({ href: "#/world/changelog", image: (GUIDE.meta.banners||{}).home, icon: "book", title: "更新日志", sub: "5.11.0 → 5.11.19 版本改动", count: (window.WZ_CHANGELOG || []).length, unit: "版", accent: "#b09acb" }) +
       "</div></div>" +
@@ -2184,7 +2184,7 @@
     { tier: "T4", code: "T4", title: "荒地", desc: "高辐射区域", ids: ["wasteland"], sections: [{ title: "炎热 / 辐射 / 极热", ids: ["wasteland"] }] }
   ];
   function lootRegionById(id) { return (DATA.regions || []).filter(function (r) { return r.id === id; })[0]; }
-  const REGION_COVER_OVERRIDES = { hotel: "./images/guides/region_hotel.webp" };
+  const REGION_COVER_OVERRIDES = { hotel: "./images/guides/region_hotel.webp?v=20261030a" };
   function lootRegionImage(r) {
     if (r && REGION_COVER_OVERRIDES[r.id]) return REGION_COVER_OVERRIDES[r.id];
     if (r.cover) return r.cover;
