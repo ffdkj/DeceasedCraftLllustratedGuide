@@ -520,7 +520,7 @@
   function hubCard(opts) {
     const img = opts.image || "";
     return '<button class="hub-card' + (img ? " has-img" : "") + '" style="--hub-accent:' + opts.accent + '" data-go="' + opts.href + '">' +
-      (img ? '<img class="hub-bg" src="' + esc(img) + '" alt="" loading="lazy"><span class="poster-view" data-action="view-poster" data-img="' + esc(img) + '" role="button" tabindex="0" title="查看海报">⤢</span>' : "") +
+      (img ? '<img class="hub-bg" decoding="async" src="' + esc(img) + '" alt="" loading="lazy"><span class="poster-view" data-action="view-poster" data-img="' + esc(img) + '" role="button" tabindex="0" title="查看海报">⤢</span>' : "") +
       '<div class="hub-icon">' + icon(opts.icon, 22) + "</div>" +
       '<div class="hub-title">' + esc(opts.title) + "</div>" +
       '<div class="hub-sub">' + esc(opts.sub) + "</div>" +
@@ -2201,7 +2201,7 @@
     if (!r) return "";
     const img = lootRegionImage(r), cc = climateClass(r);
     return '<button class="region-card ' + cc + (img ? " has-img" : "") + '" style="--accent:' + tone(r.id) + '" data-go="#/loot/region/' + encodeURIComponent(r.id) + '">' +
-      (img ? '<img class="rc-bg" src="' + esc(img) + '" alt="" loading="lazy"><span class="poster-view" data-action="view-poster" data-img="' + esc(img) + '" role="button" tabindex="0" title="查看海报">⤢</span>' : "") +
+      (img ? '<img class="rc-bg" decoding="async" src="' + esc(img) + '" alt="" loading="lazy"><span class="poster-view" data-action="view-poster" data-img="' + esc(img) + '" role="button" tabindex="0" title="查看海报">⤢</span>' : "") +
       '<div class="rc-top"><div><div class="rc-name">' + esc(displayName || r.name) + (cc === "climate-rad" ? '<span class="rc-rad-tag">辐射</span>' : "") + '</div><div class="rc-meta">' + badgeTier(r.tier) + badgeClimate(r.climate) + "</div></div>" + icon("chevron", 18) + "</div>" +
       '<div class="rc-nums"><div class="rc-num"><b>' + r.buildings.length + '</b><span>建筑</span></div><div class="rc-num"><b>' + r._entries.toLocaleString() + '</b><span>掉落条目</span></div></div>' +
       (cc === "climate-rad" ? '<div class="rc-rad-warn">高辐射 · 需防护服</div>' : "") + "</button>";
@@ -2281,7 +2281,7 @@
       const img = lootTierImage(t);
       const accent = TIER_ACCENTS[t.tier] || "#e0a94a";
       return '<button class="tier-card premium' + (img ? " has-img" : "") + '" style="--tier-accent:' + accent + '" data-go="#/loot/tier/' + encodeURIComponent(t.tier) + '">' +
-        (img ? '<img class="tier-bg" src="' + esc(img) + '" alt="" loading="lazy"><span class="poster-view" data-action="view-poster" data-img="' + esc(img) + '" role="button" tabindex="0" title="查看海报">⤢</span>' : "") +
+        (img ? '<img class="tier-bg" decoding="async" src="' + esc(img) + '" alt="" loading="lazy"><span class="poster-view" data-action="view-poster" data-img="' + esc(img) + '" role="button" tabindex="0" title="查看海报">⤢</span>' : "") +
         '<div class="tier-watermark">0' + (ti + 1) + '</div>' +
         '<div class="tier-top"><span class="tier-badge">TIER 0' + (ti + 1) + '</span><span class="tier-rank">' + TIER_RANKS[t.tier] + '</span></div>' +
         '<div class="tier-body"><h2>' + esc(t.title) + '</h2><p>' + esc(t.desc) + '</p>' +
