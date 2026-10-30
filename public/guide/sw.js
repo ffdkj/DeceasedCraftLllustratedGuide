@@ -1,5 +1,5 @@
 /* 亡者世界图鉴 · 离线缓存 */
-const CACHE = "wz-guide-v3.9.2-imgopt";
+const CACHE = "wz-guide-v3.9.3-icon";
 const ASSETS = [
   "./",
   "./index.html",
