@@ -3014,7 +3014,7 @@ body.page-creatures {
   background-color: #080b0a !important;
   background-image:
     linear-gradient(180deg, rgba(9,12,11,.66) 0%, rgba(9,12,11,.78) 60%, rgba(9,12,11,.93) 100%),
-    url('../images/guides/page_creatures_bg.webp') !important;
+    url('../images/guides/page_creatures_bg.webp?v=20261030a') !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
   background-attachment: fixed, fixed !important;
@@ -3025,7 +3025,7 @@ body.page-creatures {
   background-color: #f3f7fc !important;
   background-image:
     linear-gradient(180deg, rgba(245,249,255,.72) 0%, rgba(245,249,255,.82) 60%, rgba(245,249,255,.95) 100%),
-    url('../images/guides/page_creatures_bg.webp') !important;
+    url('../images/guides/page_creatures_bg.webp?v=20261030a') !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
   background-attachment: fixed, fixed !important;
@@ -3237,11 +3237,11 @@ body.page-armor .detail-hero.has-bg {
 
 /* 套装修复：原始卡片背景恢复，机器人作为套装 UI 大图 */
 body.page-gear .view {
-  background-image: linear-gradient(180deg, rgba(5,8,7,.10) 0%, rgba(5,8,7,.62) 42%, rgba(5,8,7,.94) 100%), url("../images/guides/page_gear_cards_bg.webp") !important;
+  background-image: linear-gradient(180deg, rgba(5,8,7,.10) 0%, rgba(5,8,7,.62) 42%, rgba(5,8,7,.94) 100%), url("../images/guides/page_gear_cards_bg.webp?v=20261030a") !important;
   background-size: cover !important; background-position: center top !important; background-repeat: no-repeat !important;
 }
 body.page-world .view {
-  background-image: linear-gradient(180deg, rgba(5,8,7,.05) 0%, rgba(5,8,7,.60) 45%, rgba(5,8,7,.94) 100%), url("../images/guides/page_world_cards_bg.webp") !important;
+  background-image: linear-gradient(180deg, rgba(5,8,7,.05) 0%, rgba(5,8,7,.60) 45%, rgba(5,8,7,.94) 100%), url("../images/guides/page_world_cards_bg.webp?v=20261030a") !important;
   background-size: cover !important; background-position: center top !important; background-repeat: no-repeat !important;
 }
 body.page-gear .showcase-main { background: var(--panel) !important; }
