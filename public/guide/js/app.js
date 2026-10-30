@@ -2014,7 +2014,7 @@
     opts = opts || {};
     document.body.classList.toggle("has-back", !!opts.back);
     document.body.classList.remove("community-page");
-    const brand = '<div class="brand"><div class="brand-mark"><img src="./images/brand/deceasedcraft_icon.png" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
+    const brand = '<div class="brand"><div class="brand-mark"><img src="./images/brand/deceasedcraft_icon.webp" alt="DeceasedCraft"></div><div class="brand-text"><div class="brand-title">亡者图鉴</div><div class="brand-sub">DECEASEDCRAFT ' + esc((GUIDE.meta || {}).version || DATA.meta.version) + '</div><div class="brand-note">非官方攻略 · 仅供参考</div></div></div>';
     let left;
     if (opts.logo) {
       left = brand;
